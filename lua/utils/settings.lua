@@ -16,6 +16,7 @@ vim.c('filetype plugin indent on')
 
 vim.o('list', true)
 vim.o('listchars', 'eol:¬,tab:| ,lead:.,trail:~,nbsp:+')
+vim.o('fillchars', 'diff:╱')
 
 vim.o('cursorline', true)
 vim.o('ignorecase', true)

@@ -104,16 +104,17 @@ local set_hl_groups = function()
     { 0, 'DapBreakpointRejected',  { fg = red2 } },
 
     -- Git(signs)
-    { 0, 'DiffText', { bg = '#3d5665', sp = blu1, underline = true }},
-    { 0, 'GSAdd',    { fg = gre1,      bg = _ }},
-    { 0, 'GSCha',    { fg = blu1,      bg = _ }},
-    { 0, 'GSDel',    { fg = red1,      bg = _ }},
-    { 0, 'GSAddNr',  { link = 'GitsignsAddNr' }},
-    { 0, 'GSAddLn',  { link = 'GitSignsAddLn' }},
-    { 0, 'GSChaNr',  { link = 'GitSignsChangeNr' }},
-    { 0, 'GSChaLn',  { link = 'GitSignsChangeLn' }},
-    { 0, 'GSDelNr',  { link = 'GitSignsDeleteNr' }},
-    { 0, 'GSDelLn',  { link = 'GitSignsDeleteLn' }},
+    { 0, 'DiffText',   { bg = '#3d5665', sp = blu1, underline = true }},
+    { 0, 'DiffDelete', { fg = fg3,  bg = _}},
+    { 0, 'GSAdd',      { fg = gre1, bg = _ }},
+    { 0, 'GSCha',      { fg = blu1, bg = _ }},
+    { 0, 'GSDel',      { fg = red1, bg = _ }},
+    { 0, 'GSAddNr',    { link = 'GitsignsAddNr' }},
+    { 0, 'GSAddLn',    { link = 'GitSignsAddLn' }},
+    { 0, 'GSChaNr',    { link = 'GitSignsChangeNr' }},
+    { 0, 'GSChaLn',    { link = 'GitSignsChangeLn' }},
+    { 0, 'GSDelNr',    { link = 'GitSignsDeleteNr' }},
+    { 0, 'GSDelLn',    { link = 'GitSignsDeleteLn' }},
 
     -- Telescope
     { 0, 'TelescopeBorder',        { fg = fg3,  bg = _ }},
