@@ -1,14 +1,15 @@
--- Dynamically detects spellfiles in any of the buffer's base directory or any
--- of its parents (see 'spellname' below). Allows scoping spellfiles to certain
--- directories / projects, while still using global ones.
+-- Dynamically detecs spellfiles in the buffer's base- or any of its parent
+-- directories (see 'spellname' below). Allows scoping spellfiles to certain
+-- directories / projects. Respects global spellfile setting, as well as
+-- spellfiles added dynamically at runtime, though local spellfiles will always
+-- have higher priority.
 --
--- * walks the directory tree down to the directory
---   * of the first editing buffer (i.e. dirname), or
---   * to the directory nvim was invoked from (i.e. cwd)
--- * at each level, checks for the existence of a local spellfile (see
+-- 1. walk the directory tree down to the directory
+--   (a) of the first editing buffer (i.e. dirname), or
+--   (b) to the directory nvim was invoked from (i.e. cwd)
+-- 2. at each level, check for the existence of a local spellfile (see
 -- 'spellname' below)
--- * prepends any spellfiles it finds to 'spellfile'
--- * local spellfiles have higher precendence than ones defined globally
+-- 3. if found, prepend spellfile to 'spellfile'
 
 local spellname = '.spell-local.utf-8.add'
 local stat
