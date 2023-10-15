@@ -2,28 +2,33 @@
 local L = require('utils.lib')
 local M = {}
 
-local highlights = { 'HintFloatInv', 'InfoFloatInv', 'WarningFloatInv', 'ErrorFloatInv' }
+-- TODO: diversify highlights
+local highlights = {
+  'HintFloatInv',
+  'InfoFloatInv',
+  'WarningFloatInv',
+  'ErrorFloatInv'
+}
 
 local sev_sign = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
   return vim.startswith(s.name, 'DiagnosticSign')
 end)
 
+
 local preprocess = function(raw)
   local tbl = {}
-  local v_idx = 1
 
   for idx, res in pairs(raw) do
-    for _, proc in pairs(tbl) do
-      if vim.deep_equal(res.result, raw[proc.idx].result) then goto continue end
+    tbl[idx] = {
+      msg = {},
+      src = res.name
+    }
+
+    for ln in res.result.title:gmatch('(.-)\r?\n') do
+      table.insert(tbl[idx].msg, ln)
     end
-
-    local ind = #raw > 9 and v_idx < 10
-    table.insert(tbl, {
-      vis = v_idx, idx = idx, ind = ind, msg = res.result.title, src = res.name
-    })
-    v_idx = v_idx + 1
-
-    ::continue::
+    -- WARN: unstable use of character class
+    table.insert(tbl[idx].msg, res.result.title:match('[\r\n]*(.*)'))
   end
 
   return tbl
@@ -31,26 +36,50 @@ end
 
 
 local format = function(proc)
-  local ret = {}
-  for _, r in pairs(proc) do
-    table.insert(ret, ' '..r.vis..'  '..r.msg..' ('..r.src..')')
+  local tbl = {}
+
+  for idx, action in pairs(proc) do
+    local offset = #tbl + 1
+    for i = 1, #action.msg do
+      table.insert(tbl, action.msg[i])
+    end
+    tbl[offset] = ' '..idx..'  '..tbl[offset]
+    tbl[#tbl] = tbl[#tbl]..' ('..action.src..')'
   end
-  return ret
+
+  return tbl
 end
 
 
+-- FIX: verify this works with multiline codeactions
 local set_highlights = function(bufnr, proc)
-  for i = 1, #proc do
-    local hlidx = i % #highlights ~= 0 and i % #highlights or 4
-    local len = 2 + string.len(proc[i].vis)
+  vim.api.nvim_buf_add_highlight(bufnr, -1, 'InfoFloatSp', 0, 0, -1)
+  vim.api.nvim_buf_add_highlight(bufnr, -1, 'NeutralFloat', 1, 0, -1)
 
-    -- header
-    vim.api.nvim_buf_add_highlight(bufnr, -1, 'InfoFloatSp', 0, 0, -1)
-    vim.api.nvim_buf_add_highlight(bufnr, -1, 'NeutralFloat', 1, 0, -1)
-    -- prefix
-    vim.api.nvim_buf_add_highlight(bufnr, -1, highlights[hlidx], i+1, 0, len)
-    -- message
-    vim.api.nvim_buf_add_highlight(bufnr, -1, 'NeutralFloatSp', i+1, len+#proc[i].msg+1, -1)
+  local offset = 0
+  for i = 1, #proc do
+    local len = 2 + string.len(i)
+
+    vim.api.nvim_buf_add_highlight(
+      bufnr,
+      -1,
+      highlights[i % #highlights ~= 0 and i % #highlights or 4],
+      offset + i + 1,
+      0,
+      len
+    )
+    vim.api.nvim_buf_add_highlight(
+      bufnr,
+      -1,
+      'NeutralFloatSp',
+      offset + (#proc[i].msg > 1 and #proc[i].msg or 0) + i + 1,
+      len + #proc[i].msg[#proc[i].msg] + 1,
+      -1
+    )
+
+    if #proc[i].msg > 1 then
+      offset = offset + #proc[i].msg - 1
+    end
   end
 end
 
@@ -59,7 +88,7 @@ local register_float_actions = function(data)
   local do_action = function(num)
     L.win.close(data.nwin, data.owin, data.pos)
 
-    local act = data.res[data.proc[num].idx]
+    local act = data.res[num]
     local res = act.result
 
     if res.edit then
@@ -93,7 +122,6 @@ local register_float_actions = function(data)
     end
   end
 
-  -- register execute and abort keymaps
   L.key.nnmap('<C-c>', function()
     L.win.close(data.nwin, data.owin, data.pos) end, { buffer = true })
   L.key.nnmap('<CR>', function()
@@ -102,16 +130,17 @@ local register_float_actions = function(data)
     do_action(num)
   end, { buffer = true })
 
-  for i = 1, data.len do
+  for i = 1, #data.proc do
     L.key.nnmap(tostring(i), function() do_action(i) end, { buffer = true })
   end
 
-  -- disable unwanted keys
-  for _, lhs in pairs({ 'h', 'l', 'w', 'W', 'b', 'B', 'e', 'E', 'f', 'F', 't', 'T', 'v', 'V', '<C-v>' }) do
+  for _, lhs in pairs({
+    'h', 'l', 'w', 'W', 'b', 'B', 'e', 'E', 'f', 'F', 't', 'T', 'v', 'V',
+    '<C-v>'
+  }) do
     L.key.nnmap(lhs, '', { buffer = true })
   end
 
-  -- register autocommands
   L.cmd.event({ 'WinLeave', 'QuitPre' }, data.nbuf, function()
     L.win.close(data.nwin, data.owin, data.pos) end)
 end
@@ -120,22 +149,17 @@ end
 local open = function(raw)
   local proc = preprocess(raw)
   local content = format(proc)
-
-  -- insert header and separator
   table.insert(content, 1, sev_sign[3].text..'Code Actions')
   table.insert(content, 2, L.win.separator(content))
 
   local data = L.win.open_cursor(content, false, true, { zindex = 2 })
   data.proc = proc
   data.res = raw
-  data.pos = vim.api.nvim_win_get_cursor(data.owin)
-  data.len = #content - 2
 
   set_highlights(data.nbuf, proc)
   vim.api.nvim_win_set_cursor(data.nwin, { 3, 0 })
   register_float_actions(data)
 end
-
 
 local try_action = function()
   local params = vim.lsp.util.make_range_params()
