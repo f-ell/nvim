@@ -1,4 +1,3 @@
--- inspired by glepnir's Lspsaga: https://github.com/glepnir/lspsaga.nvim
 local L = require('utils.lib')
 local M = {}
 
@@ -25,7 +24,7 @@ local set_highlights = function(bufnr, proc)
   vim.api.nvim_buf_add_highlight(bufnr, ns_id, 'Search', proc.start[1] - 1,
     proc.start[2], proc._end[2])
 
-    -- TODO: revise this for multi-line highlights
+  -- TODO: revise for multiline highlights
   if proc._end[1] > proc.start[1] then
     local current = proc.start[1]
     local last = proc._end[1]
@@ -37,7 +36,6 @@ local set_highlights = function(bufnr, proc)
     vim.api.nvim_buf_add_highlight(bufnr, ns_id, 'Search', last, 0, proc._end[2])
   end
 
-  -- register mapping for clearing highlight
   L.key.nnmap('<C-l>', function()
     vim.api.nvim_buf_clear_namespace(bufnr, ns_id, 0, -1)
     L.key.unmap('n', '<C-l>', { buffer = true })
@@ -47,8 +45,8 @@ end
 
 local register_float_actions = function(bufnr, winnr)
   local ns_id = vim.api.nvim_create_namespace('LspUi')
-  -- register close autocommands
   if winnr == nil then return end
+
   L.cmd.event('QuitPre', bufnr, function()
       if not L.win.is_cur_valid(winnr) then return end
       vim.api.nvim_buf_clear_namespace(bufnr, ns_id, 0, -1)
@@ -82,7 +80,7 @@ local open = function(raw)
 end
 
 
--- TODO: consider using tressitter api to select target node and only display implementation in float (can use open_floating_preview())
+-- TODO: use tressitter api to select target node - only render implementation
 local try_definition = function(switch)
   local res = L.lsp.request(L.lsp.clients_by_cap('definition'),
     'textDocument/definition', vim.lsp.util.make_position_params(), 0)

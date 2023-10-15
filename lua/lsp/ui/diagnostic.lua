@@ -1,6 +1,6 @@
--- inspired by glepnir's Lspsaga: https://github.com/glepnir/lspsaga.nvim
 local L = require('utils.lib')
 local M = {}
+
 
 local sev_sign = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
   return vim.startswith(s.name, 'DiagnosticSign')
@@ -25,10 +25,10 @@ local preprocess = function(raw)
       local stridx = msg:find('\n')
       table.insert(tbl.data, {
         partial = true,
-        msg = msg:sub(1, stridx-1),
+        msg = msg:sub(1, stridx - 1),
         sev = diag[i].severity
       })
-      msg = msg:sub(stridx+1)
+      msg = msg:sub(stridx + 1)
     end
 
     table.insert(tbl.data, {
@@ -38,8 +38,8 @@ local preprocess = function(raw)
       sev = diag[i].severity,
       sev_str = sev_str[diag[i].severity],
 
-      ln = diag[i].lnum+1,
-      col = diag[i].col+1,
+      ln = diag[i].lnum + 1,
+      col = diag[i].col + 1,
       ecol = diag[i].end_col,
     })
   end
@@ -97,11 +97,11 @@ local set_highlights = function(bufnr, proc)
   if proc.type == 'dir' then
     hl = hl_hdr[data[1].sev]
     vim.api.nvim_buf_add_highlight(bufnr, -1, hl, 0, 0, len)
-    vim.api.nvim_buf_add_highlight(bufnr, -1, hl_ntl, 0, len+1, -1)
+    vim.api.nvim_buf_add_highlight(bufnr, -1, hl_ntl, 0, len + 1, -1)
   else
     hl = 'InfoFloatSp'
     vim.api.nvim_buf_add_highlight(bufnr, -1, hl, 0, 0, len)
-    vim.api.nvim_buf_add_highlight(bufnr, -1, hl_ntl, 0, len+1, -1)
+    vim.api.nvim_buf_add_highlight(bufnr, -1, hl_ntl, 0, len + 1, -1)
   end
 
   -- separator
@@ -112,16 +112,16 @@ local set_highlights = function(bufnr, proc)
     hl = hl_msg[data[i].sev]
     len = data[i].msg:len()
     if data[i].partial then
-      vim.api.nvim_buf_add_highlight(bufnr, -1, hl, i+1, 0, -1)
+      vim.api.nvim_buf_add_highlight(bufnr, -1, hl, i + 1, 0, -1)
       goto continue
     end
 
     if proc.type == 'dir' then
-      vim.api.nvim_buf_add_highlight(bufnr, -1, hl, i+1, 0, len)
-      vim.api.nvim_buf_add_highlight(bufnr, -1, hl_ntl_sp, i+1, len+1, -1)
+      vim.api.nvim_buf_add_highlight(bufnr, -1, hl, i + 1, 0, len)
+      vim.api.nvim_buf_add_highlight(bufnr, -1, hl_ntl_sp, i + 1, len + 1, -1)
     else
-      vim.api.nvim_buf_add_highlight(bufnr, -1, hl, i+1, 0, len)
-      vim.api.nvim_buf_add_highlight(bufnr, -1, hl_ntl_sp, i+1, len+1, -1)
+      vim.api.nvim_buf_add_highlight(bufnr, -1, hl, i + 1, 0, len)
+      vim.api.nvim_buf_add_highlight(bufnr, -1, hl_ntl_sp, i + 1, len + 1, -1)
     end
     ::continue::
   end
@@ -132,17 +132,14 @@ local open = function(raw)
   local proc = preprocess(raw)
   local content = format(proc)
 
-  -- move cursor to diagnostic
   if proc.type == 'dir' then
     vim.fn.cursor(proc.data[#proc.data].ln, proc.data[#proc.data].col)
   end
 
-  -- insert header and separator
   generate_header(proc)
   table.insert(content, 1, proc.hdr..' '..proc.loc)
   table.insert(content, 2, L.win.separator(content))
 
-  -- do floaty stuff
   local data = L.win.open_cursor(content, false, false, { focusable = false, zindex = 2 })
   set_highlights(data.nbuf, proc)
   L.cmd.event({ 'BufLeave', 'CursorMoved', 'InsertEnter', 'WinNew' }, data.obuf,

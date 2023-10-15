@@ -1,10 +1,9 @@
--- inspired by glepnir's Lspsaga: https://github.com/glepnir/lspsaga.nvim
 local L = require('utils.lib')
 local M = {}
 
 
 local highlight_refs = function(data)
-  for i=1, #data.refs do
+  for i = 1, #data.refs do
     local r = data.refs[i].result
     if r.range then
       vim.api.nvim_buf_add_highlight(data.obuf, data.ns_id, 'Search',
@@ -34,11 +33,17 @@ local register_float_actions = function(data)
     vim.api.nvim_win_set_cursor(data.owin, { data.pos[1], data.pos[2] + 1 })
   end
 
-  -- register execute and abort keymaps
-  L.key.modemap({ 'n', 'i', 'v' }, '<C-c>', function() close_win() end, { buffer = true })
-  L.key.modemap({ 'n', 'i' }, '<CR>', function() do_rename() end, {buffer = true })
+  L.key.modemap(
+    { 'n', 'i', 'v' },
+    '<C-c>',
+    function() close_win() end, { buffer = true }
+  )
+  L.key.modemap(
+    { 'n', 'i' },
+    '<CR>',
+    function() do_rename() end, {buffer = true }
+  )
 
-  -- register autocommands
   L.cmd.event({ 'WinLeave', 'QuitPre' }, data.nbuf, function() close_win() end)
 end
 
@@ -50,7 +55,12 @@ local open = function(raw)
   if len > max_w then w = max_w end
 
   vim.api.nvim_win_set_cursor(0, { raw.pos[1] + 1, raw.pos[2] })
-  local data = L.win.open_cursor({ raw.cword }, true, true, { width = w, col = -1, zindex = 2 })
+  local data = L.win.open_cursor(
+    { raw.cword },
+    true,
+    true,
+    { width = w, col = -1, zindex = 2 }
+  )
   data.ns_id = vim.api.nvim_create_namespace('LspUi')
   data.pos = vim.api.nvim_win_get_cursor(data.owin)
   data.old = raw.cword

@@ -1,3 +1,4 @@
+-- inspired by glepnir's lspsaga: https://github.com/nvimdev/lspsaga.nvim
 return {
   cda = require('lsp.ui.codeaction'),
   def = require('lsp.ui.definition'),

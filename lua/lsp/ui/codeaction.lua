@@ -1,6 +1,6 @@
--- inspired by glepnir's Lspsaga: https://github.com/glepnir/lspsaga.nvim
 local L = require('utils.lib')
 local M = {}
+
 
 -- TODO: diversify highlights
 local highlights = {
