@@ -12,7 +12,7 @@ end
 return {
   'lewis6991/gitsigns.nvim',
   lazy = true,
-  event = 'BufReadPre',
+  event = 'BufReadPost',
   keys = {
     { 'gsh', toggle_diff },
     { 'gsj', '<CMD>silent Gitsigns next_hunk<CR>' },

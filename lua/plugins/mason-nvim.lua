@@ -2,7 +2,7 @@ return {
   'williamboman/mason.nvim',
   lazy = true,
   cmd = 'Mason',
-  event = 'FileType',
+  event = 'BufReadPost',
   dependencies = { 'hrsh7th/cmp-nvim-lsp', 'neovim/nvim-lspconfig' },
   config = function()
     local signs = {

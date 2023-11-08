@@ -1,7 +1,7 @@
 return {
   'numToStr/Comment.nvim',
   lazy  = true,
-  event = 'FileType',
+  keys = { 'm', '<leader>m' },
   config = function()
     require('Comment').setup({
       sticky    = true,
