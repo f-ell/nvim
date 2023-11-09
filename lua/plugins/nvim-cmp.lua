@@ -5,7 +5,7 @@ return {
   event = 'InsertEnter',
   dependencies = {
     'hrsh7th/cmp-buffer',
-    'L3MON4D3/LuaSnip',
+    'dcampos/nvim-snippy',
     { 'hrsh7th/cmp-cmdline', event = 'CmdlineEnter' }
   },
   config = function()
@@ -42,11 +42,11 @@ return {
       },
 
       snippet = {
-        expand = function(arg) require('luasnip').lsp_expand(arg.body) end
+        expand = function(arg) require('snippy').expand_snippet(arg.body) end
       },
 
       sources = {
-        { name = 'luasnip',
+        { name = 'snippy',
           max_item_count = 4,
           keyword_length = 1 },
         { name = 'nvim_lsp',
