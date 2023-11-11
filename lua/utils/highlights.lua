@@ -25,7 +25,7 @@ local set_hl_groups = function()
 
   local highlights = {
     -- Search
-    { 0, 'Search',     { fg = fg6, bg = aqu1 }},
+    { 0, 'Search',     { fg = fg6, bg = gre1 }},
     { 0, 'IncSearch',  { fg = fg6, bg = red1 }},
     { 0, 'CurSearch',  { link = 'IncSearch' }},
     { 0, 'Substitute', { link = 'IncSearch' }},
