@@ -257,11 +257,17 @@ M.vim.o = function(name, value)
 end
 
 ---------------------------------------------------------------------------- win
+M.win._max_height = function()
+  return vim.api.nvim_win_get_height(0) - vim.o.cmdheight
+end
+
 M.win._height = function(content)
   if type(content) == 'number' then return math.floor(vim.o.lines * EW) end
 
   local _mw = M.win._max_width()
-  if M.tbl.longest_line(content) < _mw then return #content end
+  if M.tbl.longest_line(content) < _mw then
+    return math.min(#content, M.win._max_height())
+  end
 
   local h, sb = 0, vim.fn.strdisplaywidth(vim.o.showbreak)
   for _, line in pairs(content) do
@@ -276,7 +282,7 @@ M.win._height = function(content)
       h = h + 1
     end
   end
-  return h
+  return math.min(h, M.win._max_height())
 end
 
 M.win._max_width = function() return math.floor(vim.o.columns * CW) - 2 end
