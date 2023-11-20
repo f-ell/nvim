@@ -1,7 +1,10 @@
 return {
   'numToStr/Comment.nvim',
   lazy  = true,
-  keys = { 'm', '<leader>m' },
+  keys = {
+    'm',
+    { '<leader>m', mode = { 'n', 'v' } }
+  },
   config = function()
     require('Comment').setup({
       sticky    = true,

@@ -1,7 +1,13 @@
 return {
   'echasnovski/mini.surround',
   lazy = true,
-  keys = { '<leader>s', 'cs', 'ds', '<leader><leader>s', '<leader>ns' },
+  keys = {
+    { '<leader>s', mode = { 'n', 'v' } },
+    'cs',
+    'ds',
+    '<leader><leader>s',
+    '<leader>ns'
+  },
   config = function()
     require('mini.surround').setup({
       custom_surroundings = nil,

@@ -1,7 +1,10 @@
 return {
   'echasnovski/mini.align',
   lazy = true,
-  keys = { '<leader>a', '<leader>A' },
+  keys = {
+    { '<leader>a', mode = { 'n', 'v' } },
+    { '<leader>A', mode = { 'n', 'v' } }
+  },
   config = function()
     require('mini.align').setup({
       mappings = {
