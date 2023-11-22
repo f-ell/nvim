@@ -2,7 +2,7 @@ return {
   'williamboman/mason.nvim',
   lazy = true,
   cmd = 'Mason',
-  event = 'BufReadPost',
+  event = { 'BufReadPost', 'BufNewFile' },
   dependencies = { 'hrsh7th/cmp-nvim-lsp', 'neovim/nvim-lspconfig' },
   init = function()
     if vim.fn.argc() ~= 0 then require('mason') end
