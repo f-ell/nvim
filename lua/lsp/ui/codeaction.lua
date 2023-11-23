@@ -31,6 +31,12 @@ local preprocess = function(raw)
     table.insert(tbl[idx].msg, res.result.title:match('[\r\n]*(.*)'))
   end
 
+  for i = 1, #tbl do
+    for j = 1, #tbl[i].msg do
+      tbl[i].msg[j] = tbl[i].msg[j]:gsub('\n', '\\n')
+    end
+  end
+
   return tbl
 end
 
