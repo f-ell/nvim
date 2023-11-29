@@ -55,6 +55,7 @@ return {
           max_item_count = 4,
           keyword_length = 4,
           option = {
+            keyword_pattern = [[\k\+]],
             get_bufnrs = function()
               local buf = vim.api.nvim_get_current_buf()
               local byte_size =
