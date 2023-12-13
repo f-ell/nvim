@@ -67,13 +67,19 @@ key.nnmap('<leader>t$', '<CMD>tabmove$<CR>')
 key.nnmap('<leader>tj', '<CMD>silent! tabmove-<CR>')
 key.nnmap('<leader>tk', '<CMD>silent! tabmove+<CR>')
 
--- ex navigation
+-- qf / loc
+key.nnmap('<leader>cj', function() return '<CMD>'..vim.v.count..'cnext<CR>' end, { expr = true })
+key.nnmap('<leader>ck', function() return '<CMD>'..vim.v.count..'cprev<CR>' end, { expr = true })
+key.nnmap('<leader>co', '<CMD>copen<CR>')
+key.nnmap('<leader>cc', '<CMD>cclose<CR>')
+
+-- ex
 key.cnmap('<C-h>', '<Left>')
 key.cnmap('<C-k>', '<Up>')
 key.cnmap('<C-j>', '<Down>')
 key.cnmap('<C-l>', '<Right>')
 
--- window navigation
+-- windows
 key.nnmap('<A-h>', '<C-w>h')
 key.nnmap('<A-j>', '<C-w>j')
 key.nnmap('<A-k>', '<C-w>k')
