@@ -4,22 +4,25 @@ return {
   event = { 'BufNewFile', 'BufReadPost' },
   dependencies = {
     'nvim-treesitter/nvim-treesitter-textobjects',
-    'JoosepAlviste/nvim-ts-context-commentstring',
+    {
+      'JoosepAlviste/nvim-ts-context-commentstring',
+      opts = { enable = true, enable_autocmd = false }
+    },
     {
       'nvim-treesitter/nvim-treesitter-context',
       opts = {
-        enable      = true,
-        mode        = 'cursor',
-        trim_scope  = 'outer',
-        max_lines         = 4,
+        enable = true,
+        mode = 'cursor',
+        trim_scope = 'outer',
+        max_lines = 4,
         min_window_height = 24
       }
     }
   },
   config = function()
     require('nvim-treesitter.configs').setup({
-      auto_install      = false,
-      ensure_installed  = {},
+      auto_install = false,
+      ensure_installed = {},
 
       highlight = {
         enable = true,
@@ -43,8 +46,6 @@ return {
           }
         }
       },
-
-      context_commentstring = { enable = true, enable_autocmd = false }
     })
   end
 }
