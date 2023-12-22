@@ -62,8 +62,7 @@ local format = function(proc)
       table.insert(tbl, proc[i].data[j])
     end
 
-    tbl[#tbl] = tbl[#tbl] .. ' ' .. proc.type == 'dir' and proc[i].src
-      or proc[i].vcol
+    tbl[#tbl] = tbl[#tbl] .. ' ' .. (proc.type == 'dir' and proc[i].src or proc[i].vcol)
   end
 
   return tbl
@@ -145,10 +144,10 @@ local try_diagnostic = function(type, pos)
 end
 
 M.goto_next = function()
-  try_diagnostic('dir', vim.diagnostic.get_next_pos())
+  try_diagnostic('dir', vim.diagnostic.get_next_pos() or { 0, 0 })
 end
 M.goto_prev = function()
-  try_diagnostic('dir', vim.diagnostic.get_prev_pos())
+  try_diagnostic('dir', vim.diagnostic.get_prev_pos() or { 0, 0 })
 end
 M.get_line = function()
   local pos = vim.fn.getcurpos()
