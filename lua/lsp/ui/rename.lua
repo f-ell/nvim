@@ -1,6 +1,10 @@
 local L = require('utils.lib')
 local M = {}
 
+local signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
+  return vim.startswith(s.name, 'DiagnosticSign')
+end)
+
 local highlight_refs = function(data)
   for i = 1, #data.refs do
     local r = data.refs[i].result
@@ -59,12 +63,15 @@ local open = function(raw)
   local w = math.min(len < min_w and min_w or len + 1, max_w)
 
   vim.api.nvim_win_set_cursor(0, { raw.pos[1] + 1, raw.pos[2] })
-  local data = L.win.open_cursor(
-    { raw.cword },
-    true,
-    true,
-    { title = ' Rename ', width = w, col = -1, zindex = 2 }
-  )
+  local data = L.win.open_cursor({ raw.cword }, true, true, {
+    title = {
+      { ' ' .. signs[3].text, signs[3].texthl },
+      { 'Rename ', 'FloatTitle' },
+    },
+    width = w,
+    col = -1,
+    zindex = 2,
+  })
   data.ns_id = vim.api.nvim_create_namespace('LspUi')
   data.pos = vim.api.nvim_win_get_cursor(data.owin)
   data.old = raw.cword
