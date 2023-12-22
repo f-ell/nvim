@@ -5,14 +5,16 @@ return {
   event = { 'BufReadPost', 'BufNewFile' },
   dependencies = { 'hrsh7th/cmp-nvim-lsp', 'neovim/nvim-lspconfig' },
   init = function()
-    if vim.fn.argc() ~= 0 then require('mason') end
+    if vim.fn.argc() ~= 0 then
+      require('mason')
+    end
   end,
   config = function()
     local signs = {
-      { 'DiagnosticSignError',  '⬥' },
-      { 'DiagnosticSignWarn',   '▴' },
-      { 'DiagnosticSignInfo',   '·' },
-      { 'DiagnosticSignHint',   '▪' }
+      { 'DiagnosticSignError', '⬥' },
+      { 'DiagnosticSignWarn', '▴' },
+      { 'DiagnosticSignInfo', '•' },
+      { 'DiagnosticSignHint', '▪' },
     }
     for _, sign in pairs(signs) do
       vim.fn.sign_define(sign[1], { texthl = sign[1], text = sign[2] })
@@ -23,7 +25,7 @@ return {
       underline = true,
       virtual_text = false,
       severity_sort = true,
-      sign = { active = signs }
+      sign = { active = signs },
     })
 
     vim.lsp.handlers['textDocument/hover'] =
@@ -36,10 +38,10 @@ return {
     local key = require('utils.lib').key
     local ui = require('lsp.ui')
     local on_attach = function()
-      key.nnmap('gd',         ui.def.peek, { buffer = 0 })
+      key.nnmap('gd', ui.def.peek, { buffer = 0 })
       key.nnmap('<leader>gt', ui.def.type, { buffer = 0 })
       key.nnmap('<leader>gd', ui.def.open, { buffer = 0 })
-      key.nnmap('K',          vim.lsp.buf.hover, { buffer = 0 })
+      key.nnmap('K', vim.lsp.buf.hover, { buffer = 0 })
       key.nnmap('<leader>ca', ui.cda.codeaction, { buffer = 0 })
       key.nnmap('<leader>rf', vim.lsp.buf.references, { buffer = 0 })
       key.nnmap('<leader>rn', ui.ren.rename, { buffer = 0 })
@@ -52,16 +54,21 @@ return {
       end)
     end
 
-    local capabilities = require('cmp_nvim_lsp')
-    .default_capabilities(vim.lsp.protocol.make_client_capabilities())
+    local capabilities = require('cmp_nvim_lsp').default_capabilities(
+      vim.lsp.protocol.make_client_capabilities()
+    )
 
-    for _, server in pairs(vim.fn.readdir(vim.fn.stdpath('config')..'/lua/lsp/servers')) do
+    for _, server in
+      pairs(vim.fn.readdir(vim.fn.stdpath('config') .. '/lua/lsp/servers'))
+    do
       local opts = { on_attach = on_attach, capabilities = capabilities }
       server = server:gsub('%.lua$', '')
 
-      local req, tbl = pcall(require, 'lsp.servers.'..server)
-      if req then opts = vim.tbl_deep_extend('force', opts, tbl) end
+      local req, tbl = pcall(require, 'lsp.servers.' .. server)
+      if req then
+        opts = vim.tbl_deep_extend('force', opts, tbl)
+      end
       require('lspconfig')[server].setup(opts)
     end
-  end
+  end,
 }
