@@ -18,12 +18,12 @@ local preprocess = function(raw)
       table.insert(tbl[idx].msg, ln)
     end
     -- WARN: unstable use of character class
-    table.insert(tbl[idx].msg, res.result.title:match('[\r\n]*(.*)'))
+    table.insert(tbl[idx].msg, res.result.title:match('[\r\n]*([^\r\n]*)$'))
   end
 
   for i = 1, #tbl do
-    for j = 1, #tbl[i].msg do
-      tbl[i].msg[j] = tbl[i].msg[j]:gsub('\n', '\\n')
+    for j = 2, #tbl[i].msg do
+      tbl[i].msg[j] = (' '):rep(string.len(i) + 1) .. tbl[i].msg[j]
     end
   end
 
@@ -51,7 +51,7 @@ local set_highlights = function(bufnr, proc)
   local offset = -1
 
   for i = 1, #proc do
-    local prefix_len = string.len(i)
+    local len = string.len(i)
 
     vim.api.nvim_buf_add_highlight(
       bufnr,
@@ -59,14 +59,14 @@ local set_highlights = function(bufnr, proc)
       signs[i % #signs ~= 0 and i % #signs or #signs].texthl,
       offset + i,
       0,
-      prefix_len
+      len
     )
     vim.api.nvim_buf_add_highlight(
       bufnr,
       -1,
       'NeutralFloat',
-      offset + (#proc[i].msg > 1 and #proc[i].msg or 0) + i,
-      prefix_len + #proc[i].msg[#proc[i].msg] + 1,
+      offset + (#proc[i].msg > 1 and #proc[i].msg - 1 or 0) + i,
+      (#proc[i].msg > 1 and 0 or len + 1) + proc[i].msg[#proc[i].msg]:len(),
       -1
     )
 
