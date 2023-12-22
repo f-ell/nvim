@@ -209,8 +209,7 @@ M.tbl.longest_line = function(tbl)
     local len = vim.fn.strdisplaywidth(tbl[i])
     if len > max then max = len end
   end
-  max = tonumber(max)
-  if max == nil then return -1 else return max end
+  return max
 end
 
 
@@ -296,7 +295,7 @@ M.win._voffset = function()
   local o = math.floor(-vim.o.cmdheight / 2)
   local s = vim.o.laststatus
   local t = vim.o.showtabline
-  if s > 1 or s == 1 and #vim.api.nvim_tabpage_list_wins() > 1 then o = o - 1 end
+  if s > 1 or s == 1 and #vim.api.nvim_tabpage_list_wins(0) > 1 then o = o - 1 end
   if t > 1 or t == 1 and #vim.api.nvim_list_tabpages() > 1 then o = o + 1 end
   return o
 end
