@@ -1,14 +1,6 @@
 local L = require('utils.lib')
 local M = {}
 
--- TODO: diversify highlights
-local highlights = {
-  'HintFloatInv',
-  'InfoFloatInv',
-  'WarningFloatInv',
-  'ErrorFloatInv',
-}
-
 local signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
   return vim.startswith(s.name, 'DiagnosticSign')
 end)
@@ -41,40 +33,40 @@ end
 local format = function(proc)
   local tbl = {}
 
-  for idx, action in pairs(proc) do
+  for i = 1, #proc do
     local offset = #tbl + 1
-    for i = 1, #action.msg do
-      table.insert(tbl, action.msg[i])
+
+    for j = 1, #proc[i].msg do
+      table.insert(tbl, proc[i].msg[j])
     end
-    tbl[offset] = ' ' .. idx .. '  ' .. tbl[offset]
-    tbl[#tbl] = tbl[#tbl] .. ' (' .. action.src .. ')'
+
+    tbl[offset] = i .. ' ' .. tbl[offset]
+    tbl[#tbl] = tbl[#tbl] .. ' ' .. proc[i].src
   end
 
   return tbl
 end
 
 local set_highlights = function(bufnr, proc)
-  vim.api.nvim_buf_add_highlight(bufnr, -1, 'InfoFloatSp', 0, 0, -1)
-  vim.api.nvim_buf_add_highlight(bufnr, -1, 'NeutralFloat', 1, 0, -1)
+  local offset = -1
 
-  local offset = 0
   for i = 1, #proc do
-    local len = 2 + string.len(i)
+    local prefix_len = string.len(i)
 
     vim.api.nvim_buf_add_highlight(
       bufnr,
       -1,
-      highlights[i % #highlights ~= 0 and i % #highlights or 4],
-      offset + i + 1,
+      signs[i % #signs ~= 0 and i % #signs or #signs].texthl,
+      offset + i,
       0,
-      len
+      prefix_len
     )
     vim.api.nvim_buf_add_highlight(
       bufnr,
       -1,
-      'NeutralFloatSp',
-      offset + (#proc[i].msg > 1 and #proc[i].msg or 0) + i + 1,
-      len + #proc[i].msg[#proc[i].msg] + 1,
+      'NeutralFloat',
+      offset + (#proc[i].msg > 1 and #proc[i].msg or 0) + i,
+      prefix_len + #proc[i].msg[#proc[i].msg] + 1,
       -1
     )
 
@@ -138,11 +130,7 @@ local register_float_actions = function(data)
 
   -- FIX: offset with multiline code actions
   L.key.nnmap('<CR>', function()
-    local num = vim.fn.line('.') - 2
-    if num < 1 then
-      return
-    end
-    do_action(num)
+    do_action(vim.fn.line('.'))
   end, { buffer = true })
 
   for i = 1, #data.proc do
@@ -151,23 +139,7 @@ local register_float_actions = function(data)
     end, { buffer = true })
   end
 
-  for _, lhs in pairs({
-    'h',
-    'l',
-    'w',
-    'W',
-    'b',
-    'B',
-    'e',
-    'E',
-    'f',
-    'F',
-    't',
-    'T',
-    'v',
-    'V',
-    '<C-v>',
-  }) do
+  for _, lhs in pairs({ 'v', 'V', '<C-v>' }) do
     L.key.nnmap(lhs, '', { buffer = true })
   end
 
@@ -179,20 +151,19 @@ end
 local open = function(raw)
   local proc = preprocess(raw)
   local content = format(proc)
-  table.insert(content, 1, signs[3].text .. 'Code Actions')
-  table.insert(content, 2, L.win.separator(content))
 
-  local data = L.win.open_cursor(
-    content,
-    false,
-    true,
-    { title = ' Code Actions ', zindex = 2 }
-  )
+  local data = L.win.open_cursor(content, false, true, {
+    title = {
+      { ' ' .. signs[3].text, signs[3].texthl },
+      { 'Code Actions ', 'FloatTitle' },
+    },
+    zindex = 2,
+  })
   data.proc = proc
   data.res = raw
 
   set_highlights(data.nbuf, proc)
-  vim.api.nvim_win_set_cursor(data.nwin, { 3, 0 })
+  vim.api.nvim_win_set_cursor(data.nwin, { 1, 0 })
   register_float_actions(data)
 end
 
@@ -206,11 +177,10 @@ local try_action = function()
     params,
     0
   )
-  if L.tbl.is_empty(res) then
-    return
-  end
 
-  open(res)
+  if not L.tbl.is_empty(res) then
+    open(res)
+  end
 end
 
 M.codeaction = function()
