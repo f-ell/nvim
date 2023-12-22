@@ -2,13 +2,16 @@ local L = require('utils.lib')
 
 -- bootstrap
 local std = vim.fn.stdpath
-local path = std('data')..'/lazy/lazy.nvim'
+local path = std('data') .. '/lazy/lazy.nvim'
 
 if not vim.loop.fs_stat(path) then
   vim.fn.system({
-    'git', 'clone',
-    '--filter=blob:none', '--single-branch',
-    'https://github.com/folke/lazy.nvim.git', path
+    'git',
+    'clone',
+    '--filter=blob:none',
+    '--single-branch',
+    'https://github.com/folke/lazy.nvim.git',
+    path,
   })
 end
 
@@ -24,9 +27,9 @@ require('lazy').setup('plugins', {
   performance = {
     cache = {
       enabled = true,
-      path = std('cache')..'/lazy/cache'
-    }
-  }
+      path = std('cache') .. '/lazy/cache',
+    },
+  },
 })
 
 L.key.nnmap('<leader>*', '<CMD>Lazy<CR>')
