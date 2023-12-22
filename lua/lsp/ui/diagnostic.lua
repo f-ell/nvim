@@ -5,124 +5,94 @@ local signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
   return vim.startswith(s.name, 'DiagnosticSign')
 end)
 
-local severity = { 'Error', 'Warn', 'Info', 'Hint' }
-
-local hl_ntl = 'NeutralFloat'
-local hl_ntl_sp = 'NeutralFloatSp'
-local hl_hdr =
-  { 'ErrorFloatSp', 'WarningFloatSp', 'InfoFloatSp', 'HintFloatSp' }
-local hl_msg = { 'ErrorFloat', 'WarningFloat', 'InfoFloat', 'HintFloat' }
-
 local preprocess = function(raw)
   local diag = raw.diag
-  local tbl = { hdr = '', type = raw.type, data = {} }
+  local tbl = {
+    title = {},
+    type = raw.type,
+  }
 
   for i = 1, #diag do
-    local msg = diag[i].message
-
-    while msg:find('\n') do
-      local stridx = msg:find('\n')
-      table.insert(tbl.data, {
-        partial = true,
-        msg = msg:sub(1, stridx - 1),
-        sev = diag[i].severity,
-      })
-      msg = msg:sub(stridx + 1)
-    end
-
-    table.insert(tbl.data, {
-      partial = false,
-      msg = msg,
-      src = diag[i].source,
+    tbl[i] = {
+      data = {},
+      src = vim.startswith(diag[i].source, 'Lua ') and 'lua_ls'
+        or diag[i].source,
       sev = diag[i].severity,
-      sev_str = severity[diag[i].severity],
-
       ln = diag[i].lnum + 1,
       col = diag[i].col + 1,
       ecol = diag[i].end_col,
-    })
+      vcol = diag[i].col < diag[i].end_col - 1
+          and diag[i].col .. '-' .. diag[i].end_col
+        or diag[i].col,
+    }
+
+    for ln in diag[i].message:gmatch('(.-)\r?\n') do
+      table.insert(tbl[i].data, ln)
+    end
+    -- WARN: unstable use of character class
+    table.insert(tbl[i].data, diag[i].message:match('[\r\n]*([^\r\n]*)$'))
+
+    tbl[i].data[1] = signs[tbl[i].sev].text .. tbl[i].data[1]
   end
+
+  for i = 1, #tbl do
+    for j = 2, #tbl[i].data do
+      tbl[i].data[j] = (' '):rep(vim.fn.strdisplaywidth(signs[tbl[i].sev].text))
+        .. tbl[i].data[j]
+    end
+  end
+
+  tbl.title.icon = raw.type == 'line'
+      and { ' ' .. signs[3].text, signs[3].texthl }
+    or {
+      ' ' .. signs[tbl[1].sev].text,
+      signs[tbl[1].sev].texthl,
+    }
+  tbl.title.loc = raw.type == 'line' and ''
+    or diag[1].lnum + 1 .. ':' .. diag[1].col + 1 .. ' '
 
   return tbl
 end
 
 local format = function(proc)
-  local ret = {}
-  local data = proc.data
+  local tbl = {}
 
-  local str
-  for i = 1, #data do
-    if data[i].partial then
-      str = data[i].msg
-      goto continue
+  for i = 1, #proc do
+    for j = 1, #proc[i].data do
+      table.insert(tbl, proc[i].data[j])
     end
 
-    if proc.type == 'dir' then
-      str = data[i].msg .. ' (' .. data[i].src .. ')'
-    else
-      local col = data[i].col <= data[i].ecol
-          and data[i].col .. '-' .. data[i].ecol
-        or data[i].col
-      str = data[i].msg .. ' ' .. 'col:' .. col
-    end
-
-    ::continue::
-    table.insert(ret, str)
+    tbl[#tbl] = tbl[#tbl] .. ' ' .. proc.type == 'dir' and proc[i].src
+      or proc[i].vcol
   end
 
-  return ret
-end
-
-local generate_header = function(diag)
-  local data = diag.data[#diag.data]
-
-  if diag.type == 'dir' then
-    diag.hdr = signs[data.sev].text .. data.sev_str
-    diag.loc = 'at <' .. data.ln .. ':' .. data.col .. '>'
-  else
-    diag.hdr = signs[3].text .. 'Diagnostics'
-    diag.loc = 'in <' .. data.ln .. '>'
-  end
+  return tbl
 end
 
 local set_highlights = function(bufnr, proc)
-  local hl, len
-  local data = proc.data
+  local offset = -1
 
-  -- header
-  len = proc.hdr:len()
-  if proc.type == 'dir' then
-    hl = hl_hdr[data[1].sev]
-    vim.api.nvim_buf_add_highlight(bufnr, -1, hl, 0, 0, len)
-    vim.api.nvim_buf_add_highlight(bufnr, -1, hl_ntl, 0, len + 1, -1)
-  else
-    hl = 'InfoFloatSp'
-    vim.api.nvim_buf_add_highlight(bufnr, -1, hl, 0, 0, len)
-    vim.api.nvim_buf_add_highlight(bufnr, -1, hl_ntl, 0, len + 1, -1)
-  end
+  for i = 1, #proc do
+    vim.api.nvim_buf_add_highlight(
+      bufnr,
+      -1,
+      signs[proc[i].sev].texthl,
+      offset + i,
+      0,
+      vim.fn.byteidx(proc[i].data[1], 1)
+    )
+    vim.api.nvim_buf_add_highlight(
+      bufnr,
+      -1,
+      'NeutralFloat',
+      offset + (#proc[i].data > 1 and #proc[i].data - 1 or 0) + i,
+      proc[i].data[#proc[i].data]:len(),
+      -1
+    )
 
-  -- separator
-  vim.api.nvim_buf_add_highlight(bufnr, -1, hl_ntl, 1, 0, -1)
-
-  -- body
-  for i = 1, #data do
-    hl = hl_msg[data[i].sev]
-    len = data[i].msg:len()
-
-    if data[i].partial then
-      vim.api.nvim_buf_add_highlight(bufnr, -1, hl, i + 1, 0, -1)
-      goto continue
+    if #proc[i].data > 1 then
+      offset = offset + #proc[i].data - 1
     end
-
-    if proc.type == 'dir' then
-      vim.api.nvim_buf_add_highlight(bufnr, -1, hl, i + 1, 0, len)
-      vim.api.nvim_buf_add_highlight(bufnr, -1, hl_ntl_sp, i + 1, len + 1, -1)
-    else
-      vim.api.nvim_buf_add_highlight(bufnr, -1, hl, i + 1, 0, len)
-      vim.api.nvim_buf_add_highlight(bufnr, -1, hl_ntl_sp, i + 1, len + 1, -1)
-    end
-
-    ::continue::
   end
 end
 
@@ -131,20 +101,22 @@ local open = function(raw)
   local content = format(proc)
 
   if proc.type == 'dir' then
-    ---@diagnostic disable-next-line: redundant-parameter
-    vim.fn.cursor(proc.data[#proc.data].ln, proc.data[#proc.data].col)
+    vim.fn.cursor({ proc[#proc].ln, proc[#proc].col })
   end
 
-  generate_header(proc)
-  table.insert(content, 1, proc.hdr .. ' ' .. proc.loc)
-  table.insert(content, 2, L.win.separator(content))
-
-  local data = L.win.open_cursor(
-    content,
-    false,
-    false,
-    { title = ' Diagnostics ', focusable = false, zindex = 2 }
-  )
+  local data = L.win.open_cursor(content, false, false, {
+    title = {
+      proc.title.icon,
+      { 'Diagnostics ', 'FloatTitle' },
+      { proc.title.loc, 'NeutralFloat' },
+    },
+    focusable = false,
+    zindex = 2,
+    width = math.max(
+      L.tbl.longest_line(content),
+      proc.title.icon[1]:len() + ('Diagnostics '):len() + proc.title.loc:len()
+    ),
+  })
   set_highlights(data.nbuf, proc)
 
   L.cmd.event(
@@ -158,6 +130,7 @@ end
 
 local try_diagnostic = function(type, pos)
   local diag = vim.diagnostic.get(0, { lnum = pos[1] })
+
   if type == 'dir' then
     diag = vim.fn.filter(diag, function(_, d)
       return d.col == pos[2]
@@ -178,6 +151,7 @@ M.goto_prev = function()
   try_diagnostic('dir', vim.diagnostic.get_prev_pos())
 end
 M.get_line = function()
-  try_diagnostic('line', vim.fn.getcurpos())
+  local pos = vim.fn.getcurpos()
+  try_diagnostic('line', { pos[2] - 1, pos[3] - 1 })
 end
 return M
