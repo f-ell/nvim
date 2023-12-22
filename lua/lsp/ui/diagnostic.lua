@@ -156,8 +156,15 @@ local open = function(raw)
   )
 end
 
-local try_diagnostic = function(type, diag)
-  if diag[1] == nil then
+local try_diagnostic = function(type, pos)
+  local diag = vim.diagnostic.get(0, { lnum = pos[1] })
+  if type == 'dir' then
+    diag = vim.fn.filter(diag, function(_, d)
+      return d.col == pos[2]
+    end)
+  end
+
+  if #diag == 0 then
     return vim.notify('No diagnostics found.', 2)
   end
 
@@ -165,12 +172,12 @@ local try_diagnostic = function(type, diag)
 end
 
 M.goto_next = function()
-  try_diagnostic('dir', { vim.diagnostic.get_next() })
+  try_diagnostic('dir', vim.diagnostic.get_next_pos())
 end
 M.goto_prev = function()
-  try_diagnostic('dir', { vim.diagnostic.get_prev() })
+  try_diagnostic('dir', vim.diagnostic.get_prev_pos())
 end
 M.get_line = function()
-  try_diagnostic('line', vim.diagnostic.get(0, { lnum = vim.fn.line('.') - 1 }))
+  try_diagnostic('line', vim.fn.getcurpos())
 end
 return M
