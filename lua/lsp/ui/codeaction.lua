@@ -128,9 +128,24 @@ local register_float_actions = function(data)
     L.win.close(data.nwin, data.owin, data.pos)
   end, { buffer = true })
 
-  -- FIX: offset with multiline code actions
   L.key.nnmap('<CR>', function()
-    do_action(vim.fn.line('.'))
+    local ln = vim.fn.line('.')
+    local offset = 0
+
+    -- PERF: suboptimal but good enough for any reasonable use-case
+    for i = 1, #data.proc do
+      for _ = 2, #data.proc[i].msg do
+        table.insert(data.res, offset + i, data.res[offset + i])
+        offset = offset + 1
+      end
+
+      if offset + i > ln then
+        goto continue
+      end
+    end
+    ::continue::
+
+    do_action(ln)
   end, { buffer = true })
 
   for i = 1, #data.proc do
