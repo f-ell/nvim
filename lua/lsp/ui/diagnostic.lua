@@ -21,9 +21,9 @@ local preprocess = function(raw)
       ln = diag[i].lnum + 1,
       col = diag[i].col + 1,
       ecol = diag[i].end_col,
-      vcol = diag[i].col < diag[i].end_col - 1
-          and diag[i].col .. '-' .. diag[i].end_col
-        or diag[i].col,
+      vcol = diag[i].col + 1 < diag[i].end_col
+          and diag[i].col + 1 .. '-' .. diag[i].end_col
+        or diag[i].col + 1,
     }
 
     for ln in diag[i].message:gmatch('(.-)\r?\n') do
@@ -62,7 +62,9 @@ local format = function(proc)
       table.insert(tbl, proc[i].data[j])
     end
 
-    tbl[#tbl] = tbl[#tbl] .. ' ' .. (proc.type == 'dir' and proc[i].src or proc[i].vcol)
+    tbl[#tbl] = tbl[#tbl]
+      .. ' '
+      .. (proc.type == 'dir' and proc[i].src or proc[i].vcol)
   end
 
   return tbl
