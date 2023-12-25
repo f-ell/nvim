@@ -78,8 +78,8 @@ local highlights = {
   { 0, 'modeV', { fg = c.pastel.red, bg = c._ } },
 
   -- tabline
-  { 0, 'TlActive', { fg = c.fg[2], bg = c.bg[2], bold = true } },
-  { 0, 'TlInactive', { fg = c.fg[3], bg = c.bg[3] } },
+  { 0, 'TabActive', { fg = c.fg[2], bg = c.bg[2], bold = true } },
+  { 0, 'TabInactive', { fg = c.fg[3], bg = c.bg[3] } },
 
   -- misc
   { 0, 'SpellBad', { sp = c.pastel.red, undercurl = true } },

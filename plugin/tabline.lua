@@ -6,22 +6,20 @@ local tabline = function()
   for i = 1, vim.fn.tabpagenr('$') do
     local bufnr = vim.fn.tabpagebuflist(i)[vim.fn.tabpagewinnr(i)]
     local name = vim.fn.bufname(bufnr)
-    name = name == ''
-      and '[null]'
-      or (name:match('([^/]-/?)$') or '_ERR')
+    name = name == '' and '[null]' or (name:match('([^/]-/?)$') or '_ERR')
 
     local tab = {
       string.format('%%%sT', i),
-      '%#Tl'..(i == vim.fn.tabpagenr() and 'Active' or 'Inactive')..'#',
+      '%#Tab' .. (i == vim.fn.tabpagenr() and 'Active' or 'Inactive') .. '#',
       '▎',
       vim.api.nvim_buf_get_option(bufnr, 'modified') and ' + ' or '  ',
-      name..'  '
+      name .. '  ',
     }
 
     table.insert(tabs, table.concat(tab))
   end
 
-  return table.concat(tabs)..'%#TlInactive#'
+  return table.concat(tabs) .. '%#TabInactive#'
 end
 
 _G.tabline = tabline
