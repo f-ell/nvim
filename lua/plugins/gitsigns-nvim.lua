@@ -1,5 +1,7 @@
 local toggle_diff = function()
-  if not vim.wo.diff then return require('gitsigns').diffthis() end
+  if not vim.wo.diff then
+    return require('gitsigns').diffthis()
+  end
 
   -- WARN: will break with simultaneous diffs
   for _, win in pairs(vim.api.nvim_tabpage_list_wins(0)) do
@@ -27,22 +29,22 @@ return {
       attach_to_untracked = false,
 
       signs = {
-        add          = { hl = 'GSAdd', text = '│', numhl='GSAddNr', linehl='GSAddLn' },
-        change       = { hl = 'GSCha', text = '│', numhl='GSChaNr', linehl='GSChaLn' },
-        delete       = { hl = 'GSDel', text = '│', numhl='GSDelNr', linehl='GSDelLn' },
-        topdelete    = { hl = 'GSDel', text = '‾', numhl='GSDelNr', linehl='GSDelLn' },
-        changedelete = { hl = 'GSCha', text = '~', numhl='GSChaNr', linehl='GSChaLn' },
+        add = { text = '│' },
+        change = { text = '│' },
+        delete = { text = '│' },
+        topdelete = { text = '‾' },
+        changedelete = { text = '~' },
       },
 
-      signcolumn  = true,
-      numhl       = false,
-      linehl      = false,
-      word_diff   = false,
+      signcolumn = true,
+      numhl = false,
+      linehl = false,
+      word_diff = false,
 
       watch_gitdir = {
-        interval      = 500,
-        follow_files  = true
-      }
+        interval = 500,
+        follow_files = true,
+      },
     })
-  end
+  end,
 }

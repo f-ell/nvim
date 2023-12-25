@@ -82,12 +82,18 @@ local highlights = {
   { 0, 'TabInactive', { fg = c.fg[3], bg = c.bg[3] } },
 
   -- misc
-  { 0, 'SpellBad', { sp = c.pastel.red, undercurl = true } },
+  {
+    0,
+    'DiffText',
+    { bg = '#3d5665', sp = c.pastel.blu, underline = true },
+  },
+  { 0, 'DiffDelete', { fg = c.fg[3], bg = c._ } },
   { 0, 'Git', { fg = c.misc.git, bg = c._ } },
   { 0, 'GitZero', { fg = c.fg[3], bg = c._ } },
   { 0, 'GitAdd', { fg = c.pastel.gre, bg = c._ } },
   { 0, 'GitCha', { fg = c.pastel.blu, bg = c._ } },
   { 0, 'GitDel', { fg = c.pastel.red, bg = c._ } },
+  { 0, 'SpellBad', { sp = c.pastel.red, undercurl = true } },
 
   ---- plugins ----
   -- cmp
@@ -101,23 +107,6 @@ local highlights = {
   { 0, 'DapBreakpoint', { fg = c.pastel.red } },
   { 0, 'DapBreakpointCondition', { fg = c.pastel.pur } },
   { 0, 'DapBreakpointRejected', { fg = c.pastel.red } },
-
-  -- gitsigns
-  {
-    0,
-    'DiffText',
-    { bg = '#3d5665', sp = c.pastel.blu, underline = true },
-  },
-  { 0, 'DiffDelete', { fg = c.fg[3], bg = c._ } },
-  { 0, 'GSAdd', { fg = c.pastel.gre, bg = c._ } },
-  { 0, 'GSCha', { fg = c.pastel.blu, bg = c._ } },
-  { 0, 'GSDel', { fg = c.pastel.red, bg = c._ } },
-  { 0, 'GSAddNr', { link = 'GitsignsAddNr' } },
-  { 0, 'GSAddLn', { link = 'GitSignsAddLn' } },
-  { 0, 'GSChaNr', { link = 'GitSignsChangeNr' } },
-  { 0, 'GSChaLn', { link = 'GitSignsChangeLn' } },
-  { 0, 'GSDelNr', { link = 'GitSignsDeleteNr' } },
-  { 0, 'GSDelLn', { link = 'GitSignsDeleteLn' } },
 
   -- telescope
   { 0, 'TelescopeBorder', { fg = c.fg[3], bg = c._ } },
