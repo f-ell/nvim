@@ -1,5 +1,3 @@
-local L = require('lib')
-
 local git_info = {
   diff = nil,
   root = {
@@ -399,5 +397,5 @@ local statusline = function()
 end
 
 _G.statusline = statusline
-L.vim.o('laststatus', 3)
-L.vim.o('statusline', '%!v:lua.statusline()')
+vim.o.laststatus = 3
+vim.o.statusline = '%!v:lua.statusline()'

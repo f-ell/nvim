@@ -23,5 +23,5 @@ local tabline = function()
 end
 
 _G.tabline = tabline
-L.vim.o('showtabline', 1)
-L.vim.o('tabline', '%!v:lua.tabline()')
+vim.o.showtabline = 1
+vim.o.tabline = '%!v:lua.tabline()'

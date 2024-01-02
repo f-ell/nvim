@@ -8,7 +8,6 @@ local M = {
   lsp = {},
   str = {},
   tbl = {},
-  vim = {},
   win = {},
 }
 
@@ -246,53 +245,19 @@ M.tbl.is_empty = function(tbl)
   return tbl == nil or (type(tbl) == 'table' and next(tbl) == nil)
 end
 
----------------------------------------------------------------------------- vim
----Wraps vim.api.nvim_command(cmd).
----
----@param cmd string
-M.vim.c = function(cmd)
-  vim.api.nvim_command(cmd)
-end
-
----Wraps v.g[name] = value when value is passed.
----Returns the option value otherwise.
----
----@param name string
----@param value any?
-M.vim.g = function(name, value)
-  if value == nil then
-    return vim.g[name]
-  else
-    vim.g[name] = value
-  end
-end
-
----Wraps v.o[name] = value when value is passed.
----Returns the option value otherwise.
----
----@param name string
----@param value any?
-M.vim.o = function(name, value)
-  if value == nil then
-    return vim.o[name]
-  else
-    vim.o[name] = value
-  end
-end
-
 ---------------------------------------------------------------------------- win
-M.win._max_height = function()
+M.win.__max_height = function()
   return vim.api.nvim_win_get_height(0) - vim.o.cmdheight
 end
 
-M.win._height = function(content)
+M.win.__height = function(content)
   if type(content) == 'number' then
     return math.floor(vim.o.lines * EW)
   end
 
-  local _mw = M.win._max_width()
+  local _mw = M.win.__max_width()
   if M.tbl.longest_line(content) < _mw then
-    return math.min(#content, M.win._max_height())
+    return math.min(#content, M.win.__max_height())
   end
 
   local h, sb = 0, vim.fn.strdisplaywidth(vim.o.showbreak)
@@ -311,19 +276,19 @@ M.win._height = function(content)
       h = h + 1
     end
   end
-  return math.min(h, M.win._max_height())
+  return math.min(h, M.win.__max_height())
 end
 
-M.win._max_width = function()
+M.win.__max_width = function()
   return math.floor(vim.o.columns * CW) - 2
 end
 
-M.win._width = function(content)
+M.win.__width = function(content)
   return type(content) == 'number' and math.floor(vim.o.columns * EW)
-    or math.min(M.tbl.longest_line(content), M.win._max_width())
+    or math.min(M.tbl.longest_line(content), M.win.__max_width())
 end
 
-M.win._voffset = function()
+M.win.__voffset = function()
   local o = math.floor(-vim.o.cmdheight / 2)
   local s = vim.o.laststatus
   local t = vim.o.showtabline
@@ -350,16 +315,16 @@ end
 ---Tries to close window 'nwin'. If present, the current window will be set to
 ---'owin' at 'pos' (the latter is expected to be a (1,0)-indexed tuple).
 ---
----@param nwin number
----@param owin number?
+---@param new number
+---@param old number?
 ---@pos table?
-M.win.close = function(nwin, owin, pos)
-  if not vim.api.nvim_win_is_valid(nwin) then
+M.win.close = function(new, old, pos)
+  if not vim.api.nvim_win_is_valid(new) then
     return
   end
-  vim.api.nvim_win_close(nwin, true)
-  if owin and pos then
-    vim.api.nvim_win_set_cursor(owin, pos)
+  vim.api.nvim_win_close(new, true)
+  if old and pos then
+    vim.api.nvim_win_set_cursor(old, pos)
   end
 end
 
@@ -391,8 +356,8 @@ M.win.open = function(lines, modifiable, enter, config)
     owin = vim.api.nvim_get_current_win(),
     nbuf = -1,
     nwin = -1,
-    height = M.win._height(lines),
-    width = M.win._width(lines),
+    height = M.win.__height(lines),
+    width = M.win.__width(lines),
   }
   if type(lines) == 'table' then
     data.nbuf = vim.api.nvim_create_buf(false, true)
@@ -442,7 +407,7 @@ M.win.open_center = function(bl, modifiable, enter, config)
   local conf = vim.tbl_extend('keep', config or {}, {
     relative = 'editor',
     anchor = 'NW',
-    row = math.floor((vim.o.lines * (1 - EW)) / 2) + M.win._voffset(),
+    row = math.floor((vim.o.lines * (1 - EW)) / 2) + M.win.__voffset(),
     col = math.floor((vim.o.columns * (1 - EW)) / 2),
   })
   return M.win.open(bl, modifiable, enter, conf)
@@ -467,18 +432,8 @@ M.win.open_cursor = function(bl, modifiable, enter, config)
   return M.win.open(bl, modifiable, enter, conf)
 end
 
----Generate a separation line, with the length accounting for the maximum window
----width.
----
----@param lines table
-M.win.separator = function(lines)
-  local _mw = M.win._max_width()
-  local len = M.tbl.longest_line(lines)
-  return string.rep('', len > _mw and _mw or len)
-end
-
 ---------------------------------------------------------------------------- key
-M.key._map = function(mode, map_opts)
+M.key.__map = function(mode, map_opts)
   map_opts = map_opts or { noremap = true }
   ---Wraps vim.keymap.set, where the mode is derived from the overarching
   ---map() call.
@@ -492,11 +447,11 @@ M.key._map = function(mode, map_opts)
   end
 end
 
-M.key.inmap = M.key._map('i')
-M.key.nnmap = M.key._map('n')
-M.key.vnmap = M.key._map('v')
-M.key.cnmap = M.key._map('c')
-M.key.tnmap = M.key._map('t')
+M.key.inmap = M.key.__map('i')
+M.key.nnmap = M.key.__map('n')
+M.key.vnmap = M.key.__map('v')
+M.key.cnmap = M.key.__map('c')
+M.key.tnmap = M.key.__map('t')
 
 ---Creates the keymap 'lhs' for each mode in 'modes'.
 ---

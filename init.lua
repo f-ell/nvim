@@ -16,7 +16,7 @@ if not vim.loop.fs_stat(path) then
 end
 
 -- init
-L.vim.g('mapleader', ' ')
+vim.g.mapleader = ' '
 vim.opt.runtimepath:prepend(path)
 
 require('lazy').setup('plugins', {
@@ -33,7 +33,8 @@ require('lazy').setup('plugins', {
 })
 
 L.key.nnmap('<leader>*', '<CMD>Lazy<CR>')
-L.vim.o('termguicolors', true)
-L.vim.c('colorscheme everforest')
+vim.o.termguicolors = true
+vim.api.nvim_command('colorscheme everforest')
+vim.api.nvim_command('filetype plugin indent on')
 
 require('utils')

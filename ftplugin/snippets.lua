@@ -1,3 +1,1 @@
-local L = require('lib')
-
-L.vim.o('expandtab', false)
+vim.o.expandtab = false

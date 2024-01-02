@@ -1,3 +1,1 @@
-local L = require('lib')
-
-L.vim.o('spell', true)
+vim.o.spell = true
