@@ -1,4 +1,4 @@
-local L = require('utils.lib')
+local L = require('lib')
 
 local tabline = function()
   local tabs = {}

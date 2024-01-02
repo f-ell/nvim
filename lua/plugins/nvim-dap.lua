@@ -14,7 +14,7 @@ return {
   },
   dependencies = 'rcarriga/nvim-dap-ui',
   config = function()
-    local L = require('utils.lib')
+    local L = require('lib')
     local dap, ui = require('dap'), require('dapui')
 
     local signs = {

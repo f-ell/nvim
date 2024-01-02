@@ -1,1 +1,1 @@
-L = require('utils.lib')
+L = require('lib')

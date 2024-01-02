@@ -1,4 +1,4 @@
-local L = require('utils.lib')
+local L = require('lib')
 
 -- bootstrap
 local std = vim.fn.stdpath

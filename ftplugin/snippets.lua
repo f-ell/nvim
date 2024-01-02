@@ -1,3 +1,3 @@
-local L = require('utils.lib')
+local L = require('lib')
 
 L.vim.o('expandtab', false)

@@ -3,7 +3,7 @@ return {
   lazy = true,
   cmd = 'UndotreeToggle',
   config = function()
-    local L = require('utils.lib')
+    local L = require('lib')
     L.vim.g('undotree_SetFocusWhenToggle', 1)
     L.vim.g('undotree_ShortIndicators', 1)
     L.vim.g('undotree_DiffpanelHeight', 16)

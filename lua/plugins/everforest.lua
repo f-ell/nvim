@@ -2,7 +2,7 @@ return {
   'sainnhe/everforest',
   lazy = true,
   config = function()
-    local vim = require('utils.lib').vim
+    local vim = require('lib').vim
     vim.o('background', 'dark')
     vim.g('everforest_background',              'soft')
     vim.g('everforest_enable_bold',             '1')

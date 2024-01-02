@@ -3,7 +3,7 @@ return {
   lazy = true,
   ft = { 'plaintex', 'tex' },
   config = function()
-    local L = require('utils.lib')
+    local L = require('lib')
 
     L.vim.g('vimtex_syntax_enabled', 0)
     L.vim.g('vimtex_compiler_method', 'tectonic')

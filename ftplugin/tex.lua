@@ -1,6 +1,6 @@
 if vim.fn.expand('%:e') == 'sty' then return end
 
-local L = require('utils.lib')
+local L = require('lib')
 
 L.vim.o('spell', true);
 

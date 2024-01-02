@@ -1,4 +1,4 @@
-local L = require('utils.lib')
+local L = require('lib')
 local M = {}
 
 local signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)

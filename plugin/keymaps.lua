@@ -1,4 +1,4 @@
-local key = require('utils.lib').key
+local key = require('lib').key
 
 local wipe_buf = function()
   if #vim.api.nvim_list_tabpages() == 1 then

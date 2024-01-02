@@ -1,4 +1,4 @@
-local vim = require('utils.lib').vim
+local vim = require('lib').vim
 
 -- spelling
 -- v.o('spell', true) -- horrendous performance hit

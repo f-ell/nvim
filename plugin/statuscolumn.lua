@@ -1,4 +1,4 @@
-local L = require('utils.lib')
+local L = require('lib')
 
 local lnum = function()
   if vim.v.virtnum ~= 0 then return '' end

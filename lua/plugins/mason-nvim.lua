@@ -35,7 +35,7 @@ return {
 
     require('mason').setup({ ui = { border = 'single' } })
 
-    local key = require('utils.lib').key
+    local key = require('lib').key
     local ui = require('lsp.ui')
     local on_attach = function()
       key.nnmap('gd', ui.def.peek, { buffer = 0 })

@@ -1,4 +1,4 @@
-local vim = require('utils.lib').vim
+local vim = require('lib').vim
 
 vim.o('expandtab',  true)
 vim.o('tabstop',       2)
