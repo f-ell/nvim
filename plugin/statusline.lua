@@ -1,401 +1,606 @@
-local git_info = {
-  diff = nil,
-  root = {
-    _local = '',
-    global = '',
-  },
-  head = '',
-  is_tracked = false,
-  vcs = false,
-}
+---@diagnostic disable: undefined-field
 
----- auxiliary ----
--- WARN: may match an incorrect path with nested links
-local readlink = function()
-  local buf = vim.fn.expand('%:p:h') .. '/' .. vim.fn.expand('%:t')
+---@class Component
+---@field name string,
+---@field enabled boolean?
+---@field events fun(self:self)|Listener[]?
+---@field get string|number|fun(self:self):string
 
-  local src = vim.loop.fs_readlink(buf)
-  if src then
-    return src
-  end
+---@class Listener
+---@field [1] string|string[]
+---@field [2] fun(component:Component, tbl: table?)
 
-  -- link in directory structure
-  local dir = ''
-  for subdir in buf:sub(2):gmatch('(.-)/') do
-    dir = dir .. '/' .. subdir
-    src = vim.loop.fs_readlink(dir)
-    if src then
-      return src .. buf:gsub(dir, '')
-    end
-  end
+local L = require('lib')
+L.fs.mktmpdir()
 
-  return buf
-end
-
-local readlink_dir = function()
-  return vim.fs.dirname(readlink())
-end
-
-local round = function(number, quotient)
-  return vim.fn.round((number * 10) / quotient) / 10
-end
-
-local is_tracked = function()
-  local dir = git_info.root._local:gsub('%.git$', '')
-  local fh = L.io.popen({
-    'git',
-    '-C',
-    dir,
-    'ls-files',
-    '--error-unmatch',
-    readlink():gsub('^' .. dir, ''),
-  }, true, '')
-  return L.io.read(fh) ~= ''
-end
-
-local is_vcs = function()
-  local fh = L.io.popen({
-    'git',
-    '-C',
-    readlink_dir(),
-    'rev-parse',
-    '--is-inside-work-tree',
-  }, true, false)
-  return L.io.read(fh) == 'true'
-end
-
-local git_dir = function()
-  local _local, global = '', ''
-  local cwd = readlink_dir()
-
-  while cwd do
-    local path = cwd .. '/.git'
-    local stat = vim.loop.fs_stat(path)
-
-    if stat then
-      _local = path
-      global = path
-
-      if stat.type == 'file' then
-        local fh = io.open(path, 'r')
-        if fh ~= nil then
-          global = L.io.read(fh):match('^gitdir: (.*)$')
-        end
-      end
-
-      break
+-- PERF: register running jobs and deregister in on_exit to prevent duplication
+local M = {
+  init = function(self)
+    for i = 1, #self.__components do
+      self.register_callbacks(self.__components[i])
     end
 
-    cwd = cwd:match('^(.+)/.-$')
-  end
-
-  return {
-    _local = _local,
-    global = global,
-  }
-end
-
-local git_diff = function()
-  local file = readlink()
-  if not git_info.is_tracked or file:match('/$') then
-    return nil
-  end
-
-  -- TODO:
-  -- on BufWrite -> generate tmpfile from current buffer state
-  -- on InsertLeave (or similar) -> diff tmpfile
-  local fh = L.io.popen({
-    'git',
-    '-C',
-    readlink_dir(),
-    'diff',
-    '-U0',
-    '--no-color',
-    file:match('/([^/]+)$'),
-  }, true, '')
-
-  local add, cha, del = 0, 0, 0
-  for ln in L.io.read(fh):gmatch('(.-)\r?\n') do
-    if not vim.startswith(ln, '@@') then
-      goto continue
-    end
-    if vim.startswith(ln, '@@@') then
-      return '%#GitDel# unmerged'
-    end
-
-    local caps = { ln:match('^@@ %-%d+,?(%d*) %+%d+,?(%d*) @@') }
-    local old, new = caps[1], caps[2]
-
-    if old == '' then
-      old = '1'
-    end
-    if new == '' then
-      new = '1'
-    end
-    if old == '0' then
-      add = add + new
-    elseif new == '0' then
-      del = del + old
-    else
-      cha = cha + math.min(old, tonumber(new))
-      if tonumber(new) > tonumber(old) then
-        add = add + (new - old)
-      elseif tonumber(new) < tonumber(old) then
-        del = del + (old - new)
-      end
-    end
-
-    ::continue::
-  end
-
-  return { add = add, cha = cha, del = del }
-end
-
-local git_head = function()
-  local fh = io.open(git_info.root.global .. '/HEAD', 'r')
-  if fh == nil then
-    return ''
-  end
-
-  local content = L.io.read(fh)
-  local head = content:match('^ref: refs/heads/(.+)$')
-
-  if not head then
-    fh = L.io.popen({
-      'git',
-      '-C',
-      readlink_dir(),
-      'describe',
-      '--tags',
-      '--exact-match',
-      '@',
-    }, true, '')
-    local tag = L.io.read(fh)
-    head = tag ~= '' and 't:' .. tag or content:sub(1, 8)
-  end
-
-  return head
-end
-
----- components ----
-local mode = function()
-  local m = vim.api.nvim_get_mode().mode
-  if m == '' then
-    m = 'v'
-  end
-  m = m:sub(0, 1):upper()
-
-  return table.concat({
-    '%#mode' .. m .. '#',
-    m,
-    '%#Statusline#',
-  })
-end
-
-local buffer = function()
-  local name = vim.fn.bufname()
-  name = name == '' and '[null]' or (name:match('([^/]-/?)$') or '_ERR')
-
-  local maxlen = 24
-  if name:len() > maxlen then
-    local fillchars = '...'
-
-    local i = name:find('%.')
-    local ext = i and name:sub(i) or ''
-    local offset = ext:len() > 0 and 2 + ext:len() or 4
-    name = name:sub(0, maxlen - (offset + fillchars:len()))
-      .. fillchars
-      .. name:sub(-offset)
-  end
-
-  return table.concat({
-    '%#Statusline#',
-    vim.bo.modified and '+ ' or '- ',
-    name,
-    ' ',
-    vim.bo.readonly and '%#StatuslineReadonly#' or '',
-    '(%n)',
-    '%#Statusline#',
-  })
-end
-
-local git = function()
-  if not git_info.vcs then
-    return ''
-  end
-
-  local diff = ''
-  if not git_info.is_tracked or git_info.diff == nil then
-    diff = '%#GitZero#untracked'
-  else
-    local hl_a = '%#Git' .. (git_info.diff.add == 0 and 'Zero' or 'Add') .. '#'
-    local hl_c = '%#Git' .. (git_info.diff.cha == 0 and 'Zero' or 'Cha') .. '#'
-    local hl_d = '%#Git' .. (git_info.diff.del == 0 and 'Zero' or 'Del') .. '#'
-    diff = table.concat({
-      hl_a .. '+' .. git_info.diff.add,
-      hl_c .. '~' .. git_info.diff.cha,
-      hl_d .. '-' .. git_info.diff.del,
-    }, ' ')
-  end
-
-  return table.concat({
-    '%#Git# ' .. git_info.head,
-    ' ',
-    diff,
-    '%#Statusline#',
-  })
-end
-
-local lsp = function()
-  local signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
-    return vim.startswith(s.name, 'DiagnosticSign')
-  end)
-
-  local clients = vim.lsp.get_active_clients({ bufnr = 0 })
-  if #clients == 0 then
-    return ''
-  end
-
-  for i = 1, #clients do
-    clients[i] = clients[i].name
-  end
-
-  local diagnostics = vim.diagnostic.get(0)
-  local counts = { 0, 0, 0, 0 }
-  for i = 1, #diagnostics do
-    counts[diagnostics[i].severity] = counts[diagnostics[i].severity] + 1
-  end
-
-  local parts = {}
-  if #diagnostics == 0 then
-    goto continue
-  end
-
-  for i = 1, #counts do
-    if counts[i] ~= 0 then
-      parts[#parts + 1] = '%#'
-        .. signs[i].texthl
-        .. '#'
-        .. signs[i].text
-        .. counts[i]
-    end
-  end
-
-  ::continue::
-  return table.concat({
-    '%#StatuslineLspinfo#',
-    table.concat(clients, ', '),
-    #diagnostics > 0 and ' ' .. table.concat(parts, ' ') or '',
-    '%#Statusline#',
-  })
-end
-
-local bytecount = function()
-  local unit = 'B'
-  local count = vim.fn.line2byte(vim.fn.line('$')) + vim.fn.getline('$'):len()
-  if count == -1 then
-    count = 0
-  end
-
-  if count >= 1048576 then
-    unit = 'MiB'
-    count = round(count, 1048576)
-  elseif count >= 10240 then
-    unit = 'KiB'
-    count = round(count, 1024)
-  end
-
-  return table.concat({
-    '%#StatuslineBytecount#﬘%#Statusline#',
-    ' ',
-    count .. unit,
-  })
-end
-
-local searchcount = function()
-  local search = vim.fn.searchcount({ maxcount = 98 })
-  local cur = search.current
-
-  if search.exact_match == 0 then
-    cur = 0
-  end
-  if search.incomplete == 1 then
-    search.total = '?'
-  end
-
-  return table.concat({
-    '%#StatuslineSearch#%#Statusline#',
-    ' ',
-    cur .. '/' .. search.total,
-  })
-end
-
-local location = function()
-  return table.concat({
-    '%#StatuslineLocation#%#Statusline#',
-    ' ',
-    '%l:%v',
-  })
-end
-
----- definition ----
-vim.api.nvim_create_autocmd({
-  'BufEnter',
-  'BufFilePost',
-  'FileChangedShellPost',
-  'FocusGained',
-  'WinClosed',
-}, {
-  callback = function()
-    git_info.vcs = is_vcs()
-    if not git_info.vcs then
-      return
-    end
-
-    git_info.root = git_dir()
-    git_info.is_tracked = is_tracked()
-    git_info.head = git_head()
-    git_info.diff = git_diff()
-  end,
-})
-
--- avoid unnecessary git calls
-vim.api.nvim_create_autocmd('BufWritePre', {
-  nested = true,
-  callback = function()
-    if not git_info.vcs then
-      return
-    end
-    git_info.head = git_head()
-
-    if not vim.bo.modified then
-      return
-    end
-    vim.api.nvim_create_autocmd('BufWritePost', {
-      once = true,
+    vim.api.nvim_create_autocmd(self.__buf_events, {
       callback = function()
-        git_info.diff = git_diff()
+        self:__readlink()
       end,
     })
   end,
+
+  render = function(self)
+    local tbl = setmetatable({}, { __index = table })
+
+    for i = 1, #self.__components do
+      if
+        self.__components[i].enabled == nil
+        or self.__components[i].enabled == true
+      then
+        tbl:insert(
+          type(self.__components[i].get) == 'function'
+              and self.__components[i]:get()
+            or self.__components[i].get
+        )
+      end
+    end
+
+    return ' ' .. vim.fn.trim(tbl:concat(' ')) .. '%< '
+  end,
+
+  ---Components may contain additional fields used to keep state or perform
+  ---arbitrary calculations.
+  ---
+  ---Each component's 'get' field is evaluated on every redraw - expensive
+  ---calculations should be offloaded to functions executed on events.
+  ---
+  ---@diagnostic disable-next-line: undefined-doc-name
+  ---@vararg Component
+  add_component = function(self, ...)
+    local args = { ... }
+
+    for i = 1, #args do
+      if args[i] == nil then
+        goto continue
+      end
+
+      self.__components:insert(args[i])
+      if args[i].init then
+        args[i]:init()
+      end
+      self.register_callbacks(args[i])
+
+      ::continue::
+    end
+  end,
+
+  ---@param component Component
+  register_callbacks = function(component)
+    if not component.events or component.enabled == false then
+      return
+    end
+
+    if type(component.events) == 'function' then
+      component:events()
+    else
+      for i = 1, #component.events do
+        vim.api.nvim_create_autocmd(component.events[i][1], {
+          callback = function(tbl)
+            component.events[i][2](component, tbl)
+          end,
+          nested = true,
+        })
+      end
+    end
+  end,
+
+  __readlink = function(self)
+    local buf = vim.fn.expand('%:p:h') .. '/' .. vim.fn.expand('%:t')
+
+    local src = vim.loop.fs_readlink(buf)
+    if src then
+      self.__realpath = src
+    end
+
+    -- link in directory structure
+    local dir = ''
+    for subdir in buf:sub(2):gmatch('(.-)/') do
+      dir = dir .. '/' .. subdir
+      src = vim.loop.fs_readlink(dir)
+      if src then
+        self.__realpath = src .. buf:gsub(dir, '')
+      end
+    end
+
+    self.__realpath = buf
+  end,
+
+  __realpath = nil,
+  __buf_events = {
+    'BufEnter',
+    'BufFilePost',
+    'WinClosed',
+    'FocusGained',
+    'FileChangedShellPost',
+  },
+  ---@type Component[]
+  __components = setmetatable({}, { __index = table }),
+}
+
+M:init()
+M:add_component({
+  name = 'mode',
+  meta = {
+    mode = 'N',
+  },
+  events = {
+    {
+      'ModeChanged',
+      function(self)
+        local m = vim.api.nvim_get_mode().mode
+        if m == '' then
+          m = 'v'
+        end
+        self.meta.mode = m:sub(0, 1):upper()
+      end,
+    },
+  },
+  get = function(self)
+    return table.concat({
+      '%#mode' .. self.meta.mode .. '#',
+      self.meta.mode,
+      '%#Statusline#',
+    })
+  end,
+}, {
+  name = 'buffer',
+  meta = {
+    name = nil,
+  },
+  events = {
+    {
+      M.__buf_events,
+      function(self)
+        local name = vim.fn.bufname()
+        name = name == '' and '[null]' or (name:match('([^/]-/?)$') or '_ERR')
+
+        local maxlen = 24
+        if name:len() > maxlen then
+          local fillchars = '...'
+
+          local i = name:find('%.')
+          local ext = i and name:sub(i) or ''
+          local offset = ext:len() > 0 and 2 + ext:len() or 4
+          name = name:sub(0, maxlen - (offset + fillchars:len()))
+            .. fillchars
+            .. name:sub(-offset)
+        end
+
+        self.meta.name = name
+      end,
+    },
+  },
+  get = function(self)
+    return table.concat({
+      '%#Statusline#',
+      vim.bo.modified and '+ ' or '- ',
+      self.meta.name,
+      ' ',
+      vim.bo.readonly and '%#StatuslineReadonly#' or '',
+      '(%n)',
+      '%#Statusline#',
+    })
+  end,
+}, {
+  name = 'git',
+  meta = {
+    relative_name = nil,
+    root = {
+      global = nil,
+      _local = nil,
+    },
+    tracked = false,
+    head = 'HEAD',
+    tmp = {
+      head = nil,
+      state = nil,
+    },
+    diff = {
+      add = 0,
+      cha = 0,
+      del = 0,
+    },
+  },
+  events = {
+    {
+      M.__buf_events,
+      function(self)
+        if not self:__root() then
+          return
+        end
+
+        self.meta.relative_name =
+          M.__realpath:gsub('^' .. self.meta.root._local, '')
+
+        self:__tracked()
+        self:__head()
+
+        if self.meta.tracked then
+          local id = vim.fn.jobstart({
+            'git',
+            'cat-file',
+            'blob',
+            'HEAD:' .. self.meta.relative_name,
+          }, {
+            cwd = self.meta.root._local,
+            stdout_buffered = true,
+            on_stdout = function(_, data, _)
+              -- PERF: prefer equality check to redundant writes
+              if
+                self.meta.tmp.head
+                and L.tbl.equals(
+                  L.io.tbl_read(io.open(self.meta.tmp.head, 'r')),
+                  { unpack(data, 1, #data - 1) }
+                )
+              then
+                return
+              end
+
+              self.meta.tmp.head = L.fs.writetmpfile(
+                vim.fn.bufnr(),
+                { unpack(data, 1, #data - 1) },
+                'diff_head'
+              )
+            end,
+          })
+          vim.fn.jobwait({ id }, 100)
+
+          self.meta.tmp.state = L.fs.writetmpfile(
+            vim.fn.bufnr(),
+            vim.api.nvim_buf_get_lines(0, 0, -1, false),
+            'diff_state'
+          )
+        end
+
+        self:__diff()
+      end,
+    },
+    {
+      { 'TextChanged', 'TextChangedI', 'TextChangedP', 'TextChangedT' },
+      function(self)
+        if not self.meta.root.global then
+          return
+        end
+
+        L.fs.writetmpfile(
+          vim.fn.bufnr(),
+          vim.api.nvim_buf_get_lines(0, 0, -1, false),
+          'diff_state'
+        )
+        self:__diff()
+      end,
+    },
+  },
+  get = function(self)
+    if not self.meta.root.global then
+      return ''
+    end
+
+    local diff = ''
+    if not self.meta.tracked then
+      diff = '%#GitZero#untracked'
+    else
+      local hl = {
+        '%#Git' .. (self.meta.diff.add == 0 and 'Zero' or 'Add') .. '#',
+        '%#Git' .. (self.meta.diff.cha == 0 and 'Zero' or 'Cha') .. '#',
+        '%#Git' .. (self.meta.diff.del == 0 and 'Zero' or 'Del') .. '#',
+      }
+      diff = table.concat({
+        hl[1] .. '+' .. self.meta.diff.add,
+        hl[2] .. '~' .. self.meta.diff.cha,
+        hl[3] .. '-' .. self.meta.diff.del,
+      }, ' ')
+    end
+
+    return table.concat({
+      '%#Git# ' .. self.meta.head,
+      ' ',
+      diff,
+      '%#Statusline#',
+    })
+  end,
+  __root = function(self)
+    local _local, global = nil, nil
+    local cwd = vim.fs.dirname(M.__realpath)
+
+    while cwd do
+      local path = cwd .. '/.git'
+      local stat = vim.loop.fs_stat(path)
+
+      if stat then
+        _local = path
+        global = path
+
+        if stat.type == 'file' then
+          local fh = io.open(path, 'r')
+          if fh ~= nil then
+            global = L.io.read(fh):match('^gitdir: (.*)$')
+          end
+        end
+
+        break
+      end
+
+      cwd = cwd:match('^(.+)/')
+    end
+
+    self.meta.root = {
+      global = global,
+      _local = _local ~= nil and _local:gsub('%.git$', '') or nil,
+    }
+
+    return global ~= nil
+  end,
+  __tracked = function(self)
+    local id = vim.fn.jobstart({
+      'git',
+      'ls-files',
+      '--error-unmatch',
+      self.meta.relative_name,
+    }, {
+      cwd = self.meta.root._local,
+      stdout_buffered = true,
+      on_stdout = function(_, data, _)
+        self.meta.tracked = data[1] ~= ''
+      end,
+    })
+    vim.fn.jobwait({ id }, 100)
+  end,
+  __head = function(self)
+    local fh = io.open(self.meta.root.global .. '/HEAD', 'r')
+    if fh == nil then
+      return
+    end
+
+    local content = L.io.read(fh)
+    local head = content:match('^ref: refs/heads/(.+)$')
+
+    if not head then
+      local id = vim.fn.jobstart({
+        'git',
+        'describe',
+        '--tags',
+        '--exact-match',
+        '@',
+      }, {
+        cwd = self.meta.root._local,
+        stdout_buffered = true,
+        on_stdout = function(_, data, _)
+          head = data ~= '' and 't:' .. data or content:sub(1, 8)
+        end,
+      })
+      vim.fn.jobwait({ id }, 100)
+    end
+
+    self.meta.head = head
+  end,
+  __diff = function(self)
+    local update_diff = function(_, data, _)
+      for i = 1, #data do
+        if not vim.startswith(data[i], '@@') then
+          goto continue
+        end
+        if vim.startswith(data[i], '@@@') then
+          return '%#GitDel# unmerged'
+        end
+
+        local d = { data[i]:match('^@@ %-%d+,?(%d*) %+%d+,?(%d*) @@') }
+        if d[1] == '' then
+          d[1] = '1'
+        end
+        if d[2] == '' then
+          d[2] = '1'
+        end
+
+        d = vim.tbl_map(function(v)
+          return tonumber(v)
+        end, d)
+
+        if d[1] == 0 then
+          self.meta.diff.add = self.meta.diff.add + d[2]
+        elseif d[2] == 0 then
+          self.meta.diff.del = self.meta.diff.del + d[1]
+        else
+          self.meta.diff.cha = self.meta.diff.cha + math.min(d[1], d[2])
+          if d[2] > d[1] then
+            self.meta.diff.add = self.meta.diff.add + (d[2] - d[1])
+          elseif d[2] < d[1] then
+            self.meta.diff.del = self.meta.diff.del + (d[1] - d[2])
+          end
+        end
+
+        ::continue::
+      end
+    end
+
+    self.meta.diff = {
+      add = 0,
+      cha = 0,
+      del = 0,
+    }
+
+    local id = vim.fn.jobstart({
+      'git',
+      'diff',
+      '-U0',
+      '--no-index',
+      self.meta.tmp.head,
+      self.meta.tmp.state,
+    }, {
+      cwd = self.meta.root._local,
+      stdout_buffered = true,
+      on_stdout = update_diff,
+    })
+    vim.fn.jobwait({ id }, 100)
+  end,
+}, {
+  name = 'misc',
+  get = '%=%<',
+}, {
+  name = 'lsp',
+  meta = {
+    signs = nil,
+    clients = {},
+    diagnostics = {
+      count = { 0, 0, 0, 0 },
+      string = '',
+    },
+  },
+  events = {
+    {
+      {
+        'LspAttach',
+        'LspDetach',
+        'BufEnter',
+        'BufFilePost',
+        'WinClosed',
+      },
+      function(self)
+        -- updated on first LspAttach - signs may not be defined beforehand
+        if not self.meta.signs then
+          self.meta.signs = vim.fn.filter(
+            vim.fn.sign_getdefined(),
+            function(_, s)
+              return vim.startswith(s.name, 'DiagnosticSign')
+            end
+          )
+        end
+
+        self.meta.clients = vim.tbl_map(function(v)
+          return v.name
+        end, vim.lsp.get_active_clients({ bufnr = 0 }))
+      end,
+    },
+    {
+      'DiagnosticChanged',
+      function(self)
+        self.meta.diagnostics = {
+          count = { 0, 0, 0, 0 },
+          string = '',
+        }
+
+        local diagnostics = vim.diagnostic.get(0)
+        for i = 1, #diagnostics do
+          self.meta.diagnostics.count[diagnostics[i].severity] = self.meta.diagnostics.count[diagnostics[i].severity]
+            + 1
+        end
+
+        local part = {}
+        for i = 1, #self.meta.diagnostics.count do
+          if self.meta.diagnostics.count[i] ~= 0 then
+            part[#part + 1] = '%#'
+              .. self.meta.signs[i].texthl
+              .. '#'
+              .. self.meta.signs[i].text
+              .. self.meta.diagnostics.count[i]
+          end
+        end
+
+        self.meta.diagnostics.string = table.concat(part, ' ')
+      end,
+    },
+  },
+  get = function(self)
+    if #self.meta.clients == 0 then
+      return ''
+    end
+
+    return table.concat({
+      '%#StatuslineLspinfo#',
+      table.concat(self.meta.clients, ', '),
+      #self.meta.diagnostics.string == 0 and ''
+        or ' ' .. self.meta.diagnostics.string,
+      '%#Statusline#',
+    })
+  end,
+}, {
+  name = 'bytes',
+  meta = {
+    count = 0,
+    unit = 'B',
+  },
+  events = {
+    {
+      M.__buf_events,
+      function(self)
+        self:__count()
+      end,
+    },
+    {
+      { 'TextChanged', 'TextChangedI', 'TextChangedP', 'TextChangedT' },
+      function(self)
+        self:__count()
+      end,
+    },
+  },
+  get = function(self)
+    return table.concat({
+      '%#StatuslineBytecount#﬘%#Statusline#',
+      self.meta.count .. self.meta.unit,
+    }, ' ')
+  end,
+  __round = function(number, quotient)
+    return vim.fn.round((number * 10) / quotient) / 10
+  end,
+  __count = function(self)
+    local unit = 'B'
+
+    local count = vim.fn.line2byte(vim.fn.line('$')) + vim.fn.getline('$'):len()
+    if count == -1 then
+      count = 0
+    end
+
+    if count >= 1048576 then
+      unit = 'MiB'
+      count = self.__round(count, 1048576)
+    elseif count >= 10240 then
+      unit = 'KiB'
+      count = self.__round(count, 1024)
+    end
+
+    self.meta = {
+      count = count,
+      unit = unit,
+    }
+  end,
+}, {
+  name = 'search',
+  get = function()
+    local search = vim.fn.searchcount({ maxcount = 98 })
+    local current = search.current
+
+    if search.exact_match == 0 then
+      current = 0
+    end
+    if search.incomplete == 1 then
+      search.total = '?'
+    end
+
+    return table.concat({
+      '%#StatuslineSearch#%#Statusline#',
+      current .. '/' .. search.total,
+    }, ' ')
+  end,
+}, {
+  name = 'location',
+  get = function()
+    return table.concat({
+      '%#StatuslineLocation#%#Statusline#',
+      '%l:%v',
+    }, ' ')
+  end,
 })
 
-local statusline = function()
-  return ' '
-    .. table.concat({
-      mode(),
-      buffer(),
-      git(),
-      '%=',
-      '%<',
-      lsp(),
-      bytecount(),
-      searchcount(),
-      location(),
-    }, ' ')
-    .. '%< '
+_G.statusline = function()
+  return M:render()
 end
-
-_G.statusline = statusline
 vim.o.laststatus = 3
 vim.o.statusline = '%!v:lua.statusline()'

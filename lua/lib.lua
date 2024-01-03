@@ -12,6 +12,7 @@ local M = {
 }
 
 ---------------------------------------------------------------------------- cmd
+
 ---Registers 'events' with 'cb' as a buffer-local autocommand on 'bufnr'.
 ---
 ---@param events string|table
@@ -31,25 +32,69 @@ M.cmd.event = function(events, bufnr, cb)
 end
 
 ----------------------------------------------------------------------------- fs
+
+---Contains trailing slash.
+---
+M.fs.__dir = vim.fn.stdpath('run') .. '/nvim.user/'
+
+---Linux only - not portable!
+---
+M.fs.__pid = (function()
+  for ln in io.lines('/proc/self/status') do
+    local match = ln:match('^Pid:.-(%d+)$')
+    if match then
+      return match
+    end
+  end
+end)()
+
 ---Create directory for temporary user files.
 ---
 M.fs.mktmpdir = function()
-  local dir = vim.fn.stdpath('run') .. '/nvim.user'
-  if vim.loop.fs_stat(dir) then
+  if vim.loop.fs_stat(M.fs.__dir) then
     return
   end
-  if not vim.loop.fs_mkdir(dir, 448) then
-    return vim.notify("Couldn't create temporary directory '" .. dir .. "'", 4)
+  if not vim.loop.fs_mkdir(M.fs.__dir, 448) then
+    return vim.notify(
+      "Couldn't create temporary directory '" .. M.fs.__dir .. "'",
+      4
+    )
   end
 end
 
--- TODO: implement | remove
----Write to temporary file. Registers delete autocommands on 'VimLeavePre'.
+---Write to temporary file. Returns the temporary file's name.
+---Registers delete autocommands on 'VimLeave'.
 ---
--- M.fs.writetmpfile = function()
--- end
+---@param bufnr integer
+---@param content table
+---@param domain string?
+---@return string
+M.fs.writetmpfile = function(bufnr, content, domain)
+  if not vim.loop.fs_stat(M.fs.__dir) then
+    M.fs.mktmpdir()
+  end
+
+  local name = M.fs.__dir
+    .. table.concat({
+      M.fs.__pid,
+      bufnr,
+      domain,
+    }, '-')
+
+  M.io.write(name, content)
+
+  vim.api.nvim_create_autocmd('VimLeavePre', {
+    callback = function()
+      os.remove(name)
+    end,
+    once = true,
+  })
+
+  return name
+end
 
 ----------------------------------------------------------------------------- io
+
 ---Open a readonly filehandle through io.popen(), where fd2 may be redirected
 ---to /dev/null. Returns the filehandle if not nil; 'ret' otherwise.
 ---
@@ -68,7 +113,7 @@ end
 ---Slurp filehandle.
 ---Chops off trailing newline character and closes the handle before returning.
 ---
----@param fh file*
+---@param fh file*?
 ---@return string
 M.io.read = function(fh)
   if fh == nil then
@@ -79,14 +124,21 @@ M.io.read = function(fh)
   return str
 end
 
----Same as io.read(), but don't chop trailing newline character.
+---Read file contents (i.e. lines) to consecutive table indices.
 ---
----@param fh file*
----@return string
-M.io.read_no_chop = function(fh)
-  local str = fh:read('*a')
+---@param fh file*?
+---@return table<string>
+M.io.tbl_read = function(fh)
+  if fh == nil then
+    return {}
+  end
+
+  local tbl = {}
+  for ln in fh:lines() do
+    table.insert(tbl, ln)
+  end
   fh:close()
-  return str
+  return tbl
 end
 
 ---Write 'content' to 'file' linewise in update mode.
@@ -104,6 +156,7 @@ M.io.write = function(file, content)
 end
 
 ---------------------------------------------------------------------------- lsp
+
 ---Applies a workspace edit. 'res' is a table with the same fields as returned
 ---by client_responses().
 ---
@@ -213,6 +266,7 @@ M.lsp.request = function(clients, method, params, bufnr, cb)
 end
 
 ---------------------------------------------------------------------------- str
+
 ---Acts similarly to Perl's chop(), removing the string's last character.
 ---
 ---@param str string
@@ -222,6 +276,7 @@ M.str.chop = function(str)
 end
 
 ---------------------------------------------------------------------------- tbl
+
 ---Returns the length of the longest line in tbl.
 ---
 ---@param tbl table
@@ -245,7 +300,35 @@ M.tbl.is_empty = function(tbl)
   return tbl == nil or (type(tbl) == 'table' and next(tbl) == nil)
 end
 
+---Performs deep equality check for two array-like tables.
+---
+---@param t1 table
+---@param t2 table
+---@return boolean
+M.tbl.equals = function(t1, t2)
+  if t1 == t2 then
+    return true
+  end
+
+  if t1 == nil or t2 == nil or #t1 ~= #t2 then
+    return false
+  end
+
+  for i = 1, #t1 do
+    if
+      type(t1[i]) ~= type(t2[i])
+      or (type(t1[i]) == 'table' and not M.tbl.equals(t1[i], t2[i]))
+      or t1[i] ~= t2[i]
+    then
+      return false
+    end
+  end
+
+  return true
+end
+
 ---------------------------------------------------------------------------- win
+
 M.win.__max_height = function()
   return vim.api.nvim_win_get_height(0) - vim.o.cmdheight
 end
@@ -433,6 +516,7 @@ M.win.open_cursor = function(bl, modifiable, enter, config)
 end
 
 ---------------------------------------------------------------------------- key
+
 M.key.__map = function(mode, map_opts)
   map_opts = map_opts or { noremap = true }
   ---Wraps vim.keymap.set, where the mode is derived from the overarching
