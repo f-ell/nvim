@@ -73,7 +73,7 @@ local open = function(raw)
   local proc = preprocess(raw)
   local bufnr = vim.uri_to_bufnr(proc.uri)
 
-  if proc.peek or bufnr == vim.api.nvim_get_current_buf() then
+  if not proc.peek or bufnr == vim.api.nvim_get_current_buf() then
     vim.api.nvim_win_set_buf(0, bufnr)
     set_highlights(bufnr, proc)
     vim.api.nvim_win_set_cursor(0, proc.start)
@@ -84,6 +84,8 @@ local open = function(raw)
     title = ' ' .. vim.fn.fnamemodify(vim.fn.bufname(bufnr), ':t') .. ' ',
     zindex = 1,
   })
+  vim.bo[data.nbuf].bufhidden = 'hide'
+
   set_highlights(data.nbuf, proc)
   register_float_actions(data.nbuf, data.nwin)
   vim.api.nvim_win_set_cursor(data.nwin, proc.start)
@@ -119,10 +121,10 @@ local try_type_defintion = function()
 end
 
 M.peek = function()
-  try_definition(false)
+  try_definition(true)
 end
 M.open = function()
-  try_definition(true)
+  try_definition(false)
 end
 M.type = function()
   try_type_defintion()
