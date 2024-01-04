@@ -1,5 +1,3 @@
-local EW, CW = 0.7, 0.8 -- window width when 'relative' is editor/cursor
-
 local M = {
   cmd = {},
   fs = {},
@@ -13,32 +11,27 @@ local M = {
 
 ---------------------------------------------------------------------------- cmd
 
----Registers 'events' with 'cb' as a buffer-local autocommand on 'bufnr'.
+---Register buffer-local autocommand on <events>.
 ---
----@param events string|table
----@param bufnr number
+---@param events string|string[]
+---@param buffer number
 ---@param cb string|function
-M.cmd.event = function(events, bufnr, cb)
-  vim.defer_fn(function()
-    vim.api.nvim_create_autocmd(events, {
-      buffer = bufnr,
-      once = true,
-      nested = true,
-      callback = type(cb) == 'string' and cb or function(tbl)
-        cb(tbl)
-      end,
-    })
-  end, 0)
+M.cmd.event = function(events, buffer, cb)
+  vim.api.nvim_create_autocmd(events, {
+    buffer = buffer,
+    nested = true,
+    callback = type(cb) == 'string' and cb or function(tbl)
+      cb(tbl)
+    end,
+  })
 end
 
 ----------------------------------------------------------------------------- fs
 
 ---Contains trailing slash.
----
 M.fs.__dir = vim.fn.stdpath('run') .. '/nvim.user/'
 
 ---Linux only - not portable!
----
 M.fs.__pid = (function()
   for ln in io.lines('/proc/self/status') do
     local match = ln:match('^Pid:.-(%d+)$')
@@ -49,27 +42,23 @@ M.fs.__pid = (function()
 end)()
 
 ---Create directory for temporary user files.
----
 M.fs.mktmpdir = function()
   if vim.loop.fs_stat(M.fs.__dir) then
     return
   end
   if not vim.loop.fs_mkdir(M.fs.__dir, 448) then
-    return vim.notify(
-      "Couldn't create temporary directory '" .. M.fs.__dir .. "'",
-      4
-    )
+    return error("couldn't create " .. M.fs.__dir, 4)
   end
 end
 
----Write to temporary file. Returns the temporary file's name.
----Registers delete autocommands on 'VimLeave'.
+---Write to temporary file.
+---Registers delete autocommands on BufWipeout and VimLeave.
 ---
----@param bufnr integer
----@param content table
----@param domain string?
----@return string
-M.fs.writetmpfile = function(bufnr, content, domain)
+---@param buffer number
+---@param data string[]
+---@param domain string? differentiate between multiple temporary files for the same buffer
+---@return string filename
+M.fs.writetmpfile = function(buffer, data, domain)
   if not vim.loop.fs_stat(M.fs.__dir) then
     M.fs.mktmpdir()
   end
@@ -77,14 +66,14 @@ M.fs.writetmpfile = function(bufnr, content, domain)
   local name = M.fs.__dir
     .. table.concat({
       M.fs.__pid,
-      bufnr,
+      buffer,
       domain,
     }, '-')
 
-  M.io.write(name, content)
+  M.io.write(name, data)
 
   vim.api.nvim_create_autocmd({ 'BufWipeout', 'VimLeavePre' }, {
-    buffer = bufnr,
+    buffer = buffer,
     callback = function()
       os.remove(name)
     end,
@@ -96,13 +85,12 @@ end
 
 ----------------------------------------------------------------------------- io
 
----Open a readonly filehandle through io.popen(), where fd2 may be redirected
----to /dev/null. Returns the filehandle if not nil; 'ret' otherwise.
+---Open a readonly filehandle through io.popen.
 ---
----@param cmd table
----@param devnull boolean
+---@param cmd string[]
+---@param devnull boolean pipe fd2 to /dev/null
 ---@param ret any?
----@return any
+---@return file*|any fh filehandle or ret
 M.io.popen = function(cmd, devnull, ret)
   if devnull then
     table.insert(cmd, '2>/dev/null')
@@ -111,11 +99,10 @@ M.io.popen = function(cmd, devnull, ret)
   return fh == nil and ret or fh
 end
 
----Slurp filehandle.
----Chops off trailing newline character and closes the handle before returning.
+---Read filehandle. Chops trailing newline.
 ---
----@param fh file*?
----@return string
+---@param fh file*? closed automatically
+---@return string content
 M.io.read = function(fh)
   if fh == nil then
     return ''
@@ -125,10 +112,10 @@ M.io.read = function(fh)
   return str
 end
 
----Read file contents (i.e. lines) to consecutive table indices.
+---Read file (i.e. lines) to consecutive table indices.
 ---
----@param fh file*?
----@return table<string>
+---@param fh file*? closed automatically
+---@return string[] content
 M.io.tbl_read = function(fh)
   if fh == nil then
     return {}
@@ -142,26 +129,46 @@ M.io.tbl_read = function(fh)
   return tbl
 end
 
----Write 'content' to 'file' linewise in update mode.
+---Write to <data> to <file>.
 ---
 ---@param file string
----@param content table
-M.io.write = function(file, content)
+---@param data string[]
+---@param mode 'w'|'w+'|'wb'|'w+b'?
+M.io.write = function(file, data, mode)
+  if mode and not vim.tbl_contains({ 'w', 'w+', 'wb', 'w+b' }, mode) then
+    error('illegal mode - ' .. mode, 4)
+  end
+
   local fh = io.open(file, 'w+')
   if fh == nil then
-    return vim.notify("Write to '" .. file .. "' failed.")
+    return vim.notify('Write failed - ' .. file, 4)
   end
-  fh:write(table.concat(content, '\n') .. '\n')
+  fh:write(table.concat(data, '\n') .. '\n')
   fh:flush()
   fh:close()
 end
 
 ---------------------------------------------------------------------------- lsp
 
----Applies a workspace edit. 'res' is a table with the same fields as returned
----by client_responses().
+---@class LspClient
+---@field [any] any
+
+---@class LspResponse
+---@field [any] any
+
+---@class (exact) EnrichedLspResponse
+---@field id number
+---@field name string
+---@field result LspResponse
+
+---@class WorkspaceEdit: LspResponse
+
+---@class TextDocumentPositionParams
+---@field [any] any
+
+---Apply a workspace edit.
 ---
----@param response table
+---@param response WorkspaceEdit
 M.lsp.apply_edit = function(response)
   local edit = response.result
   local oenc = vim.lsp.get_client_by_id(response.id).offset_encoding
@@ -174,14 +181,12 @@ M.lsp.apply_edit = function(response)
   end
 end
 
----Returns table containing all servers with server_capabilities[cap..'Provider'],
----that are attached to the current buffer. If 'cb' is present it will be called
----for each client, passing it as an argument. If it returns false, the client
----will not be returned, even it has 'cap'.
+---Get all lsp clients with capability "<cap> .. 'Provider'" attached to the
+---buffer.
 ---
 ---@param cap string
----@param cb function?
----@return table
+---@param cb fun(client:LspClient):boolean? called for each client; determines whether the client gets added
+---@return LspClient[] clients matching lsp clients
 M.lsp.clients_by_cap = function(cap, cb)
   local capable = {}
   local available = vim.lsp.get_active_clients({
@@ -205,20 +210,15 @@ M.lsp.clients_by_cap = function(cap, cb)
   return capable
 end
 
----Returns table consisting of concatenated results from all clients, where each
----table field is { id: number, name: string, result: table }.
+---Get response from all passed-in clients.
 ---
----If 'cb' is present, it will be called on the raw response data of each client.
----In case an error is returned, the function is responsible for handling it.
----
----@alias TextDocumentPositionParams TextDocumentPositionParams
----@param clients table
+---@param clients LspClient[]
 ---@param method string
 ---@param params TextDocumentPositionParams
----@param bufnr number
----@param cb function?
----@return table
-M.lsp.request = function(clients, method, params, bufnr, cb)
+---@param buffer number
+---@param cb fun(res:LspResponse)? called for each response; should handle errors
+---@return EnrichedLspResponse[]
+M.lsp.request = function(clients, method, params, buffer, cb)
   if type(clients) ~= 'table' or M.tbl.is_empty(clients) then
     vim.notify('Invalid clients.', 3)
     return {}
@@ -227,7 +227,7 @@ M.lsp.request = function(clients, method, params, bufnr, cb)
 
   for i = 1, #clients do
     local client = clients[i]
-    local dict = client.request_sync(method, params, 500, bufnr)
+    local dict = client.request_sync(method, params, 500, buffer)
 
     if cb ~= nil then
       if type(cb) == 'function' then
@@ -268,7 +268,7 @@ end
 
 ---------------------------------------------------------------------------- str
 
----Acts similarly to Perl's chop(), removing the string's last character.
+---Remove string's last character.
 ---
 ---@param str string
 ---@return string
@@ -278,10 +278,8 @@ end
 
 ---------------------------------------------------------------------------- tbl
 
----Returns the length of the longest line in tbl.
----
----@param tbl table
----@return integer
+---@param tbl string[]
+---@return integer # length of longest entry
 M.tbl.longest_line = function(tbl)
   local max = 0
   for i = 1, #tbl do
@@ -293,18 +291,16 @@ M.tbl.longest_line = function(tbl)
   return max
 end
 
----Returns true if tbl is empty or nil, false otherwise.
----
 ---@param tbl table|nil
----@returns boolean
+---@return boolean # table is empty
 M.tbl.is_empty = function(tbl)
   return tbl == nil or (type(tbl) == 'table' and next(tbl) == nil)
 end
 
----Performs deep equality check for two array-like tables.
+---Perform deep equality check for two array-like tables.
 ---
----@param t1 table
----@param t2 table
+---@param t1 any[]
+---@param t2 any[]
 ---@return boolean
 M.tbl.equals = function(t1, t2)
   if t1 == t2 then
@@ -330,22 +326,35 @@ end
 
 ---------------------------------------------------------------------------- win
 
+---@class (exact) WinData
+---@field obuf number buffer number of previously active buffer
+---@field owin number window number of previously active window
+---@field nbuf number buffer number of newly opened buffer
+---@field nwin number window number of newly opened window
+---@field width integer
+---@field height integer
+
+---Window width when <relative> is <editor>.
+M.win.__EW = 0.7
+---Window width when <relative> is <cursor>.
+M.win.__CW = 0.8
+
 M.win.__max_height = function()
   return vim.api.nvim_win_get_height(0) - vim.o.cmdheight
 end
 
-M.win.__height = function(content)
-  if type(content) == 'number' then
-    return math.floor(vim.o.lines * EW)
+M.win.__height = function(data)
+  if type(data) == 'number' then
+    return math.floor(vim.o.lines * M.win.__EW)
   end
 
   local _mw = M.win.__max_width()
-  if M.tbl.longest_line(content) < _mw then
-    return math.min(#content, M.win.__max_height())
+  if M.tbl.longest_line(data) < _mw then
+    return math.min(#data, M.win.__max_height())
   end
 
   local h, sb = 0, vim.fn.strdisplaywidth(vim.o.showbreak)
-  for _, line in pairs(content) do
+  for _, line in pairs(data) do
     h = h + 1
     local ln = vim.fn.strdisplaywidth(line)
 
@@ -354,7 +363,7 @@ M.win.__height = function(content)
       ln = ln - _mw
       h = h + 1
     end
-    -- all subsequent wraps
+    -- subsequent wraps
     while ln > _mw do
       ln = ln - _mw + sb
       h = h + 1
@@ -364,12 +373,12 @@ M.win.__height = function(content)
 end
 
 M.win.__max_width = function()
-  return math.floor(vim.o.columns * CW) - 2
+  return math.floor(vim.o.columns * M.win.__CW) - 2
 end
 
-M.win.__width = function(content)
-  return type(content) == 'number' and math.floor(vim.o.columns * EW)
-    or math.min(M.tbl.longest_line(content), M.win.__max_width())
+M.win.__width = function(data)
+  return type(data) == 'number' and math.floor(vim.o.columns * M.win.__EW)
+    or math.min(M.tbl.longest_line(data), M.win.__max_width())
 end
 
 M.win.__voffset = function()
@@ -385,10 +394,7 @@ M.win.__voffset = function()
   return o
 end
 
----Returns the window anchor (NW or SW) and the required window offset (1 or 0),
----based on the cursor position in the current window.
----
----@return string,number
+---@return 'NW'|'SW',0|1 # window anchor and required offset for cursor position
 M.win.anchor_offset = function()
   local anchor = vim.fn.winline() - (vim.fn.winheight(0) / 2) > 0 and 'SW'
     or 'NW'
@@ -396,45 +402,39 @@ M.win.anchor_offset = function()
   return anchor, offset
 end
 
----Tries to close window 'nwin'. If present, the current window will be set to
----'owin' at 'pos' (the latter is expected to be a (1,0)-indexed tuple).
+---Close window if valid.
 ---
----@param new number
----@param old number?
----@pos table?
-M.win.close = function(new, old, pos)
-  if not vim.api.nvim_win_is_valid(new) then
+---@param window number
+---@param base number? window id to make the new active window
+---@param pos {[1]:number,[2]:number}? (1,0)-indexed cursor position
+M.win.close = function(window, base, pos)
+  if not vim.api.nvim_win_is_valid(window) then
     return
   end
-  vim.api.nvim_win_close(new, true)
-  if old and pos then
-    vim.api.nvim_win_set_cursor(old, pos)
+  vim.api.nvim_win_close(window, true)
+  if base then
+    vim.api.nvim_win_set_cursor(base, pos or { 1, 0 })
   end
 end
 
----Returns true if winnr is the current window and true in the sense of
----vim.api.nvim_win_is_valid().
----
----@param winnr number
----@return boolean
-M.win.is_cur_valid = function(winnr)
+---@param window number
+---@return boolean # window is current window and valid
+M.win.is_cur_valid = function(window)
   return (
-    vim.api.nvim_get_current_win() == winnr and vim.api.nvim_win_is_valid(winnr)
+    vim.api.nvim_get_current_win() == window
+    and vim.api.nvim_win_is_valid(window)
   )
 end
 
----Opens a new floating window holding a scratch buffer. If 'lines' is a number,
----it is interpreted as a buffer handle to display. Otherwise, 'lines' will be
----used as the buffer contents to display.
+---Open floating window holding a scratch buffer.
 ---
----Returns a table containing the new and old buffer and window handles.
----
----@param lines number|table
+---@param lines number|string[] buffer number or line-array
 ---@param modifiable boolean
 ---@param enter boolean
 ---@param config table?
----@return table
+---@return WinData
 M.win.open = function(lines, modifiable, enter, config)
+  ---@type WinData
   local data = {
     obuf = vim.api.nvim_get_current_buf(),
     owin = vim.api.nvim_get_current_win(),
@@ -454,7 +454,7 @@ M.win.open = function(lines, modifiable, enter, config)
     anchor = 'NW',
     row = 1,
     col = type(lines) == 'table' and -1
-      or math.floor((vim.o.columns * (1 - EW)) / 2),
+      or math.floor((vim.o.columns * (1 - M.win.__EW)) / 2),
 
     width = data.width,
     height = data.height,
@@ -482,28 +482,28 @@ end
 
 ---Wraps win.open(), with default position centered relative to editor.
 ---
----@param bl number|table
+---@param lines number|string[] buffer number or line array
 ---@param modifiable boolean
 ---@param enter boolean
 ---@param config table?
----@return table
-M.win.open_center = function(bl, modifiable, enter, config)
+---@return WinData
+M.win.open_center = function(lines, modifiable, enter, config)
   local conf = vim.tbl_extend('keep', config or {}, {
     relative = 'editor',
     anchor = 'NW',
-    row = math.floor((vim.o.lines * (1 - EW)) / 2) + M.win.__voffset(),
-    col = math.floor((vim.o.columns * (1 - EW)) / 2),
+    row = math.floor((vim.o.lines * (1 - M.win.__EW)) / 2) + M.win.__voffset(),
+    col = math.floor((vim.o.columns * (1 - M.win.__EW)) / 2),
   })
-  return M.win.open(bl, modifiable, enter, conf)
+  return M.win.open(lines, modifiable, enter, conf)
 end
 
 ---Wraps win.open(), with default position at cursor.
 ---
----@param bl number|table
+---@param bl number|string[]
 ---@param modifiable boolean
 ---@param enter boolean
 ---@param config table?
----@return table
+---@return WinData
 M.win.open_cursor = function(bl, modifiable, enter, config)
   local anchor, row = M.win.anchor_offset()
 
@@ -520,11 +520,10 @@ end
 
 M.key.__map = function(mode, map_opts)
   map_opts = map_opts or { noremap = true }
-  ---Wraps vim.keymap.set, where the mode is derived from the overarching
-  ---map() call.
+  ---Wraps vim.keymap.set. The mode is derived from the overarching call.
   ---
   ---@param lhs string
-  ---@param rhs string | function
+  ---@param rhs string|function
   ---@param opts table?
   return function(lhs, rhs, opts)
     opts = vim.tbl_extend('force', map_opts, opts or {})
@@ -538,20 +537,20 @@ M.key.vnmap = M.key.__map('v')
 M.key.cnmap = M.key.__map('c')
 M.key.tnmap = M.key.__map('t')
 
----Creates the keymap 'lhs' for each mode in 'modes'.
+---Set map for one or more modes.
 ---
----@param modes string|table
+---@param modes string|string[]
 ---@param lhs string
 ---@param rhs string|function
----@params opts table?
+---@param opts table?
 M.key.modemap = function(modes, lhs, rhs, opts)
   opts = vim.tbl_extend('force', { noremap = true }, opts or {})
   vim.keymap.set(modes, lhs, rhs, opts)
 end
 
----Deletes the keymap 'lhs' for each mode in 'modes'.
+---Delete map for one or more modes.
 ---
----@param modes string|table
+---@param modes string|string[]
 ---@param lhs string
 ---@param opts table?
 M.key.unmap = function(modes, lhs, opts)
