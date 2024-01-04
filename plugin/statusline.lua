@@ -28,8 +28,10 @@ local M = {
 
     vim.api.nvim_create_autocmd('FocusGained', {
       callback = function()
-        vim.defer_fn(function() vim.cmd('redraw!') end, 0)
-      end
+        vim.defer_fn(function()
+          vim.cmd('redraw!')
+        end, 0)
+      end,
     })
   end,
 
@@ -184,9 +186,9 @@ M:add_component({
     },
     tracked = false,
     head = 'HEAD',
-    tmp = {
+    state = {
       head = nil,
-      state = nil,
+      buffer = nil,
     },
     diff = {
       add = 0,
@@ -202,12 +204,17 @@ M:add_component({
           return
         end
 
-        self.meta.relative_name = './' .. M.__realpath:sub(self.meta.root._local:len() + 1)
+        self.meta.relative_name = './'
+          .. M.__realpath:sub(self.meta.root._local:len() + 1)
 
         self:__tracked()
         self:__head()
 
         if self.meta.tracked then
+          -- PERF: prefer equality checks to redundant writes
+          local hstate, bstate =
+            nil, vim.api.nvim_buf_get_lines(0, 0, -1, false)
+
           local id = vim.fn.jobstart({
             'git',
             'cat-file',
@@ -217,31 +224,37 @@ M:add_component({
             cwd = self.meta.root._local,
             stdout_buffered = true,
             on_stdout = function(_, data, _)
-              -- PERF: prefer equality check to redundant writes
+              hstate = { unpack(data, 1, #data - 1) }
+
               if
-                self.meta.tmp.head
-                and L.tbl.equals(
-                  L.io.tbl_read(io.open(self.meta.tmp.head, 'r')),
-                  { unpack(data, 1, #data - 1) }
+                not (
+                  self.meta.state.head
+                  and L.tbl.equals(
+                    L.io.tbl_read(io.open(self.meta.state.head, 'r')),
+                    hstate
+                  )
                 )
               then
-                return
+                self.meta.state.head =
+                  L.fs.writetmpfile(vim.fn.bufnr(), hstate, 'diff_head')
               end
-
-              self.meta.tmp.head = L.fs.writetmpfile(
-                vim.fn.bufnr(),
-                { unpack(data, 1, #data - 1) },
-                'diff_head'
-              )
             end,
           })
           vim.fn.jobwait({ id }, 100)
 
-          self.meta.tmp.state = L.fs.writetmpfile(
-            vim.fn.bufnr(),
-            vim.api.nvim_buf_get_lines(0, 0, -1, false),
-            'diff_state'
-          )
+          if
+            not L.tbl.equals(hstate or {}, bstate)
+            or (
+              self.meta.state.buffer
+              and not L.tbl.equals(
+                L.io.tbl_read(io.open(self.meta.state.buffer, 'r')),
+                bstate
+              )
+            )
+          then
+            self.meta.state.buffer =
+              L.fs.writetmpfile(vim.fn.bufnr(), bstate, 'diff_state')
+          end
         end
 
         self:__diff()
@@ -254,7 +267,7 @@ M:add_component({
           return
         end
 
-        L.fs.writetmpfile(
+        self.meta.state.buffer = L.fs.writetmpfile(
           vim.fn.bufnr(),
           vim.api.nvim_buf_get_lines(0, 0, -1, false),
           'diff_state'
@@ -416,8 +429,8 @@ M:add_component({
       'diff',
       '-U0',
       '--no-index',
-      self.meta.tmp.head,
-      self.meta.tmp.state,
+      self.meta.state.head,
+      self.meta.state.buffer,
     }, {
       cwd = self.meta.root._local,
       stdout_buffered = true,
