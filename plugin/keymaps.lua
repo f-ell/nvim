@@ -17,7 +17,8 @@ local terminal = function()
     return
   end
 
-  local bufnr = vim.fn.bufnr(tonumber(name))
+  ---@diagnostic disable-next-line: param-type-mismatch
+  local bufnr = vim.fn.bufnr(name)
   if bufnr == -1 then
     bufnr = vim.api.nvim_create_buf(false, false)
     if bufnr == 0 then
