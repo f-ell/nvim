@@ -58,7 +58,6 @@ local M = {
   ---Each component's 'get' field is evaluated on every redraw - expensive
   ---calculations should be offloaded to functions executed on events.
   ---
-  ---@diagnostic disable-next-line: undefined-doc-name
   ---@vararg Component
   add_component = function(self, ...)
     local args = { ... }
