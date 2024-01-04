@@ -230,7 +230,7 @@ M:add_component({
                 not (
                   self.meta.state.head
                   and L.tbl.equals(
-                    L.io.tbl_read(io.open(self.meta.state.head, 'r')),
+                    L.io.tbl_read(self.meta.state.head),
                     hstate
                   )
                 )
@@ -247,7 +247,7 @@ M:add_component({
             or (
               self.meta.state.buffer
               and not L.tbl.equals(
-                L.io.tbl_read(io.open(self.meta.state.buffer, 'r')),
+                L.io.tbl_read(self.meta.state.buffer),
                 bstate
               )
             )
@@ -317,10 +317,7 @@ M:add_component({
         global = path
 
         if stat.type == 'file' then
-          local fh = io.open(path, 'r')
-          if fh ~= nil then
-            global = L.io.read(fh):match('^gitdir: (.*)$')
-          end
+          global = L.io.read(path, true):match('^gitdir: (.*)$')
         end
 
         break
@@ -352,12 +349,11 @@ M:add_component({
     vim.fn.jobwait({ id }, 100)
   end,
   __head = function(self)
-    local fh = io.open(self.meta.root.global .. '/HEAD', 'r')
-    if fh == nil then
+    local content = L.io.read(self.meta.root.global .. '/HEAD', true)
+    if content == '' then
       return
     end
 
-    local content = L.io.read(fh)
     local head = content:match('^ref: refs/heads/(.+)$')
 
     if not head then
