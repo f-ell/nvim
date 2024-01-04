@@ -83,7 +83,8 @@ M.fs.writetmpfile = function(bufnr, content, domain)
 
   M.io.write(name, content)
 
-  vim.api.nvim_create_autocmd('VimLeavePre', {
+  vim.api.nvim_create_autocmd({ 'BufWipeout', 'VimLeavePre' }, {
+    buffer = bufnr,
     callback = function()
       os.remove(name)
     end,
