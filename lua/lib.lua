@@ -85,24 +85,36 @@ end
 
 ----------------------------------------------------------------------------- io
 
----Read filehandle. Chops trailing newline.
+---@param file string|file* name or handle
+---@param mode string
+---@return file*|nil filehandle
+M.io.__open = function(file, mode)
+  return type(file) == 'string' and io.open(file, mode) --[[@as file*]]
+    or file
+end
+
+---Read file.
 ---
----@param fh file*? closed automatically
+---@param file string|file* closed automatically
+---@param chop boolean? remove trailing newline
 ---@return string content
-M.io.read = function(fh)
+M.io.read = function(file, chop)
+  local fh = M.io.__open(file, 'r')
   if fh == nil then
     return ''
   end
+
   local str = fh:read('*a')
   fh:close()
-  return str:sub(0, str:len() - 1)
+  return chop and str:sub(0, str:len() - 1) or str
 end
 
 ---Read file (i.e. lines) to consecutive table indices.
 ---
----@param fh file*? closed automatically
+---@param file string|file* closed automatically
 ---@return string[] content
-M.io.tbl_read = function(fh)
+M.io.tbl_read = function(file)
+  local fh = M.io.__open(file, 'r')
   if fh == nil then
     return {}
   end
@@ -115,9 +127,9 @@ M.io.tbl_read = function(fh)
   return tbl
 end
 
----Write to <data> to <file>.
+---Write to <data> to file.
 ---
----@param file string
+---@param file string|file* closed automatically
 ---@param data string[]
 ---@param mode 'w'|'w+'|'wb'|'w+b'?
 M.io.write = function(file, data, mode)
@@ -125,10 +137,11 @@ M.io.write = function(file, data, mode)
     error('illegal mode - ' .. mode, 4)
   end
 
-  local fh = io.open(file, 'w+')
+  local fh = M.io.__open(file, mode or 'w+')
   if fh == nil then
     return vim.notify('Write failed - ' .. file, 4)
   end
+
   fh:write(table.concat(data, '\n') .. '\n')
   fh:flush()
   fh:close()
