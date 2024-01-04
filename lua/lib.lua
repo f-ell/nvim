@@ -28,10 +28,10 @@ end
 
 ----------------------------------------------------------------------------- fs
 
----Contains trailing slash.
+---trailing slash!
 M.fs.__dir = vim.fn.stdpath('run') .. '/nvim.user/'
 
----Linux only - not portable!
+---linux only - not portable!
 M.fs.__pid = (function()
   for ln in io.lines('/proc/self/status') do
     local match = ln:match('^Pid:.-(%d+)$')
@@ -85,20 +85,6 @@ end
 
 ----------------------------------------------------------------------------- io
 
----Open a readonly filehandle through io.popen.
----
----@param cmd string[]
----@param devnull boolean pipe fd2 to /dev/null
----@param ret any?
----@return file*|any fh filehandle or ret
-M.io.popen = function(cmd, devnull, ret)
-  if devnull then
-    table.insert(cmd, '2>/dev/null')
-  end
-  local fh = io.popen(table.concat(cmd, ' '), 'r')
-  return fh == nil and ret or fh
-end
-
 ---Read filehandle. Chops trailing newline.
 ---
 ---@param fh file*? closed automatically
@@ -107,9 +93,9 @@ M.io.read = function(fh)
   if fh == nil then
     return ''
   end
-  local str = M.str.chop(fh:read('*a'))
+  local str = fh:read('*a')
   fh:close()
-  return str
+  return str:sub(0, str:len() - 1)
 end
 
 ---Read file (i.e. lines) to consecutive table indices.
@@ -266,16 +252,6 @@ M.lsp.request = function(clients, method, params, buffer, cb)
   return responses
 end
 
----------------------------------------------------------------------------- str
-
----Remove string's last character.
----
----@param str string
----@return string
-M.str.chop = function(str)
-  return str:sub(0, str:len() - 1)
-end
-
 ---------------------------------------------------------------------------- tbl
 
 ---@param tbl string[]
@@ -334,15 +310,17 @@ end
 ---@field width integer
 ---@field height integer
 
----Window width when <relative> is <editor>.
+---window width when <relative> is <editor>
 M.win.__EW = 0.7
----Window width when <relative> is <cursor>.
+---window width when <relative> is <cursor>
 M.win.__CW = 0.8
 
+---@return integer # maximum window height; respects <cmdheight>
 M.win.__max_height = function()
   return vim.api.nvim_win_get_height(0) - vim.o.cmdheight
 end
 
+---@return integer # actual window height
 M.win.__height = function(data)
   if type(data) == 'number' then
     return math.floor(vim.o.lines * M.win.__EW)
@@ -372,15 +350,18 @@ M.win.__height = function(data)
   return math.min(h, M.win.__max_height())
 end
 
+---@return integer # maximum window width; keeps padding
 M.win.__max_width = function()
   return math.floor(vim.o.columns * M.win.__CW) - 2
 end
 
+---@return integer # actual window width
 M.win.__width = function(data)
   return type(data) == 'number' and math.floor(vim.o.columns * M.win.__EW)
     or math.min(M.tbl.longest_line(data), M.win.__max_width())
 end
 
+---@return number # required vertical offset to center window
 M.win.__voffset = function()
   local o = math.floor(-vim.o.cmdheight / 2)
   local s = vim.o.laststatus
@@ -394,7 +375,7 @@ M.win.__voffset = function()
   return o
 end
 
----@return 'NW'|'SW',0|1 # window anchor and required offset for cursor position
+---@return 'NW'|'SW',0|1 # window anchor and required curosr offset
 M.win.anchor_offset = function()
   local anchor = vim.fn.winline() - (vim.fn.winheight(0) / 2) > 0 and 'SW'
     or 'NW'
