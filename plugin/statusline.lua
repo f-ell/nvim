@@ -22,8 +22,14 @@ local M = {
 
     vim.api.nvim_create_autocmd(self.__buf_events, {
       callback = function()
-        self:__readlink()
+        self.__realpath = vim.loop.fs_realpath(vim.fn.expand('%:p'))
       end,
+    })
+
+    vim.api.nvim_create_autocmd('FocusGained', {
+      callback = function()
+        vim.defer_fn(function() vim.cmd('redraw!') end, 0)
+      end
     })
   end,
 
@@ -90,27 +96,6 @@ local M = {
         })
       end
     end
-  end,
-
-  __readlink = function(self)
-    local buf = vim.fn.expand('%:p:h') .. '/' .. vim.fn.expand('%:t')
-
-    local src = vim.loop.fs_readlink(buf)
-    if src then
-      self.__realpath = src
-    end
-
-    -- link in directory structure
-    local dir = ''
-    for subdir in buf:sub(2):gmatch('(.-)/') do
-      dir = dir .. '/' .. subdir
-      src = vim.loop.fs_readlink(dir)
-      if src then
-        self.__realpath = src .. buf:gsub(dir, '')
-      end
-    end
-
-    self.__realpath = buf
   end,
 
   __realpath = nil,
@@ -217,8 +202,7 @@ M:add_component({
           return
         end
 
-        self.meta.relative_name =
-          M.__realpath:gsub('^' .. self.meta.root._local, '')
+        self.meta.relative_name = './' .. M.__realpath:sub(self.meta.root._local:len() + 1)
 
         self:__tracked()
         self:__head()
