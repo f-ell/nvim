@@ -1,15 +1,13 @@
 return {
-  'jose-elias-alvarez/null-ls.nvim',
+  'nvimtools/none-ls.nvim',
   lazy = true,
   event = { 'BufNewFile', 'BufReadPost' },
   dependencies = 'nvim-lua/plenary.nvim',
   config = function()
     local null = require('null-ls')
-    local mpc = vim.fn.stdpath('data') .. '/mason/bin'
-
     local sources = {
       eslint_d = {
-        command = mpc .. '/eslint_d',
+        command = 'eslint_d',
         condition = function(utils)
           return utils.root_has_file({
             '.eslintrc.js',
@@ -19,7 +17,7 @@ return {
         end,
       },
       prettier_d = {
-        command = mpc .. '/prettierd',
+        command = 'prettierd',
         condition = function(utils)
           return utils.root_has_file({
             '.prettierrc',
@@ -30,28 +28,22 @@ return {
         end,
       },
       stylua = {
-        command = mpc .. '/stylua',
+        command = 'stylua',
       },
     }
 
     null.setup({
-      on_attach = function(client, bufnr)
-        if client.supports_method('textDocument/formatting') then
-          vim.api.nvim_create_autocmd('BufWritePre', {
-            group = vim.api.nvim_create_augroup('null-ls', { clear = true }),
-            buffer = bufnr,
-            desc = 'null-ls formatting',
-            callback = function()
-              vim.lsp.buf.format({
-                bufnr = bufnr,
-                ---@diagnostic disable-next-line: redefined-local
-                filter = function(client)
-                  return client.name == 'null-ls'
-                end,
-              })
-            end,
-          })
-        end
+      on_attach = function(_, bufnr)
+        vim.api.nvim_create_autocmd('BufWritePre', {
+          buffer = bufnr,
+          callback = function()
+            vim.lsp.buf.format({
+              filter = function(c)
+                return c.name == 'null-ls'
+              end,
+            })
+          end,
+        })
       end,
 
       sources = {
