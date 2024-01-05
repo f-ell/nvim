@@ -17,13 +17,15 @@ local M = {
 ---@param buffer number
 ---@param cb string|function
 M.cmd.event = function(events, buffer, cb)
-  vim.api.nvim_create_autocmd(events, {
-    buffer = buffer,
-    nested = true,
-    callback = type(cb) == 'string' and cb or function(tbl)
-      cb(tbl)
-    end,
-  })
+  vim.defer_fn(function()
+    vim.api.nvim_create_autocmd(events, {
+      buffer = buffer,
+      nested = true,
+      callback = type(cb) == 'string' and cb or function(tbl)
+        cb(tbl)
+      end,
+    })
+  end, 0)
 end
 
 ----------------------------------------------------------------------------- fs
@@ -493,12 +495,12 @@ end
 
 ---Wraps win.open(), with default position at cursor.
 ---
----@param bl number|string[]
+---@param lines number|string[] buffer number or line array
 ---@param modifiable boolean
 ---@param enter boolean
 ---@param config table?
 ---@return WinData
-M.win.open_cursor = function(bl, modifiable, enter, config)
+M.win.open_cursor = function(lines, modifiable, enter, config)
   local anchor, row = M.win.anchor_offset()
 
   local conf = vim.tbl_extend('keep', config or {}, {
@@ -507,7 +509,7 @@ M.win.open_cursor = function(bl, modifiable, enter, config)
     row = row,
     col = -1,
   })
-  return M.win.open(bl, modifiable, enter, conf)
+  return M.win.open(lines, modifiable, enter, conf)
 end
 
 ---------------------------------------------------------------------------- key
