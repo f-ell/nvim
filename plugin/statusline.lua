@@ -229,10 +229,7 @@ M:add_component({
               if
                 not (
                   self.meta.state.head
-                  and L.tbl.equals(
-                    L.io.tbl_read(self.meta.state.head),
-                    hstate
-                  )
+                  and L.tbl.equals(L.io.tbl_read(self.meta.state.head), hstate)
                 )
               then
                 self.meta.state.head =
@@ -420,6 +417,7 @@ M:add_component({
       del = 0,
     }
 
+    -- TODO: pipe buffer state through stdin
     local id = vim.fn.jobstart({
       'git',
       'diff',
@@ -517,7 +515,7 @@ M:add_component({
 }, {
   name = 'bytes',
   meta = {
-    count = 0,
+    bytes = 0,
     unit = 'B',
   },
   events = {
@@ -537,7 +535,7 @@ M:add_component({
   get = function(self)
     return table.concat({
       '%#StatuslineBytecount#﬘%#Statusline#',
-      self.meta.count .. self.meta.unit,
+      self.meta.bytes .. self.meta.unit,
     }, ' ')
   end,
   __round = function(number, quotient)
@@ -546,21 +544,21 @@ M:add_component({
   __count = function(self)
     local unit = 'B'
 
-    local count = vim.fn.line2byte(vim.fn.line('$')) + vim.fn.getline('$'):len()
-    if count == -1 then
-      count = 0
+    local bytes = vim.fn.line2byte(vim.fn.line('$')) + vim.fn.getline('$'):len()
+    if bytes == -1 then
+      bytes = 0
     end
 
-    if count >= 1048576 then
+    if bytes >= 1048576 then
       unit = 'MiB'
-      count = self.__round(count, 1048576)
-    elseif count >= 10240 then
+      bytes = bit.rshift(bytes * 10, 20) / 10
+    elseif bytes >= 10240 then
       unit = 'KiB'
-      count = self.__round(count, 1024)
+      bytes = bit.rshift(bytes * 10, 10) / 10
     end
 
     self.meta = {
-      count = count,
+      bytes = bytes,
       unit = unit,
     }
   end,
