@@ -260,7 +260,7 @@ M:add_component({
     {
       { 'TextChanged', 'TextChangedI', 'TextChangedP', 'TextChangedT' },
       function(self)
-        if not self.meta.root.global then
+        if not self.meta.state.global then
           return
         end
 
