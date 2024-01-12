@@ -6,9 +6,10 @@ return {
   dependencies = {
     'hrsh7th/cmp-buffer',
     'dcampos/nvim-snippy',
-    { 'hrsh7th/cmp-cmdline', event = 'CmdlineEnter' }
+    { 'hrsh7th/cmp-cmdline', event = 'CmdlineEnter' },
   },
   config = function()
+    -- stylua: ignore
     local icons = {
       Class       = '', Color    = '', Constructor   = '', Enum      = '',
       EnumMember  = '', Event    = '', Field         = '', File      = '',
@@ -22,7 +23,7 @@ return {
       border = 'single',
       winhighlight = 'FloatBorder:FloatBorder',
       side_padding = 1,
-      col_offset = 1
+      col_offset = 1,
     }
 
     local cmp = require('cmp')
@@ -38,33 +39,37 @@ return {
         disallow_prefix_unmatching = true,
         disallow_fuzzy_matching = false,
         disallow_full_fuzzy_matching = false,
-        disallow_partial_fuzzy_matching = true
+        disallow_partial_fuzzy_matching = true,
       },
 
       snippet = {
-        expand = function(arg) require('snippy').expand_snippet(arg.body) end
+        expand = function(arg)
+          require('snippy').expand_snippet(arg.body)
+        end,
       },
 
       sources = {
-        { name = 'snippy',
+        {
+          name = 'snippy',
           max_item_count = 4,
-          keyword_length = 1 },
-        { name = 'nvim_lsp',
-          keyword_length = 1 },
-        { name = 'buffer',
+          keyword_length = 1,
+        },
+        { name = 'nvim_lsp', keyword_length = 1 },
+        {
+          name = 'buffer',
           max_item_count = 4,
           keyword_length = 4,
           option = {
-            keyword_pattern = [[\k\+]],
             get_bufnrs = function()
-              local buf = vim.api.nvim_get_current_buf()
-              local byte_size =
-                vim.api.nvim_buf_get_offset(buf, vim.api.nvim_buf_line_count(buf))
-              if byte_size > 1024 * 1024 then return {} end -- 1 MiB max
-              return { buf }
-            end
-          }
-        }
+              return vim.fn.line2byte(vim.fn.line('$'))
+                      + vim.fn.getline('$'):len()
+                    > 1048576
+                  and {}
+                or { vim.api.nvim_get_current_buf() }
+            end,
+          },
+          keyword_pattern = [[\k\+]],
+        },
       },
 
       window = { completion = window_opts, documentation = window_opts },
@@ -73,38 +78,46 @@ return {
       formatting = {
         fields = { 'kind', 'abbr', 'menu' },
         format = function(entry, item)
-          item.abbr = entry.source.name == 'cmdline'
-            and item.abbr
+          item.abbr = entry.source.name == 'cmdline' and item.abbr
             or string.sub(item.abbr, 1, 24)
           item.kind = string.format('%s', icons[item.kind])
           item.menu = ({
-            luasnip   = '-Snp-',
-            nvim_lsp  = '-Lsp-',
-            buffer    = '-Buf-'
+            luasnip = '-Snp-',
+            nvim_lsp = '-Lsp-',
+            buffer = '-Buf-',
           })[entry.source.name]
           return item
-        end
+        end,
       },
 
       mapping = {
-        ['<C-l>']     = cmp.mapping.confirm({ select = true }),
-        ['<C-k>']     = cmp.mapping.select_prev_item(),
-        ['<C-j>']     = cmp.mapping.select_next_item(),
-        ['<C-e>']     = cmp.mapping.abort(),
-        ['<C-Space>'] = cmp.mapping(cmp.mapping.complete())
+        ['<C-l>'] = cmp.mapping.confirm({ select = true }),
+        ['<C-k>'] = cmp.mapping.select_prev_item(),
+        ['<C-j>'] = cmp.mapping.select_next_item(),
+        ['<C-e>'] = cmp.mapping.abort(),
+        ['<C-Space>'] = cmp.mapping(cmp.mapping.complete()),
       },
 
       confirm_opts = { behavior = cmp.ConfirmBehavior.Replace, select = false },
-      experimental = { ghost_text = true }
+      experimental = { ghost_text = true },
     })
 
     cmp.setup.cmdline('/', {
-      mapping = cmp.mapping.preset.cmdline(),
-      sources = {{ name = 'buffer' }}
+      mapping = {
+        ['<C-k>'] = { c = cmp.mapping.select_prev_item() },
+        ['<C-j>'] = { c = cmp.mapping.select_next_item() },
+      },
+      sources = { { name = 'buffer' } },
     })
     cmp.setup.cmdline(':', {
-      mapping = cmp.mapping.preset.cmdline(),
-      sources = cmp.config.sources({{ name = 'path' }}, {{ name = 'cmdline' }})
+      mapping = {
+        ['<C-k>'] = { c = cmp.mapping.select_prev_item() },
+        ['<C-j>'] = { c = cmp.mapping.select_next_item() },
+      },
+      sources = cmp.config.sources(
+        { { name = 'path' } },
+        { { name = 'cmdline' } }
+      ),
     })
-  end
+  end,
 }
