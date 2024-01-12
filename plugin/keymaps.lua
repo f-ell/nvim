@@ -83,10 +83,12 @@ key.nnmap('<leader>co', '<CMD>copen<CR>')
 key.nnmap('<leader>cc', '<CMD>cclose<CR>')
 
 -- ex
-key.cnmap('<C-h>', '<Left>')
-key.cnmap('<C-k>', '<Up>')
-key.cnmap('<C-j>', '<Down>')
-key.cnmap('<C-l>', '<Right>')
+key.cnmap('<A-h>', '<Left>')
+key.cnmap('<A-k>', '<Up>')
+key.cnmap('<A-j>', '<Down>')
+key.cnmap('<A-l>', '<Right>')
+key.cnmap('<A-S-h>', '<C-Left>')
+key.cnmap('<A-S-l>', '<C-Right>')
 
 -- windows
 key.nnmap('<A-h>', '<C-w>h')
