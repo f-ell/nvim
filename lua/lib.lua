@@ -66,11 +66,11 @@ M.fs.writetmpfile = function(buffer, data, domain)
   end
 
   local name = M.fs.__dir
-      .. table.concat({
-        M.fs.__pid,
-        buffer,
-        domain,
-      }, '-')
+    .. table.concat({
+      M.fs.__pid,
+      buffer,
+      domain,
+    }, '-')
 
   M.io.write(name, data)
 
@@ -189,7 +189,7 @@ end
 ---buffer.
 ---
 ---@param cap string
----@param cb fun(client:LspClient):boolean? called for each client; determines whether the client gets added
+---@param cb fun(client:LspClient)?:boolean called for each client; determines whether the client gets added
 ---@return LspClient[] clients matching lsp clients
 M.lsp.clients_by_cap = function(cap, cb)
   local capable = {}
@@ -307,9 +307,9 @@ M.tbl.equals = function(t1, t2)
 
   for i = 1, #t1 do
     if
-        type(t1[i]) ~= type(t2[i])
-        or (type(t1[i]) == 'table' and not M.tbl.equals(t1[i], t2[i]))
-        or t1[i] ~= t2[i]
+      type(t1[i]) ~= type(t2[i])
+      or (type(t1[i]) == 'table' and not M.tbl.equals(t1[i], t2[i]))
+      or t1[i] ~= t2[i]
     then
       return false
     end
@@ -376,7 +376,7 @@ end
 ---@return integer # actual window width
 M.win.__width = function(data)
   return type(data) == 'number' and math.floor(vim.o.columns * M.win.__EW)
-      or math.min(M.tbl.longest_line(data), M.win.__max_width())
+    or math.min(M.tbl.longest_line(data), M.win.__max_width())
 end
 
 ---@return number # required vertical offset to center window
@@ -396,7 +396,7 @@ end
 ---@return 'NW'|'SW',0|1 # window anchor and required curosr offset
 M.win.anchor_offset = function()
   local anchor = vim.fn.winline() - (vim.fn.winheight(0) / 2) > 0 and 'SW'
-      or 'NW'
+    or 'NW'
   local offset = anchor == 'NW' and 1 or 0
   return anchor, offset
 end
@@ -453,7 +453,7 @@ M.win.open = function(lines, modifiable, enter, config)
     anchor = 'NW',
     row = 1,
     col = type(lines) == 'table' and -1
-        or math.floor((vim.o.columns * (1 - M.win.__EW)) / 2),
+      or math.floor((vim.o.columns * (1 - M.win.__EW)) / 2),
 
     width = data.width,
     height = data.height,
