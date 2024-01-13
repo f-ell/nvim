@@ -272,6 +272,23 @@ end
 
 ---------------------------------------------------------------------------- tbl
 
+---Perform recursive concatenation of nested array-like tables.
+---
+---@param tbl number|string|table<string, number, table<string, number>>
+---@return string
+M.tbl.deep_concat = function(tbl, sep)
+  if type(tbl) ~= 'table' then
+    return string.format(tbl)
+  end
+
+  return table.concat(
+    vim.tbl_map(function(t)
+      return type(t) ~= 'table' and t or M.tbl.deep_concat(t, sep)
+    end, tbl),
+    sep
+  )
+end
+
 ---@param tbl string[]
 ---@return integer # length of longest entry
 M.tbl.longest_line = function(tbl)
