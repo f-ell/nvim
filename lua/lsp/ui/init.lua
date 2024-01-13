@@ -4,4 +4,5 @@ return {
   def = require('lsp.ui.definition'),
   dgn = require('lsp.ui.diagnostic'),
   ren = require('lsp.ui.rename'),
+  sig = require('lsp.ui.signature_help'),
 }

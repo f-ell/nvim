@@ -16,8 +16,11 @@ return {
       { 'DiagnosticSignInfo', '•' },
       { 'DiagnosticSignHint', '▪' },
     }
-    for _, sign in pairs(signs) do
-      vim.fn.sign_define(sign[1], { texthl = sign[1], text = sign[2] })
+    for i = 1, #signs do
+      vim.fn.sign_define(
+        signs[i][1],
+        { texthl = signs[i][1], text = signs[i][2] }
+      )
     end
 
     vim.diagnostic.config({
@@ -38,13 +41,16 @@ return {
     local key = require('lib').key
     local ui = require('lsp.ui')
     local on_attach = function()
-      key.nnmap('gd', ui.def.peek, { buffer = 0 })
-      key.nnmap('<leader>gt', ui.def.type, { buffer = 0 })
-      key.nnmap('<leader>gd', ui.def.open, { buffer = 0 })
       key.nnmap('K', vim.lsp.buf.hover, { buffer = 0 })
-      key.nnmap('<leader>ca', ui.cda.codeaction, { buffer = 0 })
       key.nnmap('<leader>rf', vim.lsp.buf.references, { buffer = 0 })
+
+      key.nnmap('gd', ui.def.peek, { buffer = 0 })
+      key.nnmap('<leader>gd', ui.def.open, { buffer = 0 })
+      key.nnmap('<leader>gt', ui.def.type, { buffer = 0 })
+
+      key.nnmap('<leader>ca', ui.cda.codeaction, { buffer = 0 })
       key.nnmap('<leader>rn', ui.ren.rename, { buffer = 0 })
+      key.inmap('<C-s>', ui.sig.signature_help)
 
       key.nnmap('<leader>h', ui.dgn.get_line, { buffer = 0 })
       key.nnmap('<leader>j', ui.dgn.goto_next, { buffer = 0 })
