@@ -49,7 +49,7 @@ local preprocess = function(raw)
       signs[tbl[1].sev].texthl,
     }
   tbl.title.loc = raw.type == 'line' and ''
-    or diag[1].lnum + 1 .. ':' .. diag[1].col + 1 .. ' '
+    or tbl[1].ln + 1 .. ':' .. tbl[1].vcol .. ' '
 
   return tbl
 end
