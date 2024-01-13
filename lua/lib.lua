@@ -333,6 +333,22 @@ M.win.__EW = 0.7
 ---window width when <relative> is <cursor>
 M.win.__CW = 0.8
 
+---@param config table?
+---@return string
+M.win.__parse_title = function(config)
+  if not config then
+    return ''
+  end
+
+  return type(config.title) == 'string' and config.title
+    or table.concat(
+      vim.tbl_map(function(t)
+        return t[1]
+      end, config.title),
+      ''
+    )
+end
+
 ---@return integer # maximum window height; respects <cmdheight>
 M.win.__max_height = function()
   return vim.api.nvim_win_get_height(0) - vim.o.cmdheight
@@ -440,12 +456,18 @@ M.win.open = function(lines, modifiable, enter, config)
     nbuf = -1,
     nwin = -1,
     height = M.win.__height(lines),
-    width = M.win.__width(lines),
+    width = M.win.__width(
+      type(lines) == 'number' and lines
+        -- if title is present, ensure that it's not cut off
+        ---@diagnostic disable-next-line: param-type-mismatch
+        or { unpack(lines), M.win.__parse_title(config) }
+    ),
   }
-  if type(lines) == 'table' then
-    data.nbuf = vim.api.nvim_create_buf(false, true)
-  else
+
+  if type(lines) == 'number' then
     data.nbuf = lines
+  else
+    data.nbuf = vim.api.nvim_create_buf(false, true)
   end
 
   local conf = vim.tbl_extend('keep', config or {}, {
