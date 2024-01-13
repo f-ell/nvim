@@ -172,7 +172,7 @@ end
 
 ---Apply a workspace edit.
 ---
----@param response WorkspaceEdit
+---@param response EnrichedLspResponse
 M.lsp.apply_edit = function(response)
   local edit = response.result
   local oenc = vim.lsp.get_client_by_id(response.id).offset_encoding
@@ -327,6 +327,7 @@ end
 ---@field nwin number window number of newly opened window
 ---@field width integer
 ---@field height integer
+---@field [any] any
 
 ---window width when <relative> is <editor>
 M.win.__EW = 0.7
