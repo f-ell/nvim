@@ -313,7 +313,7 @@ end
 ---@param t1 any[]
 ---@param t2 any[]
 ---@return boolean
-M.tbl.equals = function(t1, t2)
+M.tbl.deep_equals = function(t1, t2)
   if t1 == t2 then
     return true
   end
@@ -325,7 +325,7 @@ M.tbl.equals = function(t1, t2)
   for i = 1, #t1 do
     if
       type(t1[i]) ~= type(t2[i])
-      or (type(t1[i]) == 'table' and not M.tbl.equals(t1[i], t2[i]))
+      or (type(t1[i]) == 'table' and not M.tbl.deep_equals(t1[i], t2[i]))
       or t1[i] ~= t2[i]
     then
       return false

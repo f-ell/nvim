@@ -229,7 +229,10 @@ M:add_component({
               if
                 not (
                   self.meta.state.head
-                  and L.tbl.equals(L.io.tbl_read(self.meta.state.head), hstate)
+                  and L.tbl.deep_equals(
+                    L.io.tbl_read(self.meta.state.head),
+                    hstate
+                  )
                 )
               then
                 self.meta.state.head =
@@ -240,10 +243,10 @@ M:add_component({
           vim.fn.jobwait({ id }, 100)
 
           if
-            not L.tbl.equals(hstate or {}, bstate)
+            not L.tbl.deep_equals(hstate or {}, bstate)
             or (
               self.meta.state.buffer
-              and not L.tbl.equals(
+              and not L.tbl.deep_equals(
                 L.io.tbl_read(self.meta.state.buffer),
                 bstate
               )
