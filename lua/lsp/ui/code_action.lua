@@ -8,17 +8,17 @@ end)
 local preprocess = function(raw)
   local tbl = {}
 
-  for idx, res in pairs(raw) do
-    tbl[idx] = {
+  for i = 1, #raw do
+    tbl[i] = {
       msg = {},
-      src = res.name,
+      src = raw[i].name,
     }
 
-    for ln in res.result.title:gmatch('(.-)\r?\n') do
-      table.insert(tbl[idx].msg, ln)
+    for ln in raw[i].result.title:gmatch('(.-)\r?\n') do
+      table.insert(tbl[i].msg, ln)
     end
     -- WARN: unstable use of character class
-    table.insert(tbl[idx].msg, res.result.title:match('[\r\n]*([^\r\n]*)$'))
+    table.insert(tbl[i].msg, raw[i].result.title:match('[\r\n]*([^\r\n]*)$'))
   end
 
   for i = 1, #tbl do

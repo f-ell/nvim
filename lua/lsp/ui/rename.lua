@@ -95,10 +95,10 @@ local try_rename = function()
   local ln, col = params.position.line, params.position.character
 
   local declaration
-  for _, ref in pairs(refs) do
-    local s, e = ref.result.range.start, ref.result.range['end']
+  for i = 1, #refs do
+    local s, e = refs[i].result.range.start, refs[i].result.range['end']
     if s.line == ln and s.character <= col and e.character >= col then
-      declaration = ref
+      declaration = refs[i]
       break
     end
   end
