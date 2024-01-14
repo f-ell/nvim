@@ -78,7 +78,7 @@ end
 
 local register_float_actions = function(data)
   local do_action = function(num)
-    L.win.close(data.nwin, data.owin, data.pos)
+    L.win.close(data.nwin)
 
     local act = data.res[num]
     local res = act.result
@@ -125,7 +125,7 @@ local register_float_actions = function(data)
   end
 
   L.key.nnmap('<C-c>', function()
-    L.win.close(data.nwin, data.owin, data.pos)
+    L.win.close(data.nwin)
   end, { buffer = true })
 
   L.key.nnmap('<CR>', function()
@@ -159,7 +159,7 @@ local register_float_actions = function(data)
   end
 
   L.cmd.event({ 'WinLeave', 'QuitPre' }, data.nbuf, function()
-    L.win.close(data.nwin, data.owin, data.pos)
+    L.win.close(data.nwin)
   end)
 end
 
