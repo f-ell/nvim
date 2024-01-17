@@ -60,6 +60,7 @@ return {
           max_item_count = 4,
           keyword_length = 4,
           option = {
+            keyword_pattern = [[\k\+]],
             get_bufnrs = function()
               return vim.fn.line2byte(vim.fn.line('$'))
                       + vim.fn.getline('$'):len()
@@ -68,7 +69,6 @@ return {
                 or { vim.api.nvim_get_current_buf() }
             end,
           },
-          keyword_pattern = [[\k\+]],
         },
       },
 
