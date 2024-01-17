@@ -368,7 +368,7 @@ M:add_component({
         cwd = self.meta.root._local,
         stdout_buffered = true,
         on_stdout = function(_, data, _)
-          head = data ~= '' and 't:' .. data or content:sub(1, 8)
+          head = data[1] ~= '' and 't:' .. data[1] or content:sub(1, 8)
         end,
       })
       vim.fn.jobwait({ id }, 100)
