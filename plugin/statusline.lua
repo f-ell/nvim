@@ -210,51 +210,52 @@ M:add_component({
         self:__tracked()
         self:__head()
 
-        if self.meta.tracked then
-          -- PERF: prefer equality checks to redundant writes
-          local hstate, bstate =
-            nil, vim.api.nvim_buf_get_lines(0, 0, -1, false)
+        if not self.meta.tracked then
+          return
+        end
 
-          local id = vim.fn.jobstart({
-            'git',
-            'cat-file',
-            'blob',
-            'HEAD:' .. self.meta.relative_name,
-          }, {
-            cwd = self.meta.root._local,
-            stdout_buffered = true,
-            on_stdout = function(_, data, _)
-              hstate = { unpack(data, 1, #data - 1) }
+        -- PERF: prefer equality checks to redundant writes
+        local hstate, bstate = nil, vim.api.nvim_buf_get_lines(0, 0, -1, false)
 
-              if
-                not (
-                  self.meta.state.head
-                  and L.tbl.deep_equals(
-                    L.io.tbl_read(self.meta.state.head),
-                    hstate
-                  )
+        local id = vim.fn.jobstart({
+          'git',
+          'cat-file',
+          'blob',
+          'HEAD:' .. self.meta.relative_name,
+        }, {
+          cwd = self.meta.root._local,
+          stdout_buffered = true,
+          on_stdout = function(_, data, _)
+            hstate = { unpack(data, 1, #data - 1) }
+
+            if
+              not (
+                self.meta.state.head
+                and L.tbl.deep_equals(
+                  L.io.tbl_read(self.meta.state.head),
+                  hstate
                 )
-              then
-                self.meta.state.head =
-                  L.fs.writetmpfile(vim.fn.bufnr(), hstate, 'diff_head')
-              end
-            end,
-          })
-          vim.fn.jobwait({ id }, 100)
-
-          if
-            not L.tbl.deep_equals(hstate or {}, bstate)
-            or (
-              self.meta.state.buffer
-              and not L.tbl.deep_equals(
-                L.io.tbl_read(self.meta.state.buffer),
-                bstate
               )
+            then
+              self.meta.state.head =
+                L.fs.writetmpfile(vim.fn.bufnr(), hstate, 'diff_head')
+            end
+          end,
+        })
+        vim.fn.jobwait({ id }, 100)
+
+        if
+          not L.tbl.deep_equals(hstate or {}, bstate)
+          or (
+            self.meta.state.buffer
+            and not L.tbl.deep_equals(
+              L.io.tbl_read(self.meta.state.buffer),
+              bstate
             )
-          then
-            self.meta.state.buffer =
-              L.fs.writetmpfile(vim.fn.bufnr(), bstate, 'diff_state')
-          end
+          )
+        then
+          self.meta.state.buffer =
+            L.fs.writetmpfile(vim.fn.bufnr(), bstate, 'diff_state')
         end
 
         self:__diff()
@@ -263,7 +264,7 @@ M:add_component({
     {
       { 'TextChanged', 'TextChangedI', 'TextChangedP', 'TextChangedT' },
       function(self)
-        if not self.meta.root.global then
+        if not (self.meta.root.global and self.meta.tracked) then
           return
         end
 
