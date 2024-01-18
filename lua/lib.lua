@@ -33,6 +33,23 @@ end
 ---trailing slash!
 M.fs.__dir = vim.fn.stdpath('run') .. '/nvim.user/'
 
+---@param name string
+---@return string filename
+M.fs.__unique = function(name)
+  if not vim.loop.fs_stat(name) then
+    return name
+  end
+
+  local i = 1
+  name = name .. '-' .. i
+  while vim.loop.fs_stat(name) do
+    i = i + 1
+    name = name:sub(0, -2) .. i
+  end
+
+  return name
+end
+
 ---linux only - not portable!
 M.fs.__pid = (function()
   for ln in io.lines('/proc/self/status') do
@@ -58,7 +75,7 @@ end
 ---@param buffer number
 ---@param data string[]
 ---@param remove boolean register delete autocommand
----@param name string? basename of the file to write
+---@param name string? basename of the file to write or uniquely generated name
 ---@return string filename
 M.fs.writetmpfile = function(buffer, data, remove, name)
   if not vim.loop.fs_stat(M.fs.__dir) then
@@ -66,7 +83,7 @@ M.fs.writetmpfile = function(buffer, data, remove, name)
   end
 
   local file = M.fs.__dir .. (name and name or M.fs.__pid .. '-' .. buffer)
-  M.io.write(file, data)
+  M.io.write(name and file or M.fs.__unique(file), data)
 
   if remove then
     vim.api.nvim_create_autocmd(
