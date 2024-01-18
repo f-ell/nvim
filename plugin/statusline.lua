@@ -229,10 +229,7 @@ M:add_component({
             if
               not (
                 self.meta.state.head
-                and L.tbl.deep_equals(
-                  L.io.tbl_read(self.meta.state.head),
-                  hstate
-                )
+                and vim.deep_equal(L.io.tbl_read(self.meta.state.head), hstate)
               )
             then
               self.meta.state.head =

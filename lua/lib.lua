@@ -311,33 +311,6 @@ M.tbl.is_empty = function(tbl)
   return tbl == nil or (type(tbl) == 'table' and next(tbl) == nil)
 end
 
----Perform deep equality check for two array-like tables.
----
----@param t1 any[]
----@param t2 any[]
----@return boolean
-M.tbl.deep_equals = function(t1, t2)
-  if t1 == t2 then
-    return true
-  end
-
-  if t1 == nil or t2 == nil or #t1 ~= #t2 then
-    return false
-  end
-
-  for i = 1, #t1 do
-    if
-      type(t1[i]) ~= type(t2[i])
-      or (type(t1[i]) == 'table' and not M.tbl.deep_equals(t1[i], t2[i]))
-      or t1[i] ~= t2[i]
-    then
-      return false
-    end
-  end
-
-  return true
-end
-
 ---------------------------------------------------------------------------- win
 
 ---@class (exact) WinData
