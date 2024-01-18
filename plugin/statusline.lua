@@ -214,9 +214,6 @@ M:add_component({
           return
         end
 
-        -- PERF: prefer equality checks to redundant writes
-        local hstate, bstate = nil, vim.api.nvim_buf_get_lines(0, 0, -1, false)
-
         local id = vim.fn.jobstart({
           'git',
           'cat-file',
@@ -226,8 +223,9 @@ M:add_component({
           cwd = self.meta.root._local,
           stdout_buffered = true,
           on_stdout = function(_, data, _)
-            hstate = { unpack(data, 1, #data - 1) }
+            local hstate = { unpack(data, 1, #data - 1) }
 
+            -- PERF: prefer equality checks to redundant writes
             if
               not (
                 self.meta.state.head
@@ -244,20 +242,6 @@ M:add_component({
         })
         vim.fn.jobwait({ id }, 100)
 
-        if
-          not L.tbl.deep_equals(hstate or {}, bstate)
-          or (
-            self.meta.state.buffer
-            and not L.tbl.deep_equals(
-              L.io.tbl_read(self.meta.state.buffer),
-              bstate
-            )
-          )
-        then
-          self.meta.state.buffer =
-            L.fs.writetmpfile(vim.fn.bufnr(), bstate, 'diff_state')
-        end
-
         self:__diff()
       end,
     },
@@ -268,11 +252,6 @@ M:add_component({
           return
         end
 
-        self.meta.state.buffer = L.fs.writetmpfile(
-          vim.fn.bufnr(),
-          vim.api.nvim_buf_get_lines(0, 0, -1, false),
-          'diff_state'
-        )
         self:__diff()
       end,
     },
@@ -421,19 +400,24 @@ M:add_component({
       del = 0,
     }
 
-    -- TODO: pipe buffer state through stdin
     local id = vim.fn.jobstart({
       'git',
       'diff',
       '-U0',
       '--no-index',
       self.meta.state.head,
-      self.meta.state.buffer,
+      '-',
     }, {
       cwd = self.meta.root._local,
       stdout_buffered = true,
       on_stdout = update_diff,
     })
+
+    local bstate = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+    table.insert(bstate, '')
+
+    vim.fn.chansend(id, bstate)
+    vim.fn.chanclose(id, 'stdin')
     vim.fn.jobwait({ id }, 100)
   end,
 }, {
