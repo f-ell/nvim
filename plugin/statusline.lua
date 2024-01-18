@@ -234,8 +234,13 @@ M:add_component({
                 and vim.deep_equal(L.io.tbl_read(self.meta.state.head), hstate)
               )
             then
-              self.meta.state.head =
-                L.fs.writetmpfile(vim.fn.bufnr(), hstate, 'diff_head')
+              self.meta.state.head = L.fs.writetmpfile(
+                vim.fn.bufnr(),
+                hstate,
+                false,
+                -- WARN: not portable
+                vim.fn.expand('%:p'):gsub('/', '%%')
+              )
             end
           end,
         })

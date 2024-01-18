@@ -54,38 +54,34 @@ M.fs.mktmpdir = function()
 end
 
 ---Write to temporary file.
----Registers delete autocommands on BufWipeout and VimLeave.
 ---
 ---@param buffer number
 ---@param data string[]
----@param domain string? differentiate between multiple temporary files for the same buffer
+---@param remove boolean register delete autocommand
+---@param name string? basename of the file to write
 ---@return string filename
-M.fs.writetmpfile = function(buffer, data, domain)
+M.fs.writetmpfile = function(buffer, data, remove, name)
   if not vim.loop.fs_stat(M.fs.__dir) then
     M.fs.mktmpdir()
   end
 
-  local name = M.fs.__dir
-    .. table.concat({
-      M.fs.__pid,
-      buffer,
-      domain,
-    }, '-')
+  local file = M.fs.__dir .. (name and name or M.fs.__pid .. '-' .. buffer)
+  M.io.write(file, data)
 
-  M.io.write(name, data)
+  if remove then
+    vim.api.nvim_create_autocmd(
+      { 'BufDelete', 'BufUnload', 'BufWipeout', 'VimLeavePre' },
+      {
+        buffer = buffer,
+        callback = function()
+          os.remove(file)
+        end,
+        once = true,
+      }
+    )
+  end
 
-  vim.api.nvim_create_autocmd(
-    { 'BufDelete', 'BufUnload', 'BufWipeout', 'VimLeavePre' },
-    {
-      buffer = buffer,
-      callback = function()
-        os.remove(name)
-      end,
-      once = true,
-    }
-  )
-
-  return name
+  return file
 end
 
 ----------------------------------------------------------------------------- io
@@ -135,11 +131,11 @@ M.io.tbl_read = function(file)
   return tbl
 end
 
----Write to <data> to file.
+---Write <data> to file.
 ---
 ---@param file string|file* closed automatically
 ---@param data string[]
----@param mode 'w'|'w+'|'wb'|'w+b'?
+---@param mode 'w'|'w+'|'wb'|'w+b'? defaults to w+
 M.io.write = function(file, data, mode)
   if mode and not vim.tbl_contains({ 'w', 'w+', 'wb', 'w+b' }, mode) then
     error('illegal mode - ' .. mode, 4)
