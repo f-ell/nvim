@@ -74,13 +74,16 @@ M.fs.writetmpfile = function(buffer, data, domain)
 
   M.io.write(name, data)
 
-  vim.api.nvim_create_autocmd({ 'BufWipeout', 'VimLeavePre' }, {
-    buffer = buffer,
-    callback = function()
-      os.remove(name)
-    end,
-    once = true,
-  })
+  vim.api.nvim_create_autocmd(
+    { 'BufDelete', 'BufUnload', 'BufWipeout', 'VimLeavePre' },
+    {
+      buffer = buffer,
+      callback = function()
+        os.remove(name)
+      end,
+      once = true,
+    }
+  )
 
   return name
 end
@@ -478,7 +481,7 @@ M.win.open = function(lines, modifiable, enter, config)
       type(lines) == 'number' and lines
         -- if title is present, ensure that it's not cut off
         ---@diagnostic disable-next-line: param-type-mismatch
-        or { unpack(lines), M.win.__parse_title(config) }
+        or { M.win.__parse_title(config), unpack(lines) }
     ),
   }
 
