@@ -114,7 +114,7 @@ local open = function(raw)
     focusable = false,
     zindex = 2,
     width = math.max(
-      L.tbl.longest_line(content),
+      L.tbl.max_len(content),
       proc.title.icon[1]:len() + ('Diagnostics '):len() + proc.title.loc:len()
     ),
   })

@@ -190,14 +190,14 @@ end
 ---
 ---@param response EnrichedLspResponse
 M.lsp.apply_edit = function(response)
-  local edit = response.result
-  local oenc = vim.lsp.get_client_by_id(response.id).offset_encoding
-
-  if edit.edit then
-    vim.lsp.util.apply_workspace_edit(edit.edit, oenc)
+  if response.result.edit then
+    vim.lsp.util.apply_workspace_edit(
+      response.result.edit,
+      vim.lsp.get_client_by_id(response.id).offset_encoding
+    )
   end
-  if edit.action and type(edit.action) == 'function' then
-    edit.action()
+  if response.result.action and type(response.result.action) == 'function' then
+    response.result.action()
   end
 end
 
@@ -205,9 +205,9 @@ end
 ---buffer.
 ---
 ---@param cap string
----@param cb fun(client:LspClient)?:boolean called for each client; determines whether the client gets added
+---@param filter (fun(client:LspClient):boolean)? determines whether a client is returned
 ---@return LspClient[] clients matching lsp clients
-M.lsp.clients_by_cap = function(cap, cb)
+M.lsp.clients_by_cap = function(cap, filter)
   local capable = {}
   local available = vim.lsp.get_active_clients({
     buffer = vim.api.nvim_get_current_buf(),
@@ -215,10 +215,10 @@ M.lsp.clients_by_cap = function(cap, cb)
 
   for i = 1, #available do
     if available[i].server_capabilities[cap .. 'Provider'] then
-      if cb == nil then
+      if filter == nil then
         table.insert(capable, available[i])
       end
-      if cb ~= nil and cb(available[i]) then
+      if filter ~= nil and filter(available[i]) then
         table.insert(capable, available[i])
       end
     end
@@ -307,7 +307,7 @@ end
 
 ---@param tbl string[]
 ---@return integer # length of longest entry
-M.tbl.longest_line = function(tbl)
+M.tbl.max_len = function(tbl)
   local max = 0
   for i = 1, #tbl do
     local len = vim.fn.strdisplaywidth(tbl[i])
@@ -368,7 +368,7 @@ M.win.__height = function(data)
   end
 
   local _mw = M.win.__max_width()
-  if M.tbl.longest_line(data) < _mw then
+  if M.tbl.max_len(data) < _mw then
     return math.min(#data, M.win.__max_height())
   end
 
@@ -399,7 +399,7 @@ end
 ---@return integer # actual window width
 M.win.__width = function(data)
   return type(data) == 'number' and math.floor(vim.o.columns * M.win.__EW)
-    or math.min(M.tbl.longest_line(data), M.win.__max_width())
+    or math.min(M.tbl.max_len(data), M.win.__max_width())
 end
 
 ---@return number # required vertical offset to center window

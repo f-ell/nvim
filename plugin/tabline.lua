@@ -1,5 +1,3 @@
-local L = require('lib')
-
 local tabline = function()
   local tabs = {}
 
@@ -12,7 +10,7 @@ local tabline = function()
       string.format('%%%sT', i),
       '%#Tab' .. (i == vim.fn.tabpagenr() and 'Active' or 'Inactive') .. '#',
       '▎',
-      vim.api.nvim_buf_get_option(bufnr, 'modified') and ' + ' or '  ',
+      vim.bo[bufnr].modified and ' + ' or '  ',
       name .. '  ',
     }
 
