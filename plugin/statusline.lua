@@ -448,7 +448,7 @@ M:add_component({
       },
       function(self)
         -- updated on first LspAttach - signs may not be defined beforehand
-        if not self.meta.signs then
+        if L.tbl.is_empty(self.meta.signs) then
           self.meta.signs = vim.fn.filter(
             vim.fn.sign_getdefined(),
             function(_, s)
