@@ -153,7 +153,7 @@ M:add_component({
         if name:len() > maxlen then
           local fillchars = '...'
 
-          local i = name:len() - name:reverse():find('%.')
+          local i = name:len() - (name:reverse():find('%.') or 0)
           local ext = i and name:sub(i) or ''
           local offset = ext:len() > 0 and 2 + ext:len() or 4
           name = name
