@@ -65,7 +65,7 @@ local open = function(raw)
   set_highlights(data.nbuf, proc)
 
   L.cmd.event(
-    { 'BufLeave', 'InsertLeave', 'TextChangedI', 'WinNew' },
+    { 'BufLeave', 'CursorMoved', 'InsertLeave', 'TextChangedI', 'WinNew' },
     data.obuf,
     function()
       L.win.close(data.nwin)
