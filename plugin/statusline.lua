@@ -29,7 +29,7 @@ local M = {
     vim.api.nvim_create_autocmd('FocusGained', {
       callback = function()
         vim.defer_fn(function()
-          vim.cmd('redraw!')
+          vim.cmd('redrawstatus')
         end, 0)
       end,
     })
@@ -430,13 +430,15 @@ M:add_component({
   },
   events = {
     {
-      {
-        'LspAttach',
-        'LspDetach',
-        'BufEnter',
-        'BufFilePost',
-        'WinClosed',
-      },
+      { 'LspAttach', 'LspDetach' },
+      function()
+        vim.defer_fn(function()
+          vim.cmd('redrawstatus')
+        end, 0)
+      end,
+    },
+    {
+      { 'LspAttach', 'LspDetach', 'BufEnter', 'BufFilePost', 'WinClosed' },
       function(self)
         -- updated on first LspAttach - signs may not be defined beforehand
         if L.tbl.is_empty(self.meta.signs) then
