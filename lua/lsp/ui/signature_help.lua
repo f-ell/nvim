@@ -84,6 +84,11 @@ local try_signature_help = function()
   )[1]
 
   if not L.tbl.is_empty(res) then
+    if L.tbl.is_empty(res.result.signatures) then
+      vim.notify('No signature help available.', 3)
+      return
+    end
+
     open(res)
   end
 end
