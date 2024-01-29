@@ -289,33 +289,24 @@ M:add_component({
     })
   end,
   __root = function(self)
-    local _local, global = nil, nil
-    local cwd = vim.fs.dirname(M.__realpath)
-
-    while cwd do
-      local path = cwd .. '/.git'
-      local stat = vim.loop.fs_stat(path)
-
-      if stat then
-        _local = path
-        global = path
-
-        if stat.type == 'file' then
-          global = L.io.read(path, true):match('^gitdir: (.*)$')
-        end
-
-        break
-      end
-
-      cwd = cwd:match('^(.+)/')
+    if M.__realpath == nil then
+      return false
     end
 
+    local path = vim.fs.find(
+      '.git',
+      { upward = true, path = vim.fs.dirname(M.__realpath) }
+    )[1]
+    local stat = vim.loop.fs_stat(path or '')
+
     self.meta.root = {
-      global = global,
-      _local = _local ~= nil and _local:gsub('%.git$', '') or nil,
+      global = stat and (stat.type == 'file' and L.io
+        .read(path, true)
+        :match('^gitdir: (.*)$') or path) or nil,
+      _local = path ~= nil and path:gsub('%.git$', '') or nil,
     }
 
-    return global ~= nil
+    return self.meta.root.global ~= nil
   end,
   __tracked = function(self)
     local id = vim.fn.jobstart({
