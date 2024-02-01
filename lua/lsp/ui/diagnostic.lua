@@ -48,8 +48,9 @@ local preprocess = function(raw)
       ' ' .. signs[tbl[1].sev].text,
       signs[tbl[1].sev].texthl,
     }
-  tbl.title.loc = raw.type == 'line' and ''
-    or tbl[1].ln + 1 .. ':' .. tbl[1].vcol .. ' '
+  tbl.title.loc = (
+    raw.type == 'line' and tbl[1].ln or tbl[1].ln .. ':' .. tbl[1].vcol
+  ) .. ' '
 
   return tbl
 end
