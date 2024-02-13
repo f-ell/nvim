@@ -5,9 +5,13 @@ local signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
   return vim.startswith(s.name, 'DiagnosticSign')
 end)
 
-local highlight_refs = function(data)
-  for i = 1, #data.refs do
-    local r = data.refs[i].result
+local set_highlights = function(data)
+  local local_refs = vim.tbl_filter(function(r)
+    return r.result.uri == data.path
+  end, data.refs)
+
+  for i = 1, #local_refs do
+    local r = local_refs[i].result
     if r.range then
       vim.api.nvim_buf_add_highlight(
         data.obuf,
@@ -76,8 +80,9 @@ local open = function(raw)
   data.pos = vim.api.nvim_win_get_cursor(data.owin)
   data.old = raw.cword
   data.refs = raw.refs
+  data.path = raw.path
 
-  highlight_refs(data)
+  set_highlights(data)
   register_float_actions(data)
   vim.api.nvim_feedkeys('A', 'n', true)
 end
@@ -119,7 +124,12 @@ local try_rename = function()
       )[1]
     or ''
 
-  open({ cword = cword, refs = refs, pos = { s.line, s.character } })
+  open({
+    cword = cword,
+    refs = refs,
+    pos = { s.line, s.character },
+    path = 'file://' .. vim.fn.expand('%:p'),
+  })
 end
 
 M.rename = function()
