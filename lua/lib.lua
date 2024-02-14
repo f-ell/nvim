@@ -486,7 +486,6 @@ M.win.open = function(lines, modifiable, enter, config)
 
     width = data.width,
     height = data.height,
-    style = 'minimal',
     border = 'single',
   })
 
@@ -526,6 +525,7 @@ M.win.open_center = function(lines, modifiable, enter, config)
 end
 
 ---Wraps win.open(), with default position at cursor.
+---Sets `style = 'minimal'` by default.
 ---
 ---@param lines number|string[] buffer number or line array
 ---@param modifiable boolean
@@ -540,6 +540,7 @@ M.win.open_cursor = function(lines, modifiable, enter, config)
     anchor = anchor,
     row = row,
     col = -1,
+    style = 'minimal',
   })
   return M.win.open(lines, modifiable, enter, conf)
 end

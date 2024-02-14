@@ -83,6 +83,7 @@ local open = function(raw)
   local data = L.win.open_center(bufnr, true, true, {
     title = ' ' .. vim.fn.fnamemodify(vim.fn.bufname(bufnr), ':t') .. ' ',
     zindex = 1,
+    style = '',
   })
   vim.bo[data.nbuf].bufhidden = 'hide'
 
