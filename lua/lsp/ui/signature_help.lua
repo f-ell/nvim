@@ -7,9 +7,11 @@ end)
 
 local preprocess = function(raw)
   local tbl = {}
-  tbl.signature = raw.activeSignature and raw.activeSignature or 1
+  tbl.signature = (
+    raw.result.activeSignature and raw.result.activeSignature or 0
+  ) + 1
   tbl.parameter = (
-    raw.activeParameter and raw.activeParameter
+    raw.result.activeParameter and raw.result.activeParameter
     or raw.result.signatures[tbl.signature].activeParameter
   ) + 1
 
@@ -21,7 +23,12 @@ local preprocess = function(raw)
     }
 
     for j = 1, #s.parameters do
-      table.insert(tbl[i].labels, s.parameters[j].label)
+      if type(s.parameters[j].label) == 'string' then
+        local pos = { s.label:find(s.parameters[j].label, 0, true) }
+        table.insert(tbl[i].labels, { pos[1] - 1, pos[2] })
+      else
+        table.insert(tbl[i].labels, s.parameters[j].label)
+      end
     end
   end
 
