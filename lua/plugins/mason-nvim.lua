@@ -42,6 +42,7 @@ return {
     local ui = require('lsp.ui')
     local on_attach = function()
       key.nnmap('K', vim.lsp.buf.hover, { buffer = 0 })
+      key.nnmap('<leader>fb', vim.lsp.buf.format, { buffer = 0 })
       key.nnmap('<leader>rf', vim.lsp.buf.references, { buffer = 0 })
 
       key.nnmap('gd', ui.def.peek, { buffer = 0 })
