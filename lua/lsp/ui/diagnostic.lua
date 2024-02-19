@@ -106,7 +106,7 @@ local open = function(raw)
     vim.fn.cursor({ proc[#proc].ln, proc[#proc].col })
   end
 
-  local data = L.win.open_cursor(content, false, false, {
+  local data = L.win.open_cursor(content, false, {
     title = {
       proc.title.icon,
       { 'Diagnostics ', 'FloatTitle' },
@@ -119,6 +119,7 @@ local open = function(raw)
       proc.title.icon[1]:len() + ('Diagnostics '):len() + proc.title.loc:len()
     ),
   })
+
   set_highlights(data.nbuf, proc)
 
   L.cmd.event(

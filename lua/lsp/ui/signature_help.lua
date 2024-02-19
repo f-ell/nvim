@@ -62,13 +62,14 @@ local open = function(raw)
   local proc = preprocess(raw)
   local content = format(proc)
 
-  local data = L.win.open_cursor(content, false, false, {
+  local data = L.win.open_cursor(content, false, {
     title = {
       { ' ' .. signs[3].text, signs[3].texthl },
       { 'Signature ', 'FloatTitle' },
     },
     zindex = 2,
   })
+
   set_highlights(data.nbuf, proc)
 
   L.cmd.event(

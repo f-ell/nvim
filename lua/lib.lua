@@ -448,14 +448,13 @@ M.win.is_cur_valid = function(window)
   )
 end
 
----Open floating window holding a scratch buffer.
+---Open floating window.
 ---
 ---@param lines number|string[] buffer number or line-array
----@param modifiable boolean
 ---@param enter boolean
----@param config table?
+---@param config table? config passed to `nvim_open_win`
 ---@return WinData
-M.win.open = function(lines, modifiable, enter, config)
+M.win.open = function(lines, enter, config)
   ---@type WinData
   local data = {
     obuf = vim.api.nvim_get_current_buf(),
@@ -471,25 +470,22 @@ M.win.open = function(lines, modifiable, enter, config)
     ),
   }
 
-  if type(lines) == 'number' then
-    data.nbuf = lines
-  else
-    data.nbuf = vim.api.nvim_create_buf(false, true)
-  end
-
-  local conf = vim.tbl_extend('keep', config or {}, {
+  ---@diagnostic disable-next-line: redefined-local
+  local config = vim.tbl_extend('keep', config or {}, {
     relative = type(lines) == 'table' and 'cursor' or 'editor',
     anchor = 'NW',
     row = 1,
     col = type(lines) == 'table' and -1
       or math.floor((vim.o.columns * (1 - M.win.__EW)) / 2),
-
     width = data.width,
     height = data.height,
     border = 'single',
   })
 
-  data.nwin = vim.api.nvim_open_win(data.nbuf, enter, conf)
+  data.nbuf = type(lines) == 'number' and lines
+    or vim.api.nvim_create_buf(false, true)
+  data.nwin = vim.api.nvim_open_win(data.nbuf, enter, config)
+
   if type(lines) == 'table' then
     vim.api.nvim_buf_set_lines(data.nbuf, 0, -1, true, lines)
   else
@@ -497,11 +493,9 @@ M.win.open = function(lines, modifiable, enter, config)
   end
 
   vim.bo[data.nbuf].bufhidden = 'wipe'
-  vim.bo[data.nbuf].modifiable = modifiable
-  -- FIX: change / conditionally set this?
+  vim.bo[data.nbuf].modifiable = false
   if type(lines) == 'table' then
     vim.wo[data.nwin].wrap = true
-    vim.bo[data.nbuf].wrapmargin = 0
   end
 
   return data
@@ -510,31 +504,28 @@ end
 ---Wraps win.open(), with default position centered relative to editor.
 ---
 ---@param lines number|string[] buffer number or line array
----@param modifiable boolean
 ---@param enter boolean
----@param config table?
+---@param config table? config passed to `nvim_open_win`
 ---@return WinData
-M.win.open_center = function(lines, modifiable, enter, config)
+M.win.open_center = function(lines, enter, config)
   local conf = vim.tbl_extend('keep', config or {}, {
     relative = 'editor',
     anchor = 'NW',
     row = math.floor((vim.o.lines * (1 - M.win.__EW)) / 2) + M.win.__voffset(),
     col = math.floor((vim.o.columns * (1 - M.win.__EW)) / 2),
   })
-  return M.win.open(lines, modifiable, enter, conf)
+  return M.win.open(lines, enter, conf)
 end
 
 ---Wraps win.open(), with default position at cursor.
 ---Sets `style = 'minimal'` by default.
 ---
 ---@param lines number|string[] buffer number or line array
----@param modifiable boolean
 ---@param enter boolean
----@param config table?
+---@param config table? config passed to `nvim_open_win`
 ---@return WinData
-M.win.open_cursor = function(lines, modifiable, enter, config)
+M.win.open_cursor = function(lines, enter, config)
   local anchor, row = M.win.anchor_offset()
-
   local conf = vim.tbl_extend('keep', config or {}, {
     relative = 'cursor',
     anchor = anchor,
@@ -542,7 +533,7 @@ M.win.open_cursor = function(lines, modifiable, enter, config)
     col = -1,
     style = 'minimal',
   })
-  return M.win.open(lines, modifiable, enter, conf)
+  return M.win.open(lines, enter, conf)
 end
 
 ---------------------------------------------------------------------------- key

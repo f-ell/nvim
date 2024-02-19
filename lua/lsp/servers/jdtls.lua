@@ -3,6 +3,13 @@
 local msn = vim.fn.stdpath('data')..'/mason'
 local mpc = msn..'/packages'
 
+-- local commands = require('utils.jdtls_extensions').commands
+-- if vim.lsp.commands then
+--   for k, v in pairs(commands) do
+--     vim.lsp.commands[k] = v
+--   end
+-- end
+
 return {
   cmd = {
     msn..'/bin/jdtls',

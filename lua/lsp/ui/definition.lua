@@ -80,12 +80,14 @@ local open = function(raw)
     return
   end
 
-  local data = L.win.open_center(bufnr, true, true, {
+  local data = L.win.open_center(bufnr, true, {
     title = ' ' .. vim.fn.fnamemodify(vim.fn.bufname(bufnr), ':t') .. ' ',
     zindex = 1,
     style = '',
   })
+
   vim.bo[data.nbuf].bufhidden = 'hide'
+  vim.bo[data.nbuf].modifiable = true
 
   set_highlights(data.nbuf, proc)
   register_float_actions(data.nbuf, data.nwin)

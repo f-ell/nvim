@@ -67,7 +67,7 @@ local open = function(raw)
   local w = math.min(len < min_w and min_w or len + 1, max_w)
 
   vim.api.nvim_win_set_cursor(0, { raw.pos[1] + 1, raw.pos[2] })
-  local data = L.win.open_cursor({ raw.cword }, true, true, {
+  local data = L.win.open_cursor({ raw.cword }, true, {
     title = {
       { ' ' .. signs[3].text, signs[3].texthl },
       { 'Rename ', 'FloatTitle' },
@@ -81,6 +81,8 @@ local open = function(raw)
   data.old = raw.cword
   data.refs = raw.refs
   data.path = raw.path
+
+  vim.bo[data.nbuf].modifiable = true
 
   set_highlights(data)
   register_float_actions(data)

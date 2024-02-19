@@ -167,7 +167,7 @@ local open = function(raw)
   local proc = preprocess(raw)
   local content = format(proc)
 
-  local data = L.win.open_cursor(content, false, true, {
+  local data = L.win.open_cursor(content, true, {
     title = {
       { ' ' .. signs[3].text, signs[3].texthl },
       { 'Code Actions ', 'FloatTitle' },
