@@ -6,17 +6,33 @@ local signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
 end)
 
 local preprocess = function(raw)
-  local tbl = {}
+  local res = raw.res
+  local tbl = { active = raw.active }
+
+  local i0, i1
+  local sig = res.result.signatures[1]
+
+  -- stupid lsp spec. just send the darn location.
+  if type(sig.parameters[1].label) == 'string' then
+    i0 = ({ sig.label:find(sig.parameters[1].label) })[1] - 1
+    i1 = ({ sig.label:find(sig.parameters[#sig.parameters].label) })[2] + 1
+  else
+    i0 = sig.parameters[1].label[1]
+    i1 = sig.parameters[#sig.parameters].label[2] + 1
+  end
+
+  tbl.title = sig.label:sub(0, i0) .. '...' .. sig.label:sub(i1) .. ' '
+
   tbl.signature = (
-    raw.result.activeSignature and raw.result.activeSignature or 0
+    res.result.activeSignature and res.result.activeSignature or 0
   ) + 1
   tbl.parameter = (
-    raw.result.activeParameter and raw.result.activeParameter
-    or raw.result.signatures[tbl.signature].activeParameter
+    res.result.activeParameter and res.result.activeParameter
+    or res.result.signatures[tbl.signature].activeParameter
   ) + 1
 
-  for i = 1, #raw.result.signatures do
-    local s = raw.result.signatures[i]
+  for i = 1, #res.result.signatures do
+    local s = res.result.signatures[i]
     tbl[i] = {
       sig = s.label,
       labels = {},
@@ -36,26 +52,61 @@ local preprocess = function(raw)
 end
 
 local format = function(proc)
-  return {
-    proc[proc.signature].sig:sub(
-      proc[proc.signature].labels[1][1] + 1,
-      proc[proc.signature].labels[#proc[proc.signature].labels][2]
-    ),
-  }
+  if proc.active then
+    return {
+      proc[proc.signature].sig:sub(
+        proc[proc.signature].labels[1][1] + 1,
+        proc[proc.signature].labels[#proc[proc.signature].labels][2]
+      ),
+    }
+  end
+
+  local tbl = {}
+
+  for i = 1, #proc do
+    table.insert(
+      tbl,
+      i
+        .. ' '
+        .. proc[i].sig:sub(
+          proc[i].labels[1][1] + 1,
+          proc[i].labels[#proc[i].labels][2]
+        )
+    )
+  end
+
+  return tbl
 end
 
 local set_highlights = function(bufnr, proc)
-  local offset = proc[proc.signature].sig:len()
-    - proc[proc.signature].sig:sub(proc[proc.signature].labels[1][1] + 1):len()
+  if proc.active then
+    local offset = proc[proc.signature].sig:len()
+      - proc[proc.signature].sig
+        :sub(proc[proc.signature].labels[1][1] + 1)
+        :len()
 
-  vim.api.nvim_buf_add_highlight(
-    bufnr,
-    -1,
-    'Search',
-    0,
-    proc[proc.signature].labels[proc.parameter][1] - offset,
-    proc[proc.signature].labels[proc.parameter][2] - offset
-  )
+    vim.api.nvim_buf_add_highlight(
+      bufnr,
+      -1,
+      'Search',
+      0,
+      proc[proc.signature].labels[proc.parameter][1] - offset,
+      proc[proc.signature].labels[proc.parameter][2] - offset
+    )
+
+    return
+  end
+
+  for i = 1, #proc do
+    vim.api.nvim_buf_add_highlight(
+      bufnr,
+      -1,
+      signs[i % #signs ~= 0 and i % #signs or #signs].texthl,
+      i - 1,
+      0,
+      string.len(i)
+    )
+  end
 end
 
 local open = function(raw)
@@ -66,6 +117,7 @@ local open = function(raw)
     title = {
       { ' ' .. signs[3].text, signs[3].texthl },
       { 'Signature ', 'FloatTitle' },
+      { proc.title, 'NeutralFloat' },
     },
     zindex = 2,
   })
@@ -81,7 +133,7 @@ local open = function(raw)
   )
 end
 
-local try_signature_help = function()
+local try_signature_help = function(active)
   local params = vim.lsp.util.make_position_params()
 
   local res = L.lsp.request(
@@ -97,11 +149,14 @@ local try_signature_help = function()
       return
     end
 
-    open(res)
+    open({ res = res, active = active })
   end
 end
 
-M.signature_help = function()
-  try_signature_help()
+M.active = function()
+  try_signature_help(true)
+end
+M.available = function()
+  try_signature_help(false)
 end
 return M
