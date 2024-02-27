@@ -204,30 +204,37 @@ end
 ---Get all lsp clients with capability "<cap> .. 'Provider'" attached to the
 ---buffer.
 ---
----@param cap string
+---@param capabilities string|string[]
 ---@param filter (fun(client:LspClient):boolean)? determines whether a client is returned
 ---@return LspClient[] clients matching lsp clients
-M.lsp.clients_by_cap = function(cap, filter)
-  local capable = {}
-  local available = vim.lsp.get_active_clients({
-    buffer = vim.api.nvim_get_current_buf(),
-  })
+M.lsp.clients_by_cap = function(capabilities, filter)
+  local clients = vim.tbl_filter(
+    function(client)
+      if type(capabilities) == 'string' then
+        return not not client.server_capabilities[capabilities .. 'Provider']
+      end
 
-  for i = 1, #available do
-    if available[i].server_capabilities[cap .. 'Provider'] then
-      if filter == nil then
-        table.insert(capable, available[i])
+      for i = 1, #capabilities do
+        if not client.server_capabilities[capabilities[i] .. 'Provider'] then
+          return false
+        end
       end
-      if filter ~= nil and filter(available[i]) then
-        table.insert(capable, available[i])
-      end
-    end
+
+      return true
+    end,
+    vim.lsp.get_active_clients({
+      buffer = vim.api.nvim_get_current_buf(),
+    })
+  )
+
+  if filter then
+    clients = vim.tbl_filter(filter, clients)
   end
 
-  if #capable == 0 then
+  if #clients == 0 then
     vim.notify('No suitable client found.', 3)
   end
-  return capable
+  return clients
 end
 
 ---Get response from all passed-in clients.
