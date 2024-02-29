@@ -6,16 +6,6 @@ return {
   config = function()
     local null = require('null-ls')
     local sources = {
-      eslint_d = {
-        command = 'eslint_d',
-        condition = function(utils)
-          return utils.root_has_file({
-            '.eslintrc.js',
-            '.eslintrc.json',
-            '.eslintrc.yml',
-          })
-        end,
-      },
       prettier_d = {
         command = 'prettierd',
         condition = function(utils)
@@ -47,8 +37,6 @@ return {
       end,
 
       sources = {
-        null.builtins.code_actions.eslint_d.with(sources.eslint_d),
-        null.builtins.diagnostics.eslint_d.with(sources.eslint_d),
         null.builtins.formatting.prettierd.with(sources.prettier_d),
         null.builtins.formatting.stylua.with(sources.stylua),
       },
