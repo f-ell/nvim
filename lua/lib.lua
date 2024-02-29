@@ -437,7 +437,7 @@ end
 ---@param base number? window id to make the new active window
 ---@param pos {[1]:number,[2]:number}? (1,0)-indexed cursor position
 M.win.close = function(window, base, pos)
-  if not vim.api.nvim_win_is_valid(window) then
+  if not window or not vim.api.nvim_win_is_valid(window) then
     return
   end
   vim.api.nvim_win_close(window, true)
