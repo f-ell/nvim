@@ -456,7 +456,7 @@ M:add_component({
       end,
     },
     {
-      'DiagnosticChanged',
+      { 'BufEnter', 'DiagnosticChanged' },
       function(self)
         self.meta.diagnostics = {
           count = { 0, 0, 0, 0 },
