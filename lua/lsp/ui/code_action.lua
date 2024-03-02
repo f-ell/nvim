@@ -1,11 +1,35 @@
 local L = require('lib')
+
+---@class (exact) LspUiModuleCodeAction:LspUiModule
+---@field codeaction fun()
+
+---@type LspUiModuleCodeAction
+---@diagnostic disable-next-line: missing-fields
 local M = {}
 
-local signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
-  return vim.startswith(s.name, 'DiagnosticSign')
-end)
+M._util = {
+  signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
+    return vim.startswith(s.name, 'DiagnosticSign')
+  end),
+}
 
-local preprocess = function(raw)
+function M.codeaction()
+  local params = vim.lsp.util.make_range_params()
+  params.context = { diagnostics = vim.lsp.diagnostic.get_line_diagnostics(0) }
+
+  local res = L.lsp.request(
+    L.lsp.clients_by_cap('codeAction'),
+    'textDocument/codeAction',
+    params,
+    0
+  )
+
+  if not L.tbl.is_empty(res) then
+    M:_open(res)
+  end
+end
+
+function M:_preprocess(raw)
   local tbl = {}
 
   for i = 1, #raw do
@@ -30,7 +54,7 @@ local preprocess = function(raw)
   return tbl
 end
 
-local format = function(proc)
+function M:_format(proc)
   local tbl = {}
 
   for i = 1, #proc do
@@ -47,7 +71,7 @@ local format = function(proc)
   return tbl
 end
 
-local set_highlights = function(bufnr, proc)
+function M:_set_highlights(bufnr, proc)
   local offset = -1
 
   for i = 1, #proc do
@@ -56,7 +80,7 @@ local set_highlights = function(bufnr, proc)
     vim.api.nvim_buf_add_highlight(
       bufnr,
       -1,
-      signs[i % #signs ~= 0 and i % #signs or #signs].texthl,
+      self._util.signs[i % #self._util.signs ~= 0 and i % #self._util.signs or #self._util.signs].texthl,
       offset + i,
       0,
       len
@@ -76,7 +100,7 @@ local set_highlights = function(bufnr, proc)
   end
 end
 
-local register_float_actions = function(data)
+function M:_register_float_actions(data)
   local do_action = function(num)
     L.win.close(data.nwin)
 
@@ -163,13 +187,13 @@ local register_float_actions = function(data)
   end)
 end
 
-local open = function(raw)
-  local proc = preprocess(raw)
-  local content = format(proc)
+function M:_open(raw)
+  local proc = self:_preprocess(raw)
+  local content = self:_format(proc)
 
   local data = L.win.open_cursor(content, true, {
     title = {
-      { ' ' .. signs[3].text, signs[3].texthl },
+      { ' ' .. self._util.signs[3].text, self._util.signs[3].texthl },
       { 'Code Actions ', 'FloatTitle' },
     },
     zindex = 2,
@@ -177,28 +201,9 @@ local open = function(raw)
   data.proc = proc
   data.res = raw
 
-  set_highlights(data.nbuf, proc)
+  self:_set_highlights(data.nbuf, proc)
   vim.api.nvim_win_set_cursor(data.nwin, { 1, 0 })
-  register_float_actions(data)
+  self:_register_float_actions(data)
 end
 
-local try_action = function()
-  local params = vim.lsp.util.make_range_params()
-  params.context = { diagnostics = vim.lsp.diagnostic.get_line_diagnostics(0) }
-
-  local res = L.lsp.request(
-    L.lsp.clients_by_cap('codeAction'),
-    'textDocument/codeAction',
-    params,
-    0
-  )
-
-  if not L.tbl.is_empty(res) then
-    open(res)
-  end
-end
-
-M.codeaction = function()
-  try_action()
-end
 return M

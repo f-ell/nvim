@@ -1,11 +1,79 @@
 local L = require('lib')
+
+---@class (exact) LspUiModuleDiagnostic:LspUiModule
+---@field goto_next fun()
+---@field goto_prev fun()
+---@field get_line fun()
+
+---@type LspUiModuleDiagnostic
+---@diagnostic disable-next-line: missing-fields
 local M = {}
 
-local signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
-  return vim.startswith(s.name, 'DiagnosticSign')
-end)
+M._util = {
+  signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
+    return vim.startswith(s.name, 'DiagnosticSign')
+  end),
+}
 
-local preprocess = function(raw)
+function M.goto_next()
+  local pos = vim.diagnostic.get_next_pos()
+
+  if not pos then
+    vim.notify('No diagnostics available.', 2)
+    return
+  end
+
+  local diag = vim.fn.filter(
+    vim.diagnostic.get(0, { lnum = pos[1] }),
+    function(_, d)
+      return d.col == pos[2]
+    end
+  )
+
+  if #diag == 0 then
+    vim.notify('No diagnostics found at location.', 3)
+    return
+  end
+
+  M:_open({ type = 'dir', diag = diag })
+end
+
+function M.goto_prev()
+  local pos = vim.diagnostic.get_prev_pos()
+
+  if not pos then
+    vim.notify('No diagnostics available.', 2)
+    return
+  end
+
+  local diag = vim.fn.filter(
+    vim.diagnostic.get(0, { lnum = pos[1] }),
+    function(_, d)
+      return d.col == pos[2]
+    end
+  )
+
+  if #diag == 0 then
+    vim.notify('No diagnostics found at location.', 3)
+    return
+  end
+
+  M:_open({ type = 'dir', diag = diag })
+end
+
+function M.get_line()
+  local pos = vim.fn.getcurpos()
+  local diag = vim.diagnostic.get(0, { lnum = pos[2] - 1 })
+
+  if #diag == 0 then
+    vim.notify('No diagnostics found at location.', 3)
+    return
+  end
+
+  M:_open({ type = 'line', diag = diag })
+end
+
+function M:_preprocess(raw)
   local diag = raw.diag
   local tbl = {
     title = {},
@@ -32,21 +100,22 @@ local preprocess = function(raw)
     -- WARN: unstable use of character class
     table.insert(tbl[i].data, diag[i].message:match('[\r\n]*([^\r\n]*)$'))
 
-    tbl[i].data[1] = signs[tbl[i].sev].text .. tbl[i].data[1]
+    tbl[i].data[1] = self._util.signs[tbl[i].sev].text .. tbl[i].data[1]
   end
 
   for i = 1, #tbl do
     for j = 2, #tbl[i].data do
-      tbl[i].data[j] = (' '):rep(vim.fn.strdisplaywidth(signs[tbl[i].sev].text))
-        .. tbl[i].data[j]
+      tbl[i].data[j] = (' '):rep(
+        vim.fn.strdisplaywidth(self._util.signs[tbl[i].sev].text)
+      ) .. tbl[i].data[j]
     end
   end
 
   tbl.title.icon = raw.type == 'line'
-      and { ' ' .. signs[3].text, signs[3].texthl }
+      and { ' ' .. self._util.signs[3].text, self._util.signs[3].texthl }
     or {
-      ' ' .. signs[tbl[1].sev].text,
-      signs[tbl[1].sev].texthl,
+      ' ' .. self._util.signs[tbl[1].sev].text,
+      self._util.signs[tbl[1].sev].texthl,
     }
   tbl.title.loc = (
     raw.type == 'line' and tbl[1].ln or tbl[1].ln .. ':' .. tbl[1].vcol
@@ -55,7 +124,7 @@ local preprocess = function(raw)
   return tbl
 end
 
-local format = function(proc)
+function M:_format(proc)
   local tbl = {}
 
   for i = 1, #proc do
@@ -71,14 +140,14 @@ local format = function(proc)
   return tbl
 end
 
-local set_highlights = function(bufnr, proc)
+function M:_set_highlights(bufnr, proc)
   local offset = -1
 
   for i = 1, #proc do
     vim.api.nvim_buf_add_highlight(
       bufnr,
       -1,
-      signs[proc[i].sev].texthl,
+      self._util.signs[proc[i].sev].texthl,
       offset + i,
       0,
       vim.fn.byteidx(proc[i].data[1], 1)
@@ -98,9 +167,9 @@ local set_highlights = function(bufnr, proc)
   end
 end
 
-local open = function(raw)
-  local proc = preprocess(raw)
-  local content = format(proc)
+function M:_open(raw)
+  local proc = self:_preprocess(raw)
+  local content = self:_format(proc)
 
   if proc.type == 'dir' then
     vim.fn.cursor({ proc[#proc].ln, proc[#proc].col })
@@ -120,7 +189,7 @@ local open = function(raw)
     ),
   })
 
-  set_highlights(data.nbuf, proc)
+  self:_set_highlights(data.nbuf, proc)
 
   L.cmd.event(
     { 'BufLeave', 'CursorMoved', 'InsertEnter', 'WinNew' },
@@ -131,30 +200,4 @@ local open = function(raw)
   )
 end
 
-local try_diagnostic = function(type, pos)
-  local diag = vim.diagnostic.get(0, { lnum = pos[1] })
-
-  if type == 'dir' then
-    diag = vim.fn.filter(diag, function(_, d)
-      return d.col == pos[2]
-    end)
-  end
-
-  if #diag == 0 then
-    return vim.notify('No diagnostics found.', 2)
-  end
-
-  open({ type = type, diag = diag })
-end
-
-M.goto_next = function()
-  try_diagnostic('dir', vim.diagnostic.get_next_pos() or { 0, 0 })
-end
-M.goto_prev = function()
-  try_diagnostic('dir', vim.diagnostic.get_prev_pos() or { 0, 0 })
-end
-M.get_line = function()
-  local pos = vim.fn.getcurpos()
-  try_diagnostic('line', { pos[2] - 1, pos[3] - 1 })
-end
 return M

@@ -1,11 +1,81 @@
 local L = require('lib')
+
+---@class (exact) LspUiModuleDefinition:LspUiModule
+---@field peek fun(self:LspUiModule)
+---@field open fun(self:LspUiModule)
+---@field type fun(self:LspUiModule)
+
+---@type LspUiModuleDefinition
+---@diagnostic disable-next-line: missing-fields
 local M = {}
 
-local signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
-  return vim.startswith(s.name, 'DiagnosticSign')
-end)
+M._util = {
+  definition = {},
+  signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
+    return vim.startswith(s.name, 'DiagnosticSign')
+  end),
+}
 
-local _def_highlight = function(bufnr, def)
+function M.peek()
+  local clients = L.lsp.clients_by_cap('definition')
+  local res = L.lsp.request(
+    clients,
+    'textDocument/definition',
+    vim.lsp.util.make_position_params(),
+    0
+  )
+  if L.tbl.is_empty(res) then
+    return
+  end
+
+  M:_open({
+    cword = vim.fn.expand('<cword>'),
+    clients = clients,
+    res = res,
+    peek = true,
+  })
+end
+
+function M.open()
+  local clients = L.lsp.clients_by_cap('definition')
+  local res = L.lsp.request(
+    clients,
+    'textDocument/definition',
+    vim.lsp.util.make_position_params(),
+    0
+  )
+  if L.tbl.is_empty(res) then
+    return
+  end
+
+  M:_open({
+    cword = vim.fn.expand('<cword>'),
+    clients = clients,
+    res = res,
+    peek = false,
+  })
+end
+
+function M.type()
+  local clients = L.lsp.clients_by_cap('typeDefinition')
+  local res = L.lsp.request(
+    clients,
+    'textDocument/typeDefinition',
+    vim.lsp.util.make_position_params(),
+    0
+  )
+  if L.tbl.is_empty(res) then
+    return
+  end
+
+  M:_open({
+    cword = vim.fn.expand('<cword>'),
+    clients = clients,
+    res = res,
+  })
+end
+
+function M._util.definition.set_highlights(bufnr, def)
   local nsid = vim.api.nvim_create_namespace('LspUi')
   vim.api.nvim_buf_clear_namespace(bufnr, nsid, 0, -1)
 
@@ -37,7 +107,7 @@ local _def_highlight = function(bufnr, def)
   end, { buffer = true, remap = false })
 end
 
-local _def_actions = function(bufnr, winnr)
+function M._util.definition.register_float_actions(bufnr, winnr)
   local nsid = vim.api.nvim_create_namespace('LspUi')
   if winnr == nil then
     return
@@ -57,7 +127,7 @@ local _def_actions = function(bufnr, winnr)
   end)
 end
 
-local _def_open = function(data, index)
+function M._util.definition.open(data, index)
   L.win.close(data.nwin)
 
   local proc = data.proc
@@ -65,7 +135,7 @@ local _def_open = function(data, index)
 
   if not proc.peek or bufnr == vim.api.nvim_get_current_buf() then
     vim.api.nvim_win_set_buf(data.owin, bufnr)
-    _def_highlight(bufnr, proc.def[index])
+    M._util.definition.set_highlights(bufnr, proc.def[index])
     vim.api.nvim_win_set_cursor(data.owin, proc.def[index].start)
     return
   end
@@ -80,15 +150,13 @@ local _def_open = function(data, index)
   vim.bo[data.nbuf].bufhidden = 'hide'
   vim.bo[data.nbuf].modifiable = true
 
-  _def_highlight(data.nbuf, proc.def[index])
-  _def_actions(data.nbuf, data.nwin)
+  M._util.definition.set_highlights(data.nbuf, proc.def[index])
+  M._util.definition.register_float_actions(data.nbuf, data.nwin)
   vim.api.nvim_win_set_cursor(data.nwin, proc.def[index].start)
   vim.cmd('norm! zt')
 end
 
---------------------------------------------------------------------------------
-
-local preprocess = function(raw)
+function M:_preprocess(raw)
   local tbl = { cword = raw.cword, peek = raw.peek, def = {} }
 
   local workspace_folders = {}
@@ -180,7 +248,7 @@ local preprocess = function(raw)
   return tbl
 end
 
-local format = function(proc)
+function M:_format(proc)
   local tbl = {}
 
   for i = 1, #proc.def do
@@ -198,14 +266,14 @@ local format = function(proc)
   return tbl
 end
 
-local set_highlights = function(bufnr, proc)
+function M:_set_highlights(bufnr, proc)
   for i = 1, #proc.def do
     local len = string.len(i)
 
     vim.api.nvim_buf_add_highlight(
       bufnr,
       -1,
-      signs[i % #signs ~= 0 and i % #signs or #signs].texthl,
+      self._util.signs[i % #self._util.signs ~= 0 and i % #self._util.signs or #self._util.signs].texthl,
       i - 1,
       0,
       len
@@ -221,18 +289,18 @@ local set_highlights = function(bufnr, proc)
   end
 end
 
-local register_float_actions = function(data)
+function M:_register_float_actions(data)
   L.key.nnmap('<C-c>', function()
     L.win.close(data.nwin)
   end, { buffer = true })
 
   L.key.nnmap('<CR>', function()
-    _def_open(data, vim.fn.line('.'))
+    M._util.definition.open(data, vim.fn.line('.'))
   end, { buffer = true })
 
   for i = 1, #data.proc.def do
     L.key.nnmap(tostring(i), function()
-      _def_open(data, i)
+      M._util.definition.open(data, i)
     end, { buffer = true })
   end
 
@@ -245,71 +313,26 @@ local register_float_actions = function(data)
   end)
 end
 
-local open = function(raw)
-  local proc = preprocess(raw)
-  local content = format(proc)
+function M:_open(raw)
+  local proc = self:_preprocess(raw)
+  local content = self:_format(proc)
 
   if #proc.def == 1 then
-    -- HACK: not clean, easiest way to integrate
-    _def_open({ owin = 0, proc = proc }, 1)
+    self._util.definition.open({ owin = 0, proc = proc }, 1)
     return
   end
 
   local data = L.win.open_cursor(content, true, {
     title = {
-      { ' ' .. signs[3].text, signs[3].texthl },
+      { ' ' .. self._util.signs[3].text, self._util.signs[3].texthl },
       { 'Definition ', 'FloatTitle' },
     },
     zindex = 2,
   })
   data.proc = proc
 
-  set_highlights(data.nbuf, data.proc)
-  register_float_actions(data)
+  self:_set_highlights(data.nbuf, proc)
+  self:_register_float_actions(data)
 end
 
-local try_definition = function(peek)
-  local clients = L.lsp.clients_by_cap('definition')
-  local res = L.lsp.request(
-    clients,
-    'textDocument/definition',
-    vim.lsp.util.make_position_params(),
-    0
-  )
-  if L.tbl.is_empty(res) then
-    return
-  end
-
-  open({
-    cword = vim.fn.expand('<cword>'),
-    clients = clients,
-    res = res,
-    peek = peek,
-  })
-end
-
-local try_type_defintion = function()
-  local clients = L.lsp.clients_by_cap('typeDefinition')
-  local res = L.lsp.request(
-    clients,
-    'textDocument/typeDefinition',
-    vim.lsp.util.make_position_params(),
-    0
-  )
-  if L.tbl.is_empty(res) then
-    return
-  end
-
-  open({ cword = vim.fn.expand('<cword>'), clients = clients, res = res })
-end
-
-M.peek = function()
-  try_definition(true)
-end
-M.open = function()
-  try_definition(false)
-end
-M.type = function()
-  try_type_defintion()
-end
 return M

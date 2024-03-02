@@ -1,11 +1,60 @@
 local L = require('lib')
+
+---@class (exact) LspUiModuleSignatureHelp:LspUiModule
+---@field active fun()
+---@field available fun()
+
+---@type LspUiModuleSignatureHelp
+---@diagnostic disable-next-line: missing-fields
 local M = {}
 
-local signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
-  return vim.startswith(s.name, 'DiagnosticSign')
-end)
+M._util = {
+  signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
+    return vim.startswith(s.name, 'DiagnosticSign')
+  end),
+}
 
-local preprocess = function(raw)
+M.active = function()
+  local params = vim.lsp.util.make_position_params()
+
+  local res = L.lsp.request(
+    L.lsp.clients_by_cap('signatureHelp'),
+    'textDocument/signatureHelp',
+    params,
+    0
+  )[1]
+
+  if not L.tbl.is_empty(res) then
+    if L.tbl.is_empty(res.result.signatures) then
+      vim.notify('No signature help available.', 3)
+      return
+    end
+
+    M:_open({ res = res, active = true })
+  end
+end
+
+M.available = function()
+  local params = vim.lsp.util.make_position_params()
+
+  local res = L.lsp.request(
+    L.lsp.clients_by_cap('signatureHelp'),
+    'textDocument/signatureHelp',
+    params,
+    0
+  )[1]
+
+  if not L.tbl.is_empty(res) then
+    if L.tbl.is_empty(res.result.signatures) then
+      vim.notify('No signature help available.', 3)
+      return
+    end
+
+    M:_open({ res = res, active = false })
+  end
+end
+
+function M:_preprocess(raw)
   local res = raw.res
   local tbl = { active = raw.active }
 
@@ -51,7 +100,7 @@ local preprocess = function(raw)
   return tbl
 end
 
-local format = function(proc)
+function M:_format(proc)
   if proc.active then
     return {
       proc[proc.signature].sig:sub(
@@ -78,7 +127,7 @@ local format = function(proc)
   return tbl
 end
 
-local set_highlights = function(bufnr, proc)
+function M:_set_highlights(bufnr, proc)
   if proc.active then
     local offset = proc[proc.signature].sig:len()
       - proc[proc.signature].sig
@@ -101,7 +150,7 @@ local set_highlights = function(bufnr, proc)
     vim.api.nvim_buf_add_highlight(
       bufnr,
       -1,
-      signs[i % #signs ~= 0 and i % #signs or #signs].texthl,
+      self._util.signs[i % #self._util.signs ~= 0 and i % #self._util.signs or #self._util.signs].texthl,
       i - 1,
       0,
       string.len(i)
@@ -109,20 +158,20 @@ local set_highlights = function(bufnr, proc)
   end
 end
 
-local open = function(raw)
-  local proc = preprocess(raw)
-  local content = format(proc)
+function M:_open(raw)
+  local proc = self:_preprocess(raw)
+  local content = self:_format(proc)
 
   local data = L.win.open_cursor(content, false, {
     title = {
-      { ' ' .. signs[3].text, signs[3].texthl },
+      { ' ' .. self._util.signs[3].text, self._util.signs[3].texthl },
       { 'Signature ', 'FloatTitle' },
       { proc.title, 'NeutralFloat' },
     },
     zindex = 2,
   })
 
-  set_highlights(data.nbuf, proc)
+  self:_set_highlights(data.nbuf, proc)
 
   L.cmd.event(
     { 'BufLeave', 'CursorMoved', 'InsertLeave', 'TextChangedI', 'WinNew' },
@@ -133,30 +182,4 @@ local open = function(raw)
   )
 end
 
-local try_signature_help = function(active)
-  local params = vim.lsp.util.make_position_params()
-
-  local res = L.lsp.request(
-    L.lsp.clients_by_cap('signatureHelp'),
-    'textDocument/signatureHelp',
-    params,
-    0
-  )[1]
-
-  if not L.tbl.is_empty(res) then
-    if L.tbl.is_empty(res.result.signatures) then
-      vim.notify('No signature help available.', 3)
-      return
-    end
-
-    open({ res = res, active = active })
-  end
-end
-
-M.active = function()
-  try_signature_help(true)
-end
-M.available = function()
-  try_signature_help(false)
-end
 return M
