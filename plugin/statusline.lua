@@ -549,12 +549,25 @@ M:add_component({
   end,
 }, {
   name = 'search',
-  get = function()
-    local search = vim.fn.searchcount({ maxcount = 98 })
-    local current = search.current
+  meta = {
+    search = {
+      current = 0,
+      exact_match = 0,
+      total = '?',
+      incomplete = 0,
+    },
+  },
+  get = function(self)
+    local _, search = pcall(vim.fn.searchcount, { maxcount = 98 })
+
+    if not _ then
+      search = self.meta.search
+    else
+      self.meta.search = search
+    end
 
     if search.exact_match == 0 then
-      current = 0
+      search.current = 0
     end
     if search.incomplete == 1 then
       search.total = '?'
@@ -562,7 +575,7 @@ M:add_component({
 
     return table.concat({
       '%#StatuslineSearch#%#Statusline#',
-      current .. '/' .. search.total,
+      search.current .. '/' .. search.total,
     }, ' ')
   end,
 }, {
