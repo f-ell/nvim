@@ -14,11 +14,15 @@ M._util = {
 }
 
 M.rename = function()
-  local client = L.lsp.clients_by_cap('references')
   local params = vim.lsp.util.make_position_params(0)
   params.context = { includeDeclaration = true }
 
-  local res = L.lsp.request(client, 'textDocument/references', params, 0)
+  local res = L.lsp.request(
+    L.lsp.clients_by_cap('references'),
+    'textDocument/references',
+    params,
+    0
+  )
   if L.tbl.is_empty(res) then
     return
   end

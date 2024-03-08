@@ -130,15 +130,18 @@ function M:_register_float_actions(data)
         return
       end
 
-      L.lsp.request({ client }, 'workspace/executeCommand', {
+      L.lsp.request(client, 'workspace/executeCommand', {
         command = cmd.command,
         arguments = cmd.arguments,
         workDoneToken = cmd.workDoneToken,
       }, 0)
     else
-      local client = vim.lsp.get_client_by_id(act.id)
-      local resolved =
-        L.lsp.request({ client }, 'codeAction/resolve', res, 0)[1]
+      local resolved = L.lsp.request(
+        vim.lsp.get_client_by_id(act.id),
+        'codeAction/resolve',
+        res,
+        0
+      )[1]
 
       if resolved then
         L.lsp.apply_edit(resolved)

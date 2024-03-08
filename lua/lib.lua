@@ -171,7 +171,20 @@ end
 ---------------------------------------------------------------------------- lsp
 
 ---@class LspClient
----@field [any] any
+---@field id number
+---@field name string
+---@field rpc table
+---@field offset_encoding string
+---@field handlers table
+---@field requests table
+---@field config table
+---@field server_capabilities table
+---@field request fun(method:string,params:table,handler:fun()?,bufnr:number)
+---@field request_sync fun(method:string,params:table,timeout_ms:number,bufnr:number)
+---@field notify fun(method:string,params:table)
+---@field stop fun(force:boolean?)
+---@field is_stopped fun():boolean
+---@field on_attach fun(client:LspClient,bufnr:number)
 
 ---@class LspResponse
 ---@field [any] any
@@ -237,28 +250,28 @@ M.lsp.clients_by_cap = function(capabilities, filter)
   return clients
 end
 
+-- TODO: refactor to return err, res
 ---Get response from all passed-in clients.
 ---
----@param clients LspClient[]
+---@param clients LspClient|LspClient[]
 ---@param method string
 ---@param params TextDocumentPositionParams
 ---@param buffer number
----@param cb fun(res:LspResponse)? called for each response; should handle errors
+---@param callback fun(res:LspResponse)? called for each response; should handle errors
 ---@return EnrichedLspResponse[]
-M.lsp.request = function(clients, method, params, buffer, cb)
-  if type(clients) ~= 'table' or M.tbl.is_empty(clients) then
-    vim.notify('Invalid clients.', 3)
-    return {}
-  end
+M.lsp.request = function(clients, method, params, buffer, callback)
+  clients = (type(clients) == 'table' and type(clients[1]) == 'table')
+      and clients
+    or { clients }
   local responses = {}
 
   for i = 1, #clients do
-    local client = clients[i]
-    local dict = client.request_sync(method, params, 500, buffer)
+    local c = clients[i]
+    local dict = c.request_sync(method, params, 500, buffer)
 
-    if cb ~= nil then
-      if type(cb) == 'function' then
-        cb(dict)
+    if callback ~= nil then
+      if type(callback) == 'function' then
+        callback(dict)
       end
     else
       if M.tbl.is_empty(dict) or M.tbl.is_empty(dict.result) or dict.err then
@@ -272,15 +285,15 @@ M.lsp.request = function(clients, method, params, buffer, cb)
     if type(dict.result[1]) == 'table' then
       for j = 1, #dict.result do
         table.insert(responses, {
-          id = client.id,
-          name = client.name,
+          id = c.id,
+          name = c.name,
           result = dict.result[j],
         })
       end
     else
       table.insert(responses, {
-        id = client.id,
-        name = client.name,
+        id = c.id,
+        name = c.name,
         result = dict.result,
       })
     end
