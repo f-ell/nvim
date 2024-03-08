@@ -44,9 +44,6 @@ L.key.vnmap('<leader>*', function()
       .. table.concat(args, ' ')
   )
 
-  if ret == 0 then
-    vim.notify('silicon: saved as ' .. file, vim.log.levels.INFO)
-  else
-    vim.notify("silicon: couldn't create file", vim.log.levels.ERROR)
-  end
+  assert(ret == 0, "silicon: couldn't create file")
+  vim.notify('silicon: saved as ' .. file, vim.log.levels.INFO)
 end)

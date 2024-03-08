@@ -43,9 +43,7 @@ end
 
 local make_buf = function()
   autoexec.aebuf = vim.api.nvim_create_buf(false, true)
-  if autoexec.aebuf == 0 then
-    return vim.notify("autoexec: couldn't create buffer", vim.log.levels.ERROR)
-  end
+  assert(autoexec.aebuf ~= 0, "autoexec: couldn't create buffer")
 
   vim.api.nvim_buf_set_name(autoexec.aebuf, autoexec._bufname)
 end

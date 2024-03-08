@@ -144,11 +144,8 @@ function M:_register_float_actions(data)
         0
       )[1]
 
-      if resolved then
-        L.lsp.apply_edit(resolved)
-      else
-        vim.notify('Failed to resolve code-action.', vim.log.levels.ERROR)
-      end
+      assert(resolved, 'Failed to resolve code-action.')
+      L.lsp.apply_edit(resolved)
     end
   end
 

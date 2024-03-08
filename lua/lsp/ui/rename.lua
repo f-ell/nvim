@@ -36,13 +36,8 @@ M.rename = function()
     end
   end
 
-  if not declaration then
-    vim.notify(
-      'Could not get declaration for symbol under cursor.',
-      vim.log.levels.ERROR
-    )
-    return
-  end
+  assert(declaration, 'Could not get declaration for symbol under cursor.')
+
   local s, e = declaration.result.range.start, declaration.result.range['end']
   local cword = declaration
       and vim.api.nvim_buf_get_text(

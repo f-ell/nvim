@@ -65,9 +65,8 @@ M.fs.mktmpdir = function()
   if vim.loop.fs_stat(M.fs.__dir) then
     return
   end
-  if not vim.loop.fs_mkdir(M.fs.__dir, 448) then
-    return error("couldn't create " .. M.fs.__dir, 4)
-  end
+
+  assert(vim.loop.fs_mkdir(M.fs.__dir, 448), "couldn't create " .. M.fs.__dir)
 end
 
 ---Write to temporary file.
@@ -154,14 +153,13 @@ end
 ---@param data string[]
 ---@param mode 'w'|'w+'|'wb'|'w+b'? defaults to w+
 M.io.write = function(file, data, mode)
-  if mode and not vim.tbl_contains({ 'w', 'w+', 'wb', 'w+b' }, mode) then
-    error('illegal mode - ' .. mode, 4)
-  end
+  assert(
+    mode and vim.tbl_contains({ 'w', 'w+', 'wb', 'w+b' }, mode),
+    'illegal mode - ' .. mode
+  )
 
   local fh = M.io.__open(file, mode or 'w+')
-  if fh == nil then
-    return vim.notify('Write failed - ' .. file, vim.log.levels.ERROR)
-  end
+  assert(fh ~= nil, ("Couldn't write `%s`"):format(file))
 
   fh:write(table.concat(data, '\n') .. '\n')
   fh:flush()
