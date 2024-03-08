@@ -37,7 +37,10 @@ M.rename = function()
   end
 
   if not declaration then
-    vim.notify('Could not get declaration for symbol under cursor.', 4)
+    vim.notify(
+      'Could not get declaration for symbol under cursor.',
+      vim.log.levels.ERROR
+    )
     return
   end
   local s, e = declaration.result.range.start, declaration.result.range['end']

@@ -160,7 +160,7 @@ M.io.write = function(file, data, mode)
 
   local fh = M.io.__open(file, mode or 'w+')
   if fh == nil then
-    return vim.notify('Write failed - ' .. file, 4)
+    return vim.notify('Write failed - ' .. file, vim.log.levels.ERROR)
   end
 
   fh:write(table.concat(data, '\n') .. '\n')
@@ -245,7 +245,7 @@ M.lsp.clients_by_cap = function(capabilities, filter)
   end
 
   if #clients == 0 then
-    vim.notify('No suitable client found.', 3)
+    vim.notify('No suitable client found.', vim.log.levels.WARN)
   end
   return clients
 end
@@ -301,7 +301,7 @@ M.lsp.request = function(clients, method, params, buffer, callback)
   end
 
   if M.tbl.is_empty(responses) then
-    vim.notify('No results found.', 3)
+    vim.notify('No results found.', vim.log.levels.WARN)
   end
   return responses
 end

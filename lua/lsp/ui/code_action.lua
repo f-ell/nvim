@@ -124,7 +124,10 @@ function M:_register_float_actions(data)
           )
         )
       then
-        vim.notify("Client doesn't support command: '" .. cmd.command .. "'", 3)
+        vim.notify(
+          "Client doesn't support command: '" .. cmd.command .. "'",
+          vim.log.levels.WARN
+        )
         return
       end
 
@@ -144,7 +147,7 @@ function M:_register_float_actions(data)
       if resolved then
         L.lsp.apply_edit(resolved)
       else
-        vim.notify('Failed to resolve code-action.', 4)
+        vim.notify('Failed to resolve code-action.', vim.log.levels.ERROR)
       end
     end
   end

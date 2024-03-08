@@ -44,7 +44,7 @@ end
 local make_buf = function()
   autoexec.aebuf = vim.api.nvim_create_buf(false, true)
   if autoexec.aebuf == 0 then
-    return vim.notify("autoexec: couldn't create buffer", 4)
+    return vim.notify("autoexec: couldn't create buffer", vim.log.levels.ERROR)
   end
 
   vim.api.nvim_buf_set_name(autoexec.aebuf, autoexec._bufname)
@@ -63,7 +63,7 @@ local update_split = function()
     { prompt = 'split type: ' },
     function(_, i)
       if i == nil then
-        return vim.notify('aborting...', 2)
+        return vim.notify('aborting...', vim.log.levels.INFO)
       end
       autoexec.dir = i - 1
     end
@@ -71,21 +71,19 @@ local update_split = function()
 end
 
 local update_cmd = function()
-  vim.ui.input(
-    {
-      prompt = 'cmd: ',
-      default = autoexec.cmd == nil and vim.fn.expand('%:p') or autoexec.cmd,
-    },
-    function(str)
-      if str == nil then
-        return vim.notify('aborting...', 2)
-      end
-      if str == '' then
-        autoexec.cmd = vim.fn.expand('%:p')
-      end
-      autoexec.cmd = str
+  vim.ui.input({
+    prompt = 'cmd: ',
+    default = autoexec.cmd == nil and vim.fn.expand('%:p') or autoexec.cmd,
+  }, function(str)
+    if str == nil then
+      vim.notify('aborting...', vim.log.levels.INFO)
+      return
     end
-  )
+    if str == '' then
+      autoexec.cmd = vim.fn.expand('%:p')
+    end
+    autoexec.cmd = str
+  end)
 end
 
 local register_cmd = function()
@@ -141,13 +139,16 @@ vim.api.nvim_create_user_command('AutoExec', function()
   autoexec.ogname = vim.api.nvim_buf_get_name(autoexec.ogbuf)
 
   if autoexec.aebuf == autoexec.ogbuf then
-    return vim.notify("autoexec: can't attach to autoexec buffer", 2)
+    return vim.notify(
+      "autoexec: can't attach to autoexec buffer",
+      vim.log.levels.INFO
+    )
   end
   if autoexec.aebuf then
     reset()
   end
 
-  vim.notify('attaching to buffer...', 2)
+  vim.notify('attaching to buffer...', vim.log.levels.INFO)
 
   if not autoexec.aebuf then
     make_buf()
@@ -162,7 +163,7 @@ vim.api.nvim_create_user_command('AutoExec', function()
   register_cmd()
   register_del()
 
-  vim.notify('attached', 2)
+  vim.notify('attached', vim.log.levels.INFO)
   vim.cmd('silent w')
 end, { desc = 'Execute <command> whenever current buffer is written.' })
 
@@ -179,7 +180,7 @@ end, { desc = 'Clean up AutoExec and wipe AutoExec buffer.' })
 
 vim.api.nvim_create_user_command('AutoExecShow', function()
   if not autoexec.aewin or has_win() then
-    return vim.notify('autoexec: no autoexec buffer found', 3)
+    return vim.notify('autoexec: no autoexec buffer found', vim.log.levels.WARN)
   end
   make_split()
 end, { desc = "Re-split AutoExec buffer if it exists and isn't visible." })
