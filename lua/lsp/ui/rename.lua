@@ -1,5 +1,3 @@
-local L = require('lib')
-
 ---@class (exact) LspUiModuleRename:LspUiModule
 ---@field rename fun()
 

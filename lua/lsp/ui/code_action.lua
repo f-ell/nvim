@@ -1,5 +1,3 @@
-local L = require('lib')
-
 ---@class (exact) LspUiModuleCodeAction:LspUiModule
 ---@field codeaction fun()
 

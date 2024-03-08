@@ -10,7 +10,6 @@
 ---@field [1] string|string[]
 ---@field [2] fun(component:Component, tbl: table?)
 
-local L = require('lib')
 L.fs.mktmpdir()
 
 -- PERF: register running jobs and deregister in on_exit to prevent duplication

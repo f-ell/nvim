@@ -3,8 +3,6 @@ return {
   lazy = true,
   ft = { 'plaintex', 'tex' },
   config = function()
-    local L = require('lib')
-
     vim.g.vimtex_syntax_enabled = 0
     vim.g.vimtex_compiler_method = 'tectonic'
     vim.g.vimtex_compiler_tectonic = {

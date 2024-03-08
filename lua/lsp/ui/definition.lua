@@ -1,5 +1,3 @@
-local L = require('lib')
-
 ---@class (exact) LspUiModuleDefinition:LspUiModule
 ---@field peek fun(self:LspUiModule)
 ---@field open fun(self:LspUiModule)

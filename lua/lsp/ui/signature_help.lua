@@ -1,5 +1,3 @@
-local L = require('lib')
-
 ---@class (exact) LspUiModuleSignatureHelp:LspUiModule
 ---@field active fun()
 ---@field available fun()

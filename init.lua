@@ -1,5 +1,3 @@
-local L = require('lib')
-
 -- bootstrap
 local std = vim.fn.stdpath
 local path = std('data') .. '/lazy/lazy.nvim'

@@ -1,5 +1,3 @@
-local L = require('lib')
-
 ---@class (exact) LspUiModuleDiagnostic:LspUiModule
 ---@field goto_next fun()
 ---@field goto_prev fun()

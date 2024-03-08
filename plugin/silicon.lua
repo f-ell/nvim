@@ -1,5 +1,3 @@
-local L = require('lib')
-
 if vim.fn.executable('silicon') ~= 1 then
   return
 end
