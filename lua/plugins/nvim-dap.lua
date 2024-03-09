@@ -45,20 +45,18 @@ return {
     local clients = L.lsp.clients_by_cap('executeCommand')
     ---@diagnostic disable-next-line: redefined-local
     local execute = function(clients, args)
-      return L.lsp.request(clients, 'workspace/executeCommand', args, 0)
+      local _, res = L.lsp.request(clients, 'workspace/executeCommand', args, 0)
+      return res
     end
 
     ----------------------------------------------------------------------- java
     local resolve =
       execute(clients, { command = 'vscode.java.resolveMainClass' })[1].result
     local main, proj = resolve.mainClass, resolve.project or ''
-    local exec = execute(
-      clients,
-      {
-        command = 'vscode.java.resolveJavaExecutable',
-        arguments = { main, proj },
-      }
-    )[1].result
+    local exec = execute(clients, {
+      command = 'vscode.java.resolveJavaExecutable',
+      arguments = { main, proj },
+    })[1].result
     local paths = execute(
       clients,
       { command = 'vscode.java.resolveClasspath', arguments = { main, proj } }

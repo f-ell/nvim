@@ -15,13 +15,19 @@ M.rename = function()
   local params = vim.lsp.util.make_position_params(0)
   params.context = { includeDeclaration = true }
 
-  local res = L.lsp.request(
+  local err, res = L.lsp.request(
     L.lsp.clients_by_cap('references'),
     'textDocument/references',
     params,
     0
   )
+
+  if err then
+    L.lsp.notify_error(err, vim.log.levels.ERROR)
+    return
+  end
   if L.tbl.is_empty(res) then
+    vim.notify('No rename results found', vim.log.levels.INFO)
     return
   end
 

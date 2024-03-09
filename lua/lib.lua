@@ -183,18 +183,34 @@ end
 ---@field is_stopped fun():boolean
 ---@field on_attach fun(client:LspClient,bufnr:number)
 
----@class LspResponse
+---@class RequestError
+---@field name string
+---@field method string
+---@field message string?
+
+---@class RPCError
+---@field code number
+---@field message string
+---@field data table?
+
+---@class RPCResult
 ---@field [any] any
+
+---@class RPCResponse
+---@field err RPCError
+---@field result RPCResult
 
 ---@class (exact) EnrichedLspResponse
 ---@field id number
 ---@field name string
----@field result LspResponse
+---@field result RPCResult
 
----@class WorkspaceEdit: LspResponse
+---@class WorkspaceEdit: RPCResult
 
 ---@class TextDocumentPositionParams
 ---@field [any] any
+
+---@alias LogLevel 0|1|2|3|4|5
 
 ---Apply a workspace edit.
 ---
@@ -247,60 +263,80 @@ M.lsp.clients_by_cap = function(capabilities, filter)
   return clients
 end
 
--- TODO: refactor to return err, res
+---Format and print RequestError via vim.notify
+---
+---@param errors RequestError|RequestError[]
+---@param level LogLevel?
+M.lsp.notify_error = function(errors, level)
+  errors = type(errors[1]) == 'table' and errors or { errors }
+  for i = 1, #errors do
+    vim.notify(
+      ('%s: `%s` request failed%s'):format(
+        errors[i].name,
+        errors[i].method,
+        errors[i].message and ' - ' .. errors[i].message or ''
+      ),
+      level
+    )
+  end
+end
+
 ---Get response from all passed-in clients.
 ---
 ---@param clients LspClient|LspClient[]
 ---@param method string
 ---@param params TextDocumentPositionParams
 ---@param buffer number
----@param callback fun(res:LspResponse)? called for each response; should handle errors
----@return EnrichedLspResponse[]
+---@param callback fun(res:RPCResponse?)? called for each response; should handle errors
+---@return RequestError[]?,EnrichedLspResponse[]
 M.lsp.request = function(clients, method, params, buffer, callback)
   clients = (type(clients) == 'table' and type(clients[1]) == 'table')
       and clients
     or { clients }
-  local responses = {}
+
+  local errors, responses = {}, {}
+
+  ---@diagnostic disable-next-line: redefined-local
+  local function add_err(name, method, message)
+    table.insert(errors, { name = name, method = method, message = message })
+  end
+  local function add_res(id, name, result)
+    table.insert(responses, { id = id, name = name, result = result })
+  end
 
   for i = 1, #clients do
-    local c = clients[i]
-    local dict = c.request_sync(method, params, 500, buffer)
+    local res, --[[@type RPCResponse?]]
+      msg --[[@type string?]] =
+      clients[i].request_sync(method, params, 500, buffer)
 
-    if callback ~= nil then
-      if type(callback) == 'function' then
-        callback(dict)
-      end
+    if callback and type(callback) == 'function' then
+      callback(res)
+      goto continue
     else
-      if M.tbl.is_empty(dict) or M.tbl.is_empty(dict.result) or dict.err then
+      if not res then
+        add_err(clients[i].name, method, msg)
+        goto continue
+      end
+      if res.err then
+        add_err(clients[i].name, method, res.err.message)
+        goto continue
+      end
+      if M.tbl.is_empty(res.result) then
         goto continue
       end
     end
 
-    if M.tbl.is_empty(dict) then
-      goto continue
-    end
-    if type(dict.result[1]) == 'table' then
-      for j = 1, #dict.result do
-        table.insert(responses, {
-          id = c.id,
-          name = c.name,
-          result = dict.result[j],
-        })
+    if type(res.result[1]) == 'table' then
+      for j = 1, #res.result do
+        add_res(clients[i].id, clients[i].name, res.result[j])
       end
     else
-      table.insert(responses, {
-        id = c.id,
-        name = c.name,
-        result = dict.result,
-      })
+      add_res(clients[i].id, clients[i].name, res.result)
     end
     ::continue::
   end
 
-  if #responses == 0 then
-    vim.notify('No results found', vim.log.levels.INFO)
-  end
-  return responses
+  return #errors > 0 and errors or nil, responses
 end
 
 ---------------------------------------------------------------------------- tbl

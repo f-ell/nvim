@@ -15,16 +15,23 @@ function M.codeaction()
   local params = vim.lsp.util.make_range_params()
   params.context = { diagnostics = vim.lsp.diagnostic.get_line_diagnostics(0) }
 
-  local res = L.lsp.request(
+  local err, res = L.lsp.request(
     L.lsp.clients_by_cap('codeAction'),
     'textDocument/codeAction',
     params,
     0
   )
 
-  if not L.tbl.is_empty(res) then
-    M:_open(res)
+  if err then
+    L.lsp.notify_error(err)
+    return
   end
+  if L.tbl.is_empty(res) then
+    vim.notify('No codeactions available', vim.log.levels.INFO)
+    return
+  end
+
+  M:_open(res)
 end
 
 function M:_preprocess(raw)
@@ -139,15 +146,15 @@ function M:_register_float_actions(data)
         )
       end
     else
-      res = L.lsp.request(
+      _, res = L.lsp.request(
         vim.lsp.get_client_by_id(act.id),
         'codeAction/resolve',
         res,
         0
-      )[1]
+      )
 
-      assert(res, 'Failed to resolve code-action')
-      L.lsp.apply_edit(res)
+      assert(res[1], 'Failed to resolve code-action')
+      L.lsp.apply_edit(res[1])
     end
   end
 

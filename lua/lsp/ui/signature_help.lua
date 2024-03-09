@@ -14,42 +14,43 @@ M._util = {
 
 M.active = function()
   local params = vim.lsp.util.make_position_params()
-
-  local res = L.lsp.request(
+  local err, res = L.lsp.request(
     L.lsp.clients_by_cap('signatureHelp'),
     'textDocument/signatureHelp',
     params,
     0
-  )[1]
+  )
 
-  if not L.tbl.is_empty(res) then
-    if L.tbl.is_empty(res.result.signatures) then
-      vim.notify('No signature help available', vim.log.levels.INFO)
-      return
-    end
-
-    M:_open({ res = res, active = true })
+  if err then
+    L.lsp.notify_error(err, vim.log.levels.ERROR)
+    return
   end
+  if L.tbl.is_empty(res[1]) or L.tbl.is_empty(res[1].result.signatures) then
+    vim.notify('No signature help available', vim.log.levels.INFO)
+    return
+  end
+
+  M:_open({ res = res, active = true })
 end
 
 M.available = function()
   local params = vim.lsp.util.make_position_params()
-
-  local res = L.lsp.request(
+  local err, res = L.lsp.request(
     L.lsp.clients_by_cap('signatureHelp'),
     'textDocument/signatureHelp',
     params,
     0
-  )[1]
+  )
 
-  if not L.tbl.is_empty(res) then
-    if L.tbl.is_empty(res.result.signatures) then
-      vim.notify('No signature help available', vim.log.levels.INFO)
-      return
-    end
-
-    M:_open({ res = res, active = false })
+  if err then
+    L.lsp.notify_error(err, vim.log.levels.ERROR)
+    return
   end
+  if L.tbl.is_empty(res[1]) or L.tbl.is_empty(res[1].result.signatures) then
+    vim.notify('No signature help available', vim.log.levels.INFO)
+  end
+
+  M:_open({ res = res, active = false })
 end
 
 function M:_preprocess(raw)
