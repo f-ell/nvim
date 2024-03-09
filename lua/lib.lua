@@ -153,10 +153,9 @@ end
 ---@param data string[]
 ---@param mode 'w'|'w+'|'wb'|'w+b'? defaults to w+
 M.io.write = function(file, data, mode)
-  assert(
-    mode and vim.tbl_contains({ 'w', 'w+', 'wb', 'w+b' }, mode),
-    'illegal mode - ' .. mode
-  )
+  if mode and not vim.tbl_contains({ 'w', 'w+', 'wb', 'w+b' }, mode) then
+    error('illegal mode - ' .. mode)
+  end
 
   local fh = M.io.__open(file, mode or 'w+')
   assert(fh ~= nil, ('Failed to write `%s`'):format(file))
