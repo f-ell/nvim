@@ -66,11 +66,13 @@ return {
       vim.lsp.protocol.make_client_capabilities()
     )
 
-    for _, server in
-      pairs(vim.fn.readdir(vim.fn.stdpath('config') .. '/lua/lsp/servers'))
-    do
+    local servers = vim.tbl_filter(function(s)
+      return not vim.startswith(s, '_')
+    end, vim.fn.readdir(vim.fn.stdpath('config') .. '/lua/lsp/servers'))
+
+    for i = 1, #servers do
       local opts = { on_attach = on_attach, capabilities = capabilities }
-      server = server:gsub('%.lua$', '')
+      local server = servers[i]:gsub('%.lua$', '')
 
       local req, tbl = pcall(require, 'lsp.servers.' .. server)
       if req then
