@@ -125,7 +125,7 @@ function M:_register_float_actions(data)
         )
       then
         vim.notify(
-          "Client doesn't support command: '" .. cmd.command .. "'",
+          ('Command `%s` not supported by client'):format(cmd.command),
           vim.log.levels.WARN
         )
         return

@@ -159,7 +159,7 @@ M.io.write = function(file, data, mode)
   )
 
   local fh = M.io.__open(file, mode or 'w+')
-  assert(fh ~= nil, ("Couldn't write `%s`"):format(file))
+  assert(fh ~= nil, ('Failed to write `%s`'):format(file))
 
   fh:write(table.concat(data, '\n') .. '\n')
   fh:flush()

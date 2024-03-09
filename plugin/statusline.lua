@@ -50,7 +50,7 @@ local M = {
       end
     end
 
-    return ' ' .. vim.fn.trim(tbl:concat(' ')) .. '%< '
+    return (' %s%%< '):format(vim.fn.trim(tbl:concat(' ')))
   end,
 
   ---Components may contain additional fields used to keep state or perform
@@ -131,7 +131,7 @@ M:add_component({
   },
   get = function(self)
     return table.concat({
-      '%#mode' .. self.meta.mode .. '#',
+      ('%%#mode%s#'):format(self.meta.mode),
       self.meta.mode,
       '%#Statusline#',
     })
@@ -471,11 +471,11 @@ M:add_component({
         local part = {}
         for i = 1, #self.meta.diagnostics.count do
           if self.meta.diagnostics.count[i] ~= 0 then
-            part[#part + 1] = '%#'
-              .. self.meta.signs[i].texthl
-              .. '#'
-              .. self.meta.signs[i].text
-              .. self.meta.diagnostics.count[i]
+            part[#part + 1] = ('%%#%s#%s%s'):format(
+              self.meta.signs[i].texthl,
+              self.meta.signs[i].text,
+              self.meta.diagnostics.count[i]
+            )
           end
         end
 

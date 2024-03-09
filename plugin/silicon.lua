@@ -7,12 +7,12 @@ local colours = { 'e67e80', 'a7c080', 'dbbc7f', '7fbbb3', 'd699b6', '83c092' }
 
 L.key.vnmap('<leader>*', function()
   local ft = vim.o.filetype
-  local file = 'silicon_' .. os.date('%Y%m%d-%H%M%S') .. '.png'
+  local file = ('silicon_%s.png'):format(os.date('%Y%m%d-%H%M%S'))
   local args = {
     '-l ' .. ft,
     '-o ' .. dir .. file,
     "-f 'Ellograph CF'",
-    "-b '#" .. colours[math.random(1, #colours)] .. "'",
+    ("-b '#%s'"):format(colours[math.random(1, #colours)]),
     '--shadow-offset-x 4',
     '--shadow-offset-y 4',
     '--shadow-blur-radius 6',
@@ -38,10 +38,10 @@ L.key.vnmap('<leader>*', function()
 
   -- run silicon
   local ret = os.execute(
-    "printf '%s' \""
-      .. table.concat(sel, '\n')
-      .. '" | silicon '
-      .. table.concat(args, ' ')
+    ('printf \'%%s\' "%s" | silicon %s'):format(
+      table.concat(sel, '\n'),
+      table.concat(args, ' ')
+    )
   )
 
   assert(ret == 0, "silicon: couldn't create file")
