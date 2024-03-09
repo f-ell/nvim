@@ -17,7 +17,7 @@ function M.goto_next()
   local pos = vim.diagnostic.get_next_pos()
 
   if not pos then
-    vim.notify('No diagnostics available.', vim.log.levels.INFO)
+    vim.notify('No diagnostics found', vim.log.levels.INFO)
     return
   end
 
@@ -29,7 +29,7 @@ function M.goto_next()
   )
 
   if #diag == 0 then
-    vim.notify('No diagnostics found at location.', vim.log.levels.WARN)
+    vim.notify('No diagnostics at position', vim.log.levels.ERROR)
     return
   end
 
@@ -40,7 +40,7 @@ function M.goto_prev()
   local pos = vim.diagnostic.get_prev_pos()
 
   if not pos then
-    vim.notify('No diagnostics available.', vim.log.levels.INFO)
+    vim.notify('No diagnostics found', vim.log.levels.INFO)
     return
   end
 
@@ -52,7 +52,7 @@ function M.goto_prev()
   )
 
   if #diag == 0 then
-    vim.notify('No diagnostics found at location.', vim.log.levels.WARN)
+    vim.notify('No diagnostics at position', vim.log.levels.ERROR)
     return
   end
 
@@ -64,7 +64,7 @@ function M.get_line()
   local diag = vim.diagnostic.get(0, { lnum = pos[2] - 1 })
 
   if #diag == 0 then
-    vim.notify('No diagnostics found at location.', vim.log.levels.WARN)
+    vim.notify('No diagnostics at position', vim.log.levels.ERROR)
     return
   end
 

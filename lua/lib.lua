@@ -242,7 +242,7 @@ M.lsp.clients_by_cap = function(capabilities, filter)
   end
 
   if #clients == 0 then
-    vim.notify('No suitable client found.', vim.log.levels.WARN)
+    vim.notify('No client(s) found', vim.log.levels.dINFO)
   end
   return clients
 end
@@ -297,8 +297,8 @@ M.lsp.request = function(clients, method, params, buffer, callback)
     ::continue::
   end
 
-  if M.tbl.is_empty(responses) then
-    vim.notify('No results found.', vim.log.levels.WARN)
+  if #responses == 0 then
+    vim.notify('No results found', vim.log.levels.INFO)
   end
   return responses
 end

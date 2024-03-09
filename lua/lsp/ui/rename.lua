@@ -36,7 +36,7 @@ M.rename = function()
     end
   end
 
-  assert(declaration, 'Could not get declaration for symbol under cursor.')
+  assert(declaration, 'Could not get declaration for symbol under cursor')
 
   local s, e = declaration.result.range.start, declaration.result.range['end']
   local cword = declaration

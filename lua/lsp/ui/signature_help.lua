@@ -24,7 +24,7 @@ M.active = function()
 
   if not L.tbl.is_empty(res) then
     if L.tbl.is_empty(res.result.signatures) then
-      vim.notify('No signature help available.', vim.log.levels.WARN)
+      vim.notify('No signature help available', vim.log.levels.INFO)
       return
     end
 
@@ -44,7 +44,7 @@ M.available = function()
 
   if not L.tbl.is_empty(res) then
     if L.tbl.is_empty(res.result.signatures) then
-      vim.notify('No signature help available.', vim.log.levels.WARN)
+      vim.notify('No signature help available', vim.log.levels.INFO)
       return
     end
 
