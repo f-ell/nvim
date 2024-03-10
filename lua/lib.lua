@@ -343,7 +343,7 @@ M.win.__CW = 0.8
 ---@param config table?
 ---@return string
 M.win.__parse_title = function(config)
-  if not config then
+  if not config or not config.title then
     return ''
   end
 
