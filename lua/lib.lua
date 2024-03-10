@@ -171,12 +171,13 @@ end
 ---
 ---@param response EnrichedLspResponse
 M.lsp.apply_edit = function(response)
-  if response.result.edit then
-    vim.lsp.util.apply_workspace_edit(
-      response.result.edit,
-      vim.lsp.get_client_by_id(response.id).offset_encoding
-    )
-  end
+  local edit = response.result.edit and response.result.edit or response.result
+
+  vim.lsp.util.apply_workspace_edit(
+    edit,
+    vim.lsp.get_client_by_id(response.id).offset_encoding
+  )
+
   if response.result.action and type(response.result.action) == 'function' then
     response.result.action()
   end
