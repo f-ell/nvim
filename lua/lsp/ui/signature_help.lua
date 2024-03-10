@@ -50,7 +50,7 @@ M.available = function()
 end
 
 function M:_preprocess(raw)
-  local res = raw.res
+  local res = raw.res[1]
   local tbl = { active = raw.active }
 
   local i0, i1
