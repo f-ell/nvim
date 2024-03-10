@@ -1,7 +1,3 @@
----@class (exact) LspUiModuleSignatureHelp:LspUiModule
----@field active fun()
----@field available fun()
-
 ---@type LspUiModuleSignatureHelp
 ---@diagnostic disable-next-line: missing-fields
 local M = {}

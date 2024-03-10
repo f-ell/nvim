@@ -1,8 +1,3 @@
----@class (exact) LspUiModuleDiagnostic:LspUiModule
----@field goto_next fun()
----@field goto_prev fun()
----@field get_line fun()
-
 ---@type LspUiModuleDiagnostic
 ---@diagnostic disable-next-line: missing-fields
 local M = {}

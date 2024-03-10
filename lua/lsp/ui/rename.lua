@@ -1,6 +1,3 @@
----@class (exact) LspUiModuleRename:LspUiModule
----@field rename fun()
-
 ---@type LspUiModuleRename
 ---@diagnostic disable-next-line: missing-fields
 local M = {}

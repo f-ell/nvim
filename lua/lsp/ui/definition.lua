@@ -1,8 +1,3 @@
----@class (exact) LspUiModuleDefinition:LspUiModule
----@field peek fun(self:LspUiModule)
----@field open fun(self:LspUiModule)
----@field type fun(self:LspUiModule)
-
 ---@type LspUiModuleDefinition
 ---@diagnostic disable-next-line: missing-fields
 local M = {}

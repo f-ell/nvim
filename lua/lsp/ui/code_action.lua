@@ -1,6 +1,3 @@
----@class (exact) LspUiModuleCodeAction:LspUiModule
----@field codeaction fun()
-
 ---@type LspUiModuleCodeAction
 ---@diagnostic disable-next-line: missing-fields
 local M = {}
