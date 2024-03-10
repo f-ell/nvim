@@ -28,7 +28,11 @@ function M.codeaction()
     return
   end
 
-  M:_open(res)
+  for i = 1, #res do
+    res[i].result.kind = nil
+  end
+
+  M:_open(vim.fn.uniq(res))
 end
 
 function M:_preprocess(raw)
