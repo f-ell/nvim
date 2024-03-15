@@ -6,6 +6,7 @@ local M = {
   lsp = {},
   str = {},
   tbl = {},
+  ui = {},
   win = {},
 }
 
@@ -319,6 +320,7 @@ end
 M.tbl.max_len = function(tbl)
   local max = 0
   for i = 1, #tbl do
+    -- FIX: returns incorrect width for some strings (replace with `strwidth`?)
     local len = vim.fn.strdisplaywidth(tbl[i])
     if len > max then
       max = len
@@ -328,9 +330,133 @@ M.tbl.max_len = function(tbl)
 end
 
 ---@param tbl table|nil
----@return boolean # table is empty
+---@return boolean
 M.tbl.is_empty = function(tbl)
   return tbl == nil or (type(tbl) == 'table' and next(tbl) == nil)
+end
+
+----------------------------------------------------------------------------- ui
+
+---@param bufnr number
+---@param winnr number
+M.ui.__register_close_events = function(bufnr, winnr)
+  M.cmd.event({ 'WinLeave', 'QuitPre' }, bufnr, function()
+    M.win.close(winnr)
+  end)
+
+  M.key.nnmap('<C-c>', function()
+    M.win.close(winnr)
+  end, { buffer = bufnr })
+end
+
+---@param bufnr number
+---@param callback fun(index:number)
+M.ui.__register_select_keymaps = function(bufnr, callback)
+  M.key.nnmap('<CR>', function()
+    callback(vim.fn.line('.'))
+  end, { buffer = bufnr })
+
+  for i = 1, #vim.api.nvim_buf_get_lines(bufnr, 0, -1, true) do
+    M.key.nnmap(tostring(i), function()
+      callback(i)
+    end, { buffer = bufnr })
+  end
+end
+
+---Open picker ui to select zero or more of the available items. Call
+---`callback` on user confirmation with all selected items.
+---
+---Poor implementation - should instead wait for user input, handle the input
+---and, on confirmation, return selected items for consumption by the caller.
+---
+---@generic T
+---@param items T[]
+---@param preselect number[]? indices of items to preselect
+---@param format fun(item:T,selected:boolean,index:number):string transform item to string representation
+---@param callback fun(selected:T[]) called after confirmation with selected items
+---@param config table? config passed to `nvim_open_win`
+M.ui.pick = function(items, preselect, format, callback, config)
+  if not items or #items == 0 then
+    return {}
+  end
+
+  local function fmt()
+    local tbl = {}
+    for i = 1, #items do
+      ---@diagnostic disable-next-line: undefined-field
+      table.insert(tbl, i .. ' ' .. format(items[i].item, items[i].selected, i))
+    end
+    return tbl
+  end
+
+  local function set_highlights(bufnr)
+    -- FIX: don't rely on diagnostic signs being set
+    local signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
+      return vim.startswith(s.name, 'DiagnosticSign')
+    end)
+
+    for i = 1, #vim.api.nvim_buf_get_lines(bufnr, 0, -1, true) do
+      vim.api.nvim_buf_add_highlight(
+        bufnr,
+        -1,
+        signs[i % #signs ~= 0 and i % #signs or #signs].texthl,
+        i - 1,
+        0,
+        string.len(i)
+      )
+    end
+  end
+
+  local function select(i, data)
+    ---@diagnostic disable-next-line: inject-field, undefined-field
+    items[i].selected = not items[i].selected
+
+    local lines = fmt()
+    vim.bo[data.nbuf].modifiable = true
+    vim.api.nvim_buf_set_lines(data.nbuf, 0, -1, true, lines)
+    vim.bo[data.nbuf].modifiable = false
+    vim.api.nvim_win_set_width(
+      data.nwin,
+      M.win.__width({ M.win.__parse_title(config), unpack(lines) })
+    )
+    set_highlights(data.nbuf)
+  end
+
+  do
+    local sparse = {}
+    preselect = preselect or {}
+    for i = 1, #preselect do
+      sparse[preselect[i]] = true
+    end
+
+    local tbl = {}
+    for i = 1, #items do
+      table.insert(tbl, { item = items[i], selected = sparse[i] })
+    end
+    items = tbl
+  end
+
+  local lines = fmt()
+  local data = M.win.open_cursor(lines, true, config)
+  set_highlights(data.nbuf)
+
+  M.ui.__register_close_events(data.nbuf, data.nwin)
+  M.ui.__register_select_keymaps(data.nbuf, function(i)
+    select(i, data)
+  end)
+
+  M.key.__disable_visual_keymaps(data.nbuf)
+  M.key.nnmap('<Esc>', function()
+    M.win.close(data.nwin)
+
+    local tbl = {}
+    for i = 1, #items do
+      if items[i].selected then
+        table.insert(tbl, items[i].item)
+      end
+    end
+    callback(tbl)
+  end, { buffer = data.nbuf })
 end
 
 ---------------------------------------------------------------------------- win
@@ -343,7 +469,7 @@ M.win.__CW = 0.8
 ---@param config table?
 ---@return string
 M.win.__parse_title = function(config)
-  if not config or not config.title then
+  if not (config and config.title) then
     return ''
   end
 
@@ -542,6 +668,15 @@ end
 
 ---------------------------------------------------------------------------- key
 
+---@param bufnr number
+M.key.__disable_visual_keymaps = function(bufnr)
+  for _, lhs in pairs({ 'v', 'V', '<C-v>' }) do
+    M.key.nnmap(lhs, '', { buffer = bufnr })
+  end
+end
+
+---@param mode 'i'|'n'|'v'|'c'|'t'
+---@param map_opts table?
 M.key.__map = function(mode, map_opts)
   map_opts = map_opts or { noremap = true }
   ---Wraps vim.keymap.set. The mode is derived from the overarching call.
