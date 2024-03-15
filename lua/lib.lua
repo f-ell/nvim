@@ -380,15 +380,6 @@ M.ui.pick = function(items, preselect, format, callback, config)
     return {}
   end
 
-  local function fmt()
-    local tbl = {}
-    for i = 1, #items do
-      ---@diagnostic disable-next-line: undefined-field
-      table.insert(tbl, i .. ' ' .. format(items[i].item, items[i].selected, i))
-    end
-    return tbl
-  end
-
   local function set_highlights(bufnr)
     -- FIX: don't rely on diagnostic signs being set
     local signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
@@ -407,21 +398,6 @@ M.ui.pick = function(items, preselect, format, callback, config)
     end
   end
 
-  local function select(i, data)
-    ---@diagnostic disable-next-line: inject-field, undefined-field
-    items[i].selected = not items[i].selected
-
-    local lines = fmt()
-    vim.bo[data.nbuf].modifiable = true
-    vim.api.nvim_buf_set_lines(data.nbuf, 0, -1, true, lines)
-    vim.bo[data.nbuf].modifiable = false
-    vim.api.nvim_win_set_width(
-      data.nwin,
-      M.win.__width({ M.win.__parse_title(config), unpack(lines) })
-    )
-    set_highlights(data.nbuf)
-  end
-
   do
     local sparse = {}
     preselect = preselect or {}
@@ -436,13 +412,27 @@ M.ui.pick = function(items, preselect, format, callback, config)
     items = tbl
   end
 
-  local lines = fmt()
+  local lines = {}
+  for i = 1, #items do
+    table.insert(lines, i .. ' ' .. format(items[i].item, items[i].selected, i))
+  end
+
   local data = M.win.open_cursor(lines, true, config)
   set_highlights(data.nbuf)
 
   M.ui.__register_close_events(data.nbuf, data.nwin)
   M.ui.__register_select_keymaps(data.nbuf, function(i)
-    select(i, data)
+    items[i].selected = not items[i].selected
+    lines[i] = i .. ' ' .. format(items[i].item, items[i].selected, i)
+
+    vim.bo[data.nbuf].modifiable = true
+    vim.api.nvim_buf_set_lines(data.nbuf, 0, -1, true, lines)
+    vim.bo[data.nbuf].modifiable = false
+    vim.api.nvim_win_set_width(
+      data.nwin,
+      M.win.__width({ M.win.__parse_title(config), unpack(lines) })
+    )
+    set_highlights(data.nbuf)
   end)
 
   M.key.__disable_visual_keymaps(data.nbuf)
