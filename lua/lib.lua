@@ -369,7 +369,7 @@ M.win.__height = function(data)
 
   local _mw = M.win.__max_width()
   if M.tbl.max_len(data) < _mw then
-    return math.min(#data, M.win.__max_height())
+    return math.min(#data > 0 and #data or 1, M.win.__max_height())
   end
 
   local h, sb = 0, vim.fn.strdisplaywidth(vim.o.showbreak)
@@ -398,8 +398,12 @@ end
 
 ---@return integer # actual window width
 M.win.__width = function(data)
-  return type(data) == 'number' and math.floor(vim.o.columns * M.win.__EW)
-    or math.min(M.tbl.max_len(data), M.win.__max_width())
+  if type(data) == 'number' then
+    return math.floor(vim.o.columns * M.win.__EW)
+  else
+    local len = M.tbl.max_len(data)
+    return math.min(len > 0 and len or 1, M.win.__max_width())
+  end
 end
 
 ---@return number # required vertical offset to center window
