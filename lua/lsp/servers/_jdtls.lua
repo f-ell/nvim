@@ -20,7 +20,7 @@ local function generateToStringPrompt(_, ctx)
   res = res[1]
   if res.result.exists then
     vim.notify(
-      ('`toString()` already exists in `%s`'):format(res.result.type),
+      ('`toString` already exists in `%s`'):format(res.result.type),
       vim.log.levels.INFO
     )
     return
@@ -60,7 +60,72 @@ local function generateToStringPrompt(_, ctx)
   })
 end
 
--- TODO: support method picking (default: select all not from java.lang.Object)
+local function hashCodeEqualsPrompt(_, ctx)
+  local client = vim.lsp.get_client_by_id(ctx.client_id)
+
+  local err, res = L.lsp.request(
+    client,
+    'java/checkHashCodeEqualsStatus',
+    ctx.params,
+    ctx.bufnr
+  )
+
+  if err then
+    L.lsp.notify_error(err)
+    return
+  end
+
+  res = res[1]
+  if not res or L.tbl.is_empty(res.result.fields) then
+    vim.notify(
+      ('`hashCodeEquals` not applicable for type `%s`'):format(res.result.type),
+      vim.log.levels.INFO
+    )
+    return
+  end
+
+  if #res.result.existingMethods == 2 then
+    vim.notify(
+      ('`hashCode` and `equals` already exist in `%s`'):format(res.result.type),
+      vim.log.levels.INFO
+    )
+    return
+  end
+
+  local function format(field, selected)
+    return ('%s%s %s'):format(selected and '* ' or '', field.type, field.name)
+  end
+
+  local function callback(fields)
+    err, res = L.lsp.request(
+      client,
+      'java/generateHashCodeEquals',
+      { context = ctx.params, fields = fields },
+      ctx.bufnr
+    )
+
+    if err then
+      L.lsp.notify_error(err)
+      return
+    end
+
+    L.lsp.apply_edit(res[1])
+  end
+
+  local preselect = {}
+  for i = 1, #res.result.fields do
+    table.insert(preselect, i)
+  end
+
+  L.ui.pick(res.result.fields, preselect, format, callback, {
+    title = {
+      { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
+      { 'hashCodeEquals ', 'FloatTitle' },
+      { '<ESC> to confirm ', 'NeutralFloat' },
+    },
+  })
+end
+
 local function overrideMethodsPrompt(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   local err, res
@@ -122,6 +187,7 @@ end
 
 M.commands = {
   ['java.action.generateToStringPrompt'] = generateToStringPrompt,
+  ['java.action.hashCodeEqualsPrompt'] = hashCodeEqualsPrompt,
   ['java.action.overrideMethodsPrompt'] = overrideMethodsPrompt,
 }
 
