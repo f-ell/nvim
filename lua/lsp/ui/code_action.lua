@@ -147,14 +147,19 @@ function M:_register_float_actions(data)
         )
       end
     else
-      _, res = L.lsp.request(
+      local err
+      err, res = L.lsp.request(
         vim.lsp.get_client_by_id(act.id),
         'codeAction/resolve',
         res,
         0
       )
 
-      assert(res[1], 'Failed to resolve code-action')
+      if err then
+        L.lsp.notify_error(err)
+        return
+      end
+
       L.lsp.apply_edit(res[1])
     end
   end
