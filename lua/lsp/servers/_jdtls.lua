@@ -13,7 +13,7 @@ local function generateToStringPrompt(_, ctx)
     L.lsp.request(client, 'java/checkToStringStatus', ctx.params, ctx.bufnr)
 
   if err then
-    L.lsp.notify_error(err[1], vim.log.levels.ERROR)
+    L.lsp.notify_error(err)
     return
   end
 

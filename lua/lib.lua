@@ -233,7 +233,7 @@ M.lsp.notify_error = function(errors, level)
         errors[i].method,
         errors[i].message and ' - ' .. errors[i].message or ''
       ),
-      level
+      level or vim.log.levels.ERROR
     )
   end
 end

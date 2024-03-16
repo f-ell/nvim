@@ -19,7 +19,7 @@ function M.peek()
   )
 
   if err then
-    L.lsp.notify_error(err, vim.log.levels.ERROR)
+    L.lsp.notify_error(err)
     return
   end
   if L.tbl.is_empty(res) then
@@ -45,7 +45,7 @@ function M.open()
   )
 
   if err then
-    L.lsp.notify_error(err, vim.log.levels.ERROR)
+    L.lsp.notify_error(err)
     return
   end
   if L.tbl.is_empty(res) then
@@ -71,7 +71,7 @@ function M.type()
   )
 
   if err then
-    L.lsp.notify_error(err, vim.log.levels.ERROR)
+    L.lsp.notify_error(err)
     return
   end
   if L.tbl.is_empty(res) then

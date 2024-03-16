@@ -20,7 +20,7 @@ M.rename = function()
   )
 
   if err then
-    L.lsp.notify_error(err, vim.log.levels.ERROR)
+    L.lsp.notify_error(err)
     return
   end
   if L.tbl.is_empty(res) then

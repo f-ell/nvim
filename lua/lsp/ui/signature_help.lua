@@ -18,7 +18,7 @@ M.active = function()
   )
 
   if err then
-    L.lsp.notify_error(err, vim.log.levels.ERROR)
+    L.lsp.notify_error(err)
     return
   end
   if L.tbl.is_empty(res[1]) or L.tbl.is_empty(res[1].result.signatures) then
@@ -39,7 +39,7 @@ M.available = function()
   )
 
   if err then
-    L.lsp.notify_error(err, vim.log.levels.ERROR)
+    L.lsp.notify_error(err)
     return
   end
   if L.tbl.is_empty(res[1]) or L.tbl.is_empty(res[1].result.signatures) then
