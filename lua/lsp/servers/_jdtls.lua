@@ -91,6 +91,7 @@ local function hashCodeEqualsPrompt(_, ctx)
     )
     return
   end
+  local exists = res.result.existingMethods[1]
 
   local function format(field, selected)
     return ('%s%s %s'):format(selected and '* ' or '', field.type, field.name)
@@ -107,6 +108,20 @@ local function hashCodeEqualsPrompt(_, ctx)
     if err then
       L.lsp.notify_error(err)
       return
+    end
+
+    if exists then
+      local uri = vim.fn.keys(res[1].result.changes)
+
+      for i = 1, #uri do
+        for j = 1, #res[1].result.changes[uri[i]] do
+          local c = res[1].result.changes[uri[i]][j]
+          c.newText = c.newText:gsub(
+            ('@Override\npublic %%l+ %s.- {.-}'):format(exists),
+            ''
+          )
+        end
+      end
     end
 
     L.lsp.apply_edit(res[1])
