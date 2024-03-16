@@ -422,6 +422,8 @@ M.ui.pick = function(items, preselect, format, callback, config)
 
   M.ui.__register_close_events(data.nbuf, data.nwin)
   M.ui.__register_select_keymaps(data.nbuf, function(i)
+    vim.api.nvim_win_set_cursor(data.nwin, { i, 0 })
+
     items[i].selected = not items[i].selected
     lines[i] = i .. ' ' .. format(items[i].item, items[i].selected, i)
 
