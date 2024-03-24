@@ -148,6 +148,8 @@ function M._util.definition.open(data, index)
     vim.api.nvim_win_set_buf(data.owin, bufnr)
     M._util.definition.set_highlights(bufnr, proc.def[index])
     vim.api.nvim_win_set_cursor(data.owin, proc.def[index].start)
+    vim.cmd('filetype detect')
+    vim.cmd('norm zz')
     return
   end
 
@@ -157,6 +159,7 @@ function M._util.definition.open(data, index)
     style = '',
   })
   vim.cmd('filetype detect')
+  vim.cmd('norm zz')
 
   vim.bo[data.nbuf].bufhidden = 'hide'
   vim.bo[data.nbuf].modifiable = true

@@ -238,15 +238,17 @@ M.lsp.notify_error = function(errors, level)
   end
 end
 
----Get response from all passed-in clients.
+---Aggregate responses of all clients.
+---Ignores global handlers (i.e. `vim.lsp.handlers`), but respects client-local
+---handlers. Handlers on clients are expected to return { err, result }-tuples.
 ---
 ---@param clients LspClient|LspClient[]
 ---@param method string
 ---@param params TextDocumentPositionParams
----@param buffer number
+---@param bufnr number
 ---@param callback fun(res:RPCResponse?)? called for each response; should handle errors
 ---@return RequestError[]?,EnrichedLspResponse[]
-M.lsp.request = function(clients, method, params, buffer, callback)
+M.lsp.request = function(clients, method, params, bufnr, callback)
   clients = (type(clients) == 'table' and type(clients[1]) == 'table')
       and clients
     or { clients }
@@ -262,35 +264,67 @@ M.lsp.request = function(clients, method, params, buffer, callback)
   end
 
   for i = 1, #clients do
-    local res, --[[@type RPCResponse?]]
-      msg --[[@type string?]] =
-      clients[i].request_sync(method, params, 500, buffer)
+    local handler = function(err, result, ctx, config)
+      local res, msg
+      local _h = clients[i].handlers[method]
 
-    if callback and type(callback) == 'function' then
-      callback(res)
-      goto continue
-    else
-      if not res then
-        add_err(clients[i].name, method, msg)
-        goto continue
-      end
-      if res.err then
-        add_err(clients[i].name, method, res.err.message)
-        goto continue
-      end
-      if M.tbl.is_empty(res.result) then
-        goto continue
-      end
-    end
+      if _h then
+        local ok
+        ok, res = pcall(_h, err, result, ctx, config or {})
 
-    if type(res.result[1]) == 'table' then
+        -- FIX: poor implementation, should not be nested in async-request
+        if not ok then
+          res = clients[i].request_sync(method, params, 800, bufnr)
+        end
+      else
+        res = { err = err, result = result }
+      end
+
+      if callback and type(callback) == 'function' then
+        callback(res)
+        goto continue
+      else
+        if not res then
+          add_err(clients[i].name, method, msg)
+          goto continue
+        end
+        if res.err then
+          add_err(clients[i].name, method, res.err.message)
+          goto continue
+        end
+        if M.tbl.is_empty(res.result) then
+          goto continue
+        end
+      end
+
+      res.result = type(res.result[1]) == 'table' and res.result
+        or { res.result }
       for j = 1, #res.result do
         add_res(clients[i].id, clients[i].name, res.result[j])
       end
-    else
-      add_res(clients[i].id, clients[i].name, res.result)
+      ::continue::
     end
-    ::continue::
+
+    local status, request = clients[i].request(method, params, handler, bufnr)
+    if status == false then
+      return {
+        name = clients[i].name,
+        method = method,
+        message = 'cliet not available',
+      }, {}
+    end
+
+    local wait = vim.fn.wait(1000, function()
+      return clients[i].requests[request] == nil
+    end, 50)
+
+    if wait == -1 then
+      return {
+        name = clients[i].name,
+        method = method,
+        message = 'timeout',
+      }, {}
+    end
   end
 
   return #errors > 0 and errors or nil, responses
