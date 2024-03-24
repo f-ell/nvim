@@ -151,12 +151,12 @@ function M._util.definition.open(data, index)
     return
   end
 
-  ---@diagnostic disable-next-line: redefined-local
-  local data = L.win.open_center(bufnr, true, {
+  data = L.win.open_center(bufnr, true, {
     title = ' ' .. vim.fn.fnamemodify(vim.fn.bufname(bufnr), ':t') .. ' ',
     zindex = 1,
     style = '',
   })
+  vim.cmd('filetype detect')
 
   vim.bo[data.nbuf].bufhidden = 'hide'
   vim.bo[data.nbuf].modifiable = true

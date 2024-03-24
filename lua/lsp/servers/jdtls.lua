@@ -33,6 +33,51 @@ return {
   handlers = {
     ['language/status'] = function() end, -- disable prints
     ['$/progress'] = function() end, -- disable progress warnings
+    ['textDocument/definition'] = function(err, res, ctx)
+      local uri, range = res.uri or res[1].uri, res.range or res[1].range
+      if not vim.endswith(uri, '.class') then
+        return { err = err, result = res }
+      end
+
+      if vim.startswith(uri, 'file://') then
+        uri = vim.uri_from_fname(uri)
+      end
+
+      err, res = L.lsp.request(
+        vim.lsp.get_client_by_id(ctx.client_id),
+        'workspace/executeCommand',
+        {
+          command = 'java.decompile',
+          arguments = { uri },
+        },
+        ctx.bufnr
+      )
+
+      if err == nil then
+        uri = uri:sub(0, ({ uri:find('^%w-://.-%.class%?') })[2] - 1)
+        local bufnr = vim.uri_to_bufnr(uri)
+
+        if vim.fn.bufloaded(bufnr) == 0 then
+          vim.bo[bufnr].buftype = 'nofile'
+          vim.bo[bufnr].bufhidden = 'wipe'
+          vim.api.nvim_buf_set_name(bufnr, uri)
+          vim.api.nvim_buf_set_lines(
+            bufnr,
+            0,
+            -1,
+            true,
+            vim.split(res[1].result:gsub('\r\n', '\n'), '\n')
+          )
+        end
+
+        res = {
+          targetUri = uri,
+          range = range,
+        }
+      end
+
+      return { err = err, result = res }
+    end,
   },
 
   -- https://github.com/eclipse/eclipse.jdt.ls/wiki/Running-the-JAVA-LS-server-from-the-command-line#initialize-request
