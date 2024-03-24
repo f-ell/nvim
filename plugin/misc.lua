@@ -1,5 +1,3 @@
-L = require('lib')
-
 vim.api.nvim_create_autocmd('TextYankPost', {
   callback = function()
     vim.highlight.on_yank({
@@ -8,11 +6,4 @@ vim.api.nvim_create_autocmd('TextYankPost', {
       on_visual = false,
     })
   end,
-})
-
-vim.filetype.add({
-  extension = {
-    snippet = 'snippet',
-    snippets = 'snippet',
-  },
 })
