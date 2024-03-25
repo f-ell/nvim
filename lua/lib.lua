@@ -246,9 +246,8 @@ end
 ---@param method string
 ---@param params TextDocumentPositionParams
 ---@param bufnr number
----@param callback fun(res:RPCResponse?)? called for each response; should handle errors
 ---@return RequestError[]?,EnrichedLspResponse[]
-M.lsp.request = function(clients, method, params, bufnr, callback)
+M.lsp.request = function(clients, method, params, bufnr)
   clients = (type(clients) == 'table' and type(clients[1]) == 'table')
       and clients
     or { clients }
@@ -280,21 +279,16 @@ M.lsp.request = function(clients, method, params, bufnr, callback)
         res = { err = err, result = result }
       end
 
-      if callback and type(callback) == 'function' then
-        callback(res)
+      if not res then
+        add_err(clients[i].name, method, msg)
         goto continue
-      else
-        if not res then
-          add_err(clients[i].name, method, msg)
-          goto continue
-        end
-        if res.err then
-          add_err(clients[i].name, method, res.err.message)
-          goto continue
-        end
-        if M.tbl.is_empty(res.result) then
-          goto continue
-        end
+      end
+      if res.err then
+        add_err(clients[i].name, method, res.err.message)
+        goto continue
+      end
+      if M.tbl.is_empty(res.result) then
+        goto continue
       end
 
       res.result = type(res.result[1]) == 'table' and res.result

@@ -77,16 +77,21 @@ return {
       },
     }
     dap.adapters.java = function(callback, _)
-      L.lsp.request(
+      local err, res = L.lsp.request(
         clients,
         'workspace/executeCommand',
         { command = 'vscode.java.startDebugSession' },
-        0,
-        function(tbl)
-          assert(not tbl.err, vim.print(tbl.err))
-          callback({ type = 'server', host = '127.0.0.1', port = tbl.result })
-        end
+        0
       )
+
+      if err ~= nil then
+        L.lsp.notify_error(err)
+        return
+      end
+
+      for i = 1, #res do
+        callback({ type = 'server', host = '127.0.0.1', port = res[i].result })
+      end
     end
   end,
 }
