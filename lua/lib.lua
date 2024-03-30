@@ -246,12 +246,10 @@ end
 ---@param method string
 ---@param params TextDocumentPositionParams
 ---@param bufnr number
+---@param timeout number? passeed as `timeout` parameter to `wait`, defaults to 1000
 ---@return RequestError[]?,EnrichedLspResponse[]
-M.lsp.request = function(clients, method, params, bufnr)
-  clients = (type(clients) == 'table' and type(clients[1]) == 'table')
-      and clients
-    or { clients }
-
+M.lsp.request = function(clients, method, params, bufnr, timeout)
+  clients = (type(clients) == 'table' and type(clients[1]) == 'table') and clients or { clients }
   local errors, responses = {}, {}
 
   ---@diagnostic disable-next-line: redefined-local
@@ -291,8 +289,7 @@ M.lsp.request = function(clients, method, params, bufnr)
         goto continue
       end
 
-      res.result = type(res.result[1]) == 'table' and res.result
-        or { res.result }
+      res.result = type(res.result[1]) == 'table' and res.result or { res.result }
       for j = 1, #res.result do
         add_res(clients[i].id, clients[i].name, res.result[j])
       end
@@ -308,7 +305,7 @@ M.lsp.request = function(clients, method, params, bufnr)
       }, {}
     end
 
-    local wait = vim.fn.wait(1000, function()
+    local wait = vim.fn.wait(timeout or 1000, function()
       return clients[i].requests[request] == nil
     end, 50)
 
@@ -317,6 +314,18 @@ M.lsp.request = function(clients, method, params, bufnr)
         name = clients[i].name,
         method = method,
         message = 'timeout',
+      }, {}
+    elseif wait == -2 then
+      return {
+        name = clients[i].name,
+        method = method,
+        message = 'interrupt',
+      }, {}
+    elseif wait == -3 then
+      return {
+        name = clients[i].name,
+        method = method,
+        message = 'internal error',
       }, {}
     end
   end
