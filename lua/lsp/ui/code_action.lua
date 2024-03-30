@@ -152,7 +152,8 @@ function M:_register_float_actions(data)
         vim.lsp.get_client_by_id(act.id),
         'codeAction/resolve',
         res,
-        0
+        0,
+        -1
       )
 
       if err then
@@ -218,7 +219,6 @@ function M:_open(raw)
   data.res = raw
 
   self:_set_highlights(data.nbuf, proc)
-  vim.api.nvim_win_set_cursor(data.nwin, { 1, 0 })
   self:_register_float_actions(data)
 end
 
