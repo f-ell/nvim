@@ -249,7 +249,13 @@ end
 ---@param timeout number? passeed as `timeout` parameter to `wait`, defaults to 1000
 ---@return RequestError[]?,EnrichedLspResponse[]
 M.lsp.request = function(clients, method, params, bufnr, timeout)
-  clients = (type(clients) == 'table' and type(clients[1]) == 'table') and clients or { clients }
+  if
+    type(clients) == 'table'
+    and not (type(clients[1]) == 'table' or M.tbl.is_empty(clients))
+  then
+    clients = { clients }
+  end
+
   local errors, responses = {}, {}
 
   ---@diagnostic disable-next-line: redefined-local
@@ -289,7 +295,8 @@ M.lsp.request = function(clients, method, params, bufnr, timeout)
         goto continue
       end
 
-      res.result = type(res.result[1]) == 'table' and res.result or { res.result }
+      res.result = type(res.result[1]) == 'table' and res.result
+        or { res.result }
       for j = 1, #res.result do
         add_res(clients[i].id, clients[i].name, res.result[j])
       end
