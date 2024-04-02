@@ -137,6 +137,56 @@ local function hashCodeEqualsPrompt(_, ctx)
   L.lsp.apply_edit(res[1])
 end
 
+local function organizeImportsChooseImports(result)
+  local ns_id = vim.api.nvim_create_namespace('jdtls')
+  local uri, missing = result[1], result[2]
+
+  local chosen = {}
+  for i = 1, #missing do
+    local r = missing[i].range
+
+    vim.api.nvim_win_set_buf(0, vim.uri_to_bufnr(uri))
+    vim.api.nvim_win_set_cursor(0, { r.start.line + 1, r.start.character })
+    vim.api.nvim_command('normal zz')
+    vim.api.nvim_buf_add_highlight(
+      0,
+      ns_id,
+      'Search',
+      r.start.line,
+      r.start.character,
+      r['end'].character
+    )
+    vim.api.nvim_command('redraw')
+
+    local candidates = missing[i].candidates
+
+    if #candidates == 1 then
+      vim.api.nvim_buf_clear_namespace(0, ns_id, 0, -1)
+      table.insert(chosen, candidates[1])
+    else
+      local fqn = candidates[1].fullyQualifiedName
+      local type = fqn:sub(L.str.last_index(fqn, '%.') + 2)
+
+      local function format(item, selected)
+        return ('%s%s'):format(selected and '* ' or '', item.fullyQualifiedName)
+      end
+
+      local items = L.ui.pick(candidates, nil, format, {
+        title = {
+          { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
+          { 'chooseImports:' .. type .. ' ', 'FloatTitle' },
+          { '<ESC> to confirm ', 'NeutralFloat' },
+        },
+      })
+
+      vim.api.nvim_buf_clear_namespace(0, ns_id, 0, -1)
+      chosen = vim.fn.extend(chosen, items)
+    end
+  end
+
+  return chosen
+end
+
 local function overrideMethodsPrompt(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   local err, res
@@ -197,7 +247,33 @@ end
 M.commands = {
   ['java.action.generateToStringPrompt'] = generateToStringPrompt,
   ['java.action.hashCodeEqualsPrompt'] = hashCodeEqualsPrompt,
+  ['java.action.organizeImports.chooseImports'] = organizeImportsChooseImports,
   ['java.action.overrideMethodsPrompt'] = overrideMethodsPrompt,
 }
+
+if not vim.lsp.handlers['workspace/executeClientCommand'] then
+  vim.lsp.handlers['workspace/executeClientCommand'] = function(_, params, ctx)
+    local cmd = (vim.lsp.get_client_by_id(ctx.client_id) or {}).commands or {}
+    local _cmd = vim.tbl_extend('force', vim.lsp.commands, M.commands)
+    local fn = cmd[params.command] or _cmd[params.command]
+
+    if not fn then
+      return vim.lsp.rpc_response_error(
+        vim.lsp.protocol.ErrorCodes.MethodNotFound,
+        ('`%s` not supported by client'):format(params.command)
+      )
+    end
+
+    local ok, res = pcall(fn, params.arguments, ctx)
+    if ok then
+      return res
+    else
+      return vim.lsp.rpc_response_error(
+        vim.lsp.protocol.ErrorCodes.InternalError,
+        res
+      )
+    end
+  end
+end
 
 return M

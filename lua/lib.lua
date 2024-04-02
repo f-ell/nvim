@@ -340,6 +340,15 @@ M.lsp.request = function(clients, method, params, bufnr, timeout)
   return #errors > 0 and errors or nil, responses
 end
 
+---------------------------------------------------------------------------- str
+
+---@param str string
+---@param pattern string
+---@return number?
+M.str.last_index = function(str, pattern)
+  return str:len() - str:reverse():find(pattern)
+end
+
 ---------------------------------------------------------------------------- tbl
 
 ---Perform recursive concatenation of nested array-like tables.
