@@ -26,24 +26,8 @@ local function generateToStringPrompt(_, ctx)
     return
   end
 
-  local function format(field, selected)
-    return ('%s%s %s'):format(selected and '* ' or '', field.type, field.name)
-  end
-
-  local function callback(fields)
-    err, res = L.lsp.request(
-      client,
-      'java/generateToString',
-      { context = ctx.params, fields = fields },
-      ctx.bufnr
-    )
-
-    if err then
-      L.lsp.notify_error(err)
-      return
-    end
-
-    L.lsp.apply_edit(res[1])
+  local function format(item, selected)
+    return ('%s%s %s'):format(selected and '* ' or '', item.type, item.name)
   end
 
   local preselect = {}
@@ -51,13 +35,27 @@ local function generateToStringPrompt(_, ctx)
     table.insert(preselect, i)
   end
 
-  L.ui.pick(res.result.fields, preselect, format, callback, {
+  local items = L.ui.pick(res.result.fields, preselect, format, {
     title = {
       { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
       { 'toString ', 'FloatTitle' },
       { '<ESC> to confirm ', 'NeutralFloat' },
     },
   })
+
+  err, res = L.lsp.request(
+    client,
+    'java/generateToString',
+    { context = ctx.params, fields = items },
+    ctx.bufnr
+  )
+
+  if err then
+    L.lsp.notify_error(err)
+    return
+  end
+
+  L.lsp.apply_edit(res[1])
 end
 
 local function hashCodeEqualsPrompt(_, ctx)
@@ -93,38 +91,8 @@ local function hashCodeEqualsPrompt(_, ctx)
   end
   local exists = res.result.existingMethods[1]
 
-  local function format(field, selected)
-    return ('%s%s %s'):format(selected and '* ' or '', field.type, field.name)
-  end
-
-  local function callback(fields)
-    err, res = L.lsp.request(
-      client,
-      'java/generateHashCodeEquals',
-      { context = ctx.params, fields = fields },
-      ctx.bufnr
-    )
-
-    if err then
-      L.lsp.notify_error(err)
-      return
-    end
-
-    if exists then
-      local uri = vim.fn.keys(res[1].result.changes)
-
-      for i = 1, #uri do
-        for j = 1, #res[1].result.changes[uri[i]] do
-          local c = res[1].result.changes[uri[i]][j]
-          c.newText = c.newText:gsub(
-            ('@Override\npublic %%l+ %s.- {.-}'):format(exists),
-            ''
-          )
-        end
-      end
-    end
-
-    L.lsp.apply_edit(res[1])
+  local function format(item, selected)
+    return ('%s%s %s'):format(selected and '* ' or '', item.type, item.name)
   end
 
   local preselect = {}
@@ -132,13 +100,41 @@ local function hashCodeEqualsPrompt(_, ctx)
     table.insert(preselect, i)
   end
 
-  L.ui.pick(res.result.fields, preselect, format, callback, {
+  local items = L.ui.pick(res.result.fields, preselect, format, {
     title = {
       { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
       { 'hashCodeEquals ', 'FloatTitle' },
       { '<ESC> to confirm ', 'NeutralFloat' },
     },
   })
+
+  err, res = L.lsp.request(
+    client,
+    'java/generateHashCodeEquals',
+    { context = ctx.params, fields = items },
+    ctx.bufnr
+  )
+
+  if err then
+    L.lsp.notify_error(err)
+    return
+  end
+
+  if exists then
+    local uri = vim.fn.keys(res[1].result.changes)
+
+    for i = 1, #uri do
+      for j = 1, #res[1].result.changes[uri[i]] do
+        local c = res[1].result.changes[uri[i]][j]
+        c.newText = c.newText:gsub(
+          ('@Override\npublic %%l+ %s.- {.-}'):format(exists),
+          ''
+        )
+      end
+    end
+  end
+
+  L.lsp.apply_edit(res[1])
 end
 
 local function overrideMethodsPrompt(_, ctx)
@@ -159,29 +155,13 @@ local function overrideMethodsPrompt(_, ctx)
     return
   end
 
-  local function format(method, selected)
+  local function format(item, selected)
     return ('%s%s(%s) via %s'):format(
       selected and '* ' or '',
-      method.name,
-      table.concat(method.parameters, ', '),
-      method.declaringClass
+      item.name,
+      table.concat(item.parameters, ', '),
+      item.declaringClass
     )
-  end
-
-  local function callback(methods)
-    err, res = L.lsp.request(
-      client,
-      'java/addOverridableMethods',
-      { context = ctx.params, overridableMethods = methods },
-      ctx.bufnr
-    )
-
-    if err then
-      L.lsp.notify_error(err)
-      return
-    end
-
-    L.lsp.apply_edit(res[1])
   end
 
   local preselect = {}
@@ -191,13 +171,27 @@ local function overrideMethodsPrompt(_, ctx)
     end
   end
 
-  L.ui.pick(res.result.methods, preselect, format, callback, {
+  local items = L.ui.pick(res.result.methods, preselect, format, {
     title = {
       { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
       { '@Override ', 'FloatTitle' },
       { '<ESC> to confirm ', 'NeutralFloat' },
     },
   })
+
+  err, res = L.lsp.request(
+    client,
+    'java/addOverridableMethods',
+    { context = ctx.params, overridableMethods = items },
+    ctx.bufnr
+  )
+
+  if err then
+    L.lsp.notify_error(err)
+    return
+  end
+
+  L.lsp.apply_edit(res[1])
 end
 
 M.commands = {
