@@ -410,16 +410,16 @@ end
 ---Open picker ui to select zero or more of the available items. Call
 ---`callback` on user confirmation with all selected items.
 ---
----Poor implementation - should instead wait for user input, handle the input
----and, on confirmation, return selected items for consumption by the caller.
+---NOTE: `getchar()` does not allow the visual cursor to be updated properly
+---before 0.10.
 ---
 ---@generic T
 ---@param items T[]
 ---@param preselect number[]? indices of items to preselect
 ---@param format fun(item:T,selected:boolean,index:number):string transform item to string representation
----@param callback fun(selected:T[]) called after confirmation with selected items
 ---@param config table? config passed to `nvim_open_win`
-M.ui.pick = function(items, preselect, format, callback, config)
+---@return T[] selected items
+M.ui.pick = function(items, preselect, format, config)
   if not items or #items == 0 then
     return {}
   end
@@ -465,7 +465,8 @@ M.ui.pick = function(items, preselect, format, callback, config)
   set_highlights(data.nbuf)
 
   M.ui.__register_close_events(data.nbuf, data.nwin)
-  M.ui.__register_select_keymaps(data.nbuf, function(i)
+
+  local function select(i)
     vim.api.nvim_win_set_cursor(data.nwin, { i, 0 })
 
     items[i].selected = not items[i].selected
@@ -479,20 +480,55 @@ M.ui.pick = function(items, preselect, format, callback, config)
       M.win.__width({ M.win.__parse_title(config), unpack(lines) })
     )
     set_highlights(data.nbuf)
-  end)
+  end
 
-  M.key.__disable_visual_keymaps(data.nbuf)
-  M.key.nnmap('<Esc>', function()
-    M.win.close(data.nwin)
+  local i_indices = {}
+  for i = 1, #items do
+    table.insert(i_indices, i)
+  end
+  local vmaps = { 22, 86, 118 }
 
-    local tbl = {}
-    for i = 1, #items do
-      if items[i].selected then
-        table.insert(tbl, items[i].item)
-      end
+  while true do
+    vim.cmd('redraw!')
+    local c, num = vim.fn.getchar(), nil
+
+    if c == 27 then
+      break
     end
-    callback(tbl)
-  end, { buffer = data.nbuf })
+
+    if c == 13 then
+      select(vim.fn.line('.'))
+      goto continue
+    end
+
+    if vim.tbl_contains(vmaps, c) then
+      goto continue
+    end
+
+    num = tonumber(vim.fn.nr2char(c))
+    if num then
+      if num <= #items then
+        select(num)
+      end
+      goto continue
+    end
+
+    -- NOTE: does not handle operator-pending mappings
+    vim.fn.feedkeys(vim.fn.nr2char(c), 'x')
+
+    ::continue::
+  end
+
+  M.win.close(data.nwin)
+
+  local tbl = {}
+  for i = 1, #items do
+    if items[i].selected then
+      table.insert(tbl, items[i].item)
+    end
+  end
+
+  return tbl
 end
 
 ---------------------------------------------------------------------------- win
