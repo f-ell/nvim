@@ -542,10 +542,10 @@ end
 
 ---------------------------------------------------------------------------- win
 
----window width when <relative> is <editor>
-M.win.__EW = 0.7
----window width when <relative> is <cursor>
-M.win.__CW = 0.8
+---maximum window width when `relative` is 'editor'
+M.win.__MAXSIZE = 0.8
+---reuired offset to center floating window when `relative` is 'editor'
+M.win.__OFFSET = (1 - M.win.__MAXSIZE) / 2
 
 ---@param config table?
 ---@return string
@@ -563,68 +563,57 @@ M.win.__parse_title = function(config)
     )
 end
 
----@return integer # maximum window height; respects <cmdheight>
-M.win.__max_height = function()
-  return vim.api.nvim_win_get_height(0) - vim.o.cmdheight
-end
-
----@return integer # actual window height
-M.win.__height = function(data)
-  if type(data) == 'number' then
-    return math.floor(vim.o.lines * M.win.__EW)
-  end
-
-  local _mw = M.win.__max_width()
-  if M.tbl.max_len(data) < _mw then
-    return math.min(#data > 0 and #data or 1, M.win.__max_height())
-  end
-
-  local h, sb = 0, vim.fn.strdisplaywidth(vim.o.showbreak)
-  for _, line in pairs(data) do
-    h = h + 1
-    local ln = vim.fn.strdisplaywidth(line)
-
-    -- first wrap
-    if ln > _mw then
-      ln = ln - _mw
-      h = h + 1
-    end
-    -- subsequent wraps
-    while ln > _mw do
-      ln = ln - _mw + sb
-      h = h + 1
-    end
-  end
-  return math.min(h, M.win.__max_height())
-end
-
----@return integer # maximum window width; keeps padding
+---@return integer # maximum window width
 M.win.__max_width = function()
-  return math.floor(vim.o.columns * M.win.__CW) - 2
+  return math.floor(vim.o.columns * M.win.__MAXSIZE) - 2
 end
 
+---@return integer # maximum window height; respects `cmdheight`
+M.win.__max_height = function()
+  return math.floor(vim.api.nvim_win_get_height(0) * M.win.__MAXSIZE)
+end
+
+---@param data number|string[]
 ---@return integer # actual window width
 M.win.__width = function(data)
   if type(data) == 'number' then
-    return math.floor(vim.o.columns * M.win.__EW)
+    return M.win.__max_width()
   else
     local len = M.tbl.max_len(data)
     return math.min(len > 0 and len or 1, M.win.__max_width())
   end
 end
 
----@return number # required vertical offset to center window
-M.win.__voffset = function()
-  local o = math.floor(-vim.o.cmdheight / 2)
-  local s = vim.o.laststatus
-  local t = vim.o.showtabline
-  if s > 1 or s == 1 and #vim.api.nvim_tabpage_list_wins(0) > 1 then
-    o = o - 1
+---@param data number|string[]
+---@return integer # actual window height
+M.win.__height = function(data)
+  if type(data) == 'number' then
+    return M.win.__max_height()
   end
-  if t > 1 or t == 1 and #vim.api.nvim_list_tabpages() > 1 then
-    o = o + 1
+
+  local maxw = vim.o.columns - 2
+  if M.tbl.max_len(data) < maxw then
+    return math.min(#data > 0 and #data or 1, M.win.__max_height())
   end
-  return o
+
+  local h, showbreak = #data, vim.fn.strdisplaywidth(vim.o.showbreak)
+  for i = 1, #data do
+    local l = vim.fn.strdisplaywidth(data[i])
+
+    -- first wrap
+    if l > maxw then
+      l = l - maxw
+      h = h + 1
+    end
+
+    -- subsequent wraps
+    while l > maxw do
+      l = l - maxw + showbreak
+      h = h + 1
+    end
+  end
+
+  return math.min(h, M.win.__max_height())
 end
 
 ---@return 'NW'|'SW',0|1 # window anchor and required curosr offset
@@ -672,13 +661,13 @@ M.win.open = function(lines, enter, config)
     owin = vim.api.nvim_get_current_win(),
     nbuf = -1,
     nwin = -1,
-    height = M.win.__height(lines),
     width = M.win.__width(
       type(lines) == 'number' and lines
         -- if title is present, ensure that it's not cut off
         ---@diagnostic disable-next-line: param-type-mismatch
         or { M.win.__parse_title(config), unpack(lines) }
     ),
+    height = M.win.__height(lines),
   }
 
   ---@diagnostic disable-next-line: redefined-local
@@ -687,7 +676,7 @@ M.win.open = function(lines, enter, config)
     anchor = 'NW',
     row = 1,
     col = type(lines) == 'table' and -1
-      or math.floor((vim.o.columns * (1 - M.win.__EW)) / 2),
+      or math.floor(vim.o.columns * M.win.__OFFSET),
     width = data.width,
     height = data.height,
     border = 'single',
@@ -719,13 +708,14 @@ end
 ---@param config table? config passed to `nvim_open_win`
 ---@return WinData
 M.win.open_center = function(lines, enter, config)
-  local conf = vim.tbl_extend('keep', config or {}, {
+  config = vim.tbl_extend('keep', config or {}, {
     relative = 'editor',
     anchor = 'NW',
-    row = math.floor((vim.o.lines * (1 - M.win.__EW)) / 2) + M.win.__voffset(),
-    col = math.floor((vim.o.columns * (1 - M.win.__EW)) / 2),
+    row = math.floor(vim.o.lines * M.win.__OFFSET) - 1,
+    col = math.floor(vim.o.columns * M.win.__OFFSET),
   })
-  return M.win.open(lines, enter, conf)
+
+  return M.win.open(lines, enter, config)
 end
 
 ---Wraps win.open(), with default position at cursor.
@@ -737,14 +727,16 @@ end
 ---@return WinData
 M.win.open_cursor = function(lines, enter, config)
   local anchor, row = M.win.anchor_offset()
-  local conf = vim.tbl_extend('keep', config or {}, {
+
+  config = vim.tbl_extend('keep', config or {}, {
     relative = 'cursor',
     anchor = anchor,
     row = row,
     col = -1,
     style = 'minimal',
   })
-  return M.win.open(lines, enter, conf)
+
+  return M.win.open(lines, enter, config)
 end
 
 ---------------------------------------------------------------------------- key
