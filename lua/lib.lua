@@ -17,7 +17,7 @@ local M = {
 ---@param events string|string[]
 ---@param buffer number
 ---@param callback string|function
-M.cmd.event = function(events, buffer, callback)
+function M.cmd.event(events, buffer, callback)
   vim.defer_fn(function()
     vim.api.nvim_create_autocmd(events, {
       buffer = buffer,
@@ -38,7 +38,7 @@ M.fs.user_dir = vim.fn.stdpath('run') .. '/nvim.user/'
 ---
 ---@param name string
 ---@return string filename
-M.fs.__unique = function(name)
+function M.fs._unique(name)
   if not vim.loop.fs_stat(name) then
     return name
   end
@@ -54,7 +54,7 @@ M.fs.__unique = function(name)
 end
 
 ---Current process PID. Linux only - relies on `/proc/self/status`!
-M.fs.__PID = (function()
+M.fs._PID = (function()
   for ln in io.lines('/proc/self/status') do
     local match = ln:match('^Pid:.-(%d+)$')
     if match then
@@ -64,7 +64,7 @@ M.fs.__PID = (function()
 end)()
 
 ---Create temporary directory for miscellaneous runtime user files.
-M.fs.mktmpdir = function()
+function M.fs.mktmpdir()
   if vim.loop.fs_stat(M.fs.user_dir) then
     return
   end
@@ -82,13 +82,13 @@ end
 ---@param remove boolean register delete autocommand
 ---@param name string? basename of the file to write or uniquely generated name
 ---@return string filename
-M.fs.writetmpfile = function(buffer, data, remove, name)
+function M.fs.writetmpfile(buffer, data, remove, name)
   if not vim.loop.fs_stat(M.fs.user_dir) then
     M.fs.mktmpdir()
   end
 
-  local file = M.fs.user_dir .. (name and name or M.fs.__PID .. '-' .. buffer)
-  M.io.write(name and file or M.fs.__unique(file), data)
+  local file = M.fs.user_dir .. (name and name or M.fs._PID .. '-' .. buffer)
+  M.io.write(name and file or M.fs._unique(file), data)
 
   if remove then
     vim.api.nvim_create_autocmd(
@@ -113,7 +113,7 @@ end
 ---@param file string|file* name or handle
 ---@param mode string
 ---@return file*|nil filehandle
-M.io.__open = function(file, mode)
+function M.io._open(file, mode)
   if type(file) == 'string' then
     return io.open(file, mode) --[[@as file*]]
   else
@@ -126,8 +126,8 @@ end
 ---@param file string|file* closed automatically
 ---@param chop boolean? remove trailing newline
 ---@return string content
-M.io.read = function(file, chop)
-  local fh = M.io.__open(file, 'r')
+function M.io.read(file, chop)
+  local fh = M.io._open(file, 'r')
   if fh == nil then
     return ''
   end
@@ -141,8 +141,8 @@ end
 ---
 ---@param file string|file* closed automatically
 ---@return string[] content
-M.io.tbl_read = function(file)
-  local fh = M.io.__open(file, 'r')
+function M.io.tbl_read(file)
+  local fh = M.io._open(file, 'r')
   if fh == nil then
     return {}
   end
@@ -160,12 +160,12 @@ end
 ---@param file string|file* closed automatically
 ---@param data string[]
 ---@param mode 'w'|'w+'|'wb'|'w+b'? defaults to w+
-M.io.write = function(file, data, mode)
+function M.io.write(file, data, mode)
   if mode and not vim.tbl_contains({ 'w', 'w+', 'wb', 'w+b' }, mode) then
     error('illegal mode - ' .. mode)
   end
 
-  local fh = M.io.__open(file, mode or 'w+')
+  local fh = M.io._open(file, mode or 'w+')
   assert(fh ~= nil, ('Failed to write `%s`'):format(file))
 
   fh:write(table.concat(data, '\n') .. '\n')
@@ -178,7 +178,7 @@ end
 ---Apply a workspace edit.
 ---
 ---@param response EnrichedLspResponse
-M.lsp.apply_edit = function(response)
+function M.lsp.apply_edit(response)
   local edit = response.result.edit and response.result.edit or response.result
 
   vim.lsp.util.apply_workspace_edit(
@@ -197,7 +197,7 @@ end
 ---@param capabilities string|string[]
 ---@param filter (fun(client:LspClient):boolean)? determines whether a client is returned
 ---@return LspClient[] clients
-M.lsp.clients_by_cap = function(capabilities, filter)
+function M.lsp.clients_by_cap(capabilities, filter)
   local clients = vim.tbl_filter(
     function(client)
       if type(capabilities) == 'string' then
@@ -231,7 +231,7 @@ end
 ---
 ---@param errors RequestError|RequestError[]
 ---@param level LogLevel? defaults to `vim.log.levels.ERROR`
-M.lsp.notify_error = function(errors, level)
+function M.lsp.notify_error(errors, level)
   errors = type(errors[1]) == 'table' and errors or { errors }
   for i = 1, #errors do
     vim.notify(
@@ -255,7 +255,7 @@ end
 ---@param bufnr number
 ---@param timeout number? passeed as `timeout` parameter to `wait()`, defaults to 1000
 ---@return RequestError[]?,EnrichedLspResponse[]
-M.lsp.request = function(clients, method, params, bufnr, timeout)
+function M.lsp.request(clients, method, params, bufnr, timeout)
   if
     type(clients) == 'table'
     and not (type(clients[1]) == 'table' or M.tbl.is_empty(clients))
@@ -354,7 +354,7 @@ end
 ---@param str string
 ---@param pattern string
 ---@return number?
-M.str.last_index = function(str, pattern)
+function M.str.last_index(str, pattern)
   local index = str:reverse():find(pattern)
 
   if not index then
@@ -371,7 +371,7 @@ end
 ---@param tbl number|string|table<string, number, table<string, number>>
 ---@param sep string
 ---@return string
-M.tbl.deep_concat = function(tbl, sep)
+function M.tbl.deep_concat(tbl, sep)
   if type(tbl) ~= 'table' then
     return string.format(tbl)
   end
@@ -388,7 +388,7 @@ end
 ---
 ---@param tbl string[]
 ---@return integer
-M.tbl.max_len = function(tbl)
+function M.tbl.max_len(tbl)
   local max = 0
   for i = 1, #tbl do
     -- FIX: returns incorrect width for some strings (replace with `strwidth`?)
@@ -404,7 +404,7 @@ end
 ---
 ---@param tbl table?
 ---@return boolean
-M.tbl.is_empty = function(tbl)
+function M.tbl.is_empty(tbl)
   return tbl == nil or (type(tbl) == 'table' and next(tbl) == nil)
 end
 
@@ -414,7 +414,7 @@ end
 ---
 ---@param bufnr number
 ---@param winnr number
-M.ui.__register_close_events = function(bufnr, winnr)
+function M.ui._register_close_events(bufnr, winnr)
   M.cmd.event({ 'WinLeave', 'QuitPre' }, bufnr, function()
     M.win.close(winnr)
   end)
@@ -428,7 +428,7 @@ end
 ---
 ---@param bufnr number
 ---@param callback fun(index:number)
-M.ui.__register_select_keymaps = function(bufnr, callback)
+function M.ui._register_select_keymaps(bufnr, callback)
   M.key.nnmap('<CR>', function()
     callback(vim.fn.line('.'))
   end, { buffer = bufnr })
@@ -452,7 +452,7 @@ end
 ---@param format fun(item:T,selected:boolean,index:number):string transform item to string representation
 ---@param config table? config passed to `nvim_open_win()`
 ---@return T[] selected
-M.ui.pick = function(items, preselect, format, config)
+function M.ui.pick(items, preselect, format, config)
   if not items or #items == 0 then
     return {}
   end
@@ -497,7 +497,7 @@ M.ui.pick = function(items, preselect, format, config)
   local data = M.win.open_cursor(lines, true, config)
   set_highlights(data.nbuf)
 
-  M.ui.__register_close_events(data.nbuf, data.nwin)
+  M.ui._register_close_events(data.nbuf, data.nwin)
 
   local function select(i)
     vim.api.nvim_win_set_cursor(data.nwin, { i, 0 })
@@ -510,7 +510,7 @@ M.ui.pick = function(items, preselect, format, config)
     vim.bo[data.nbuf].modifiable = false
     vim.api.nvim_win_set_width(
       data.nwin,
-      M.win.__width({ M.win.__parse_title(config), unpack(lines) })
+      M.win._width({ M.win._parse_title(config), unpack(lines) })
     )
     set_highlights(data.nbuf)
   end
@@ -567,15 +567,15 @@ end
 ---------------------------------------------------------------------------- win
 
 ---Maximum window width when `relative` is 'editor'.
-M.win.__MAXSIZE = 0.8
+M.win._MAXSIZE = 0.8
 ---Reuired offset to center floating window when `relative` is 'editor'.
-M.win.__OFFSET = (1 - M.win.__MAXSIZE) / 2
+M.win._OFFSET = (1 - M.win._MAXSIZE) / 2
 
 ---Extract window title string from `nvim_open_win()`'s `config` table.
 ---
 ---@param config table?
 ---@return string
-M.win.__parse_title = function(config)
+function M.win._parse_title(config)
   if not (config and config.title) then
     return ''
   end
@@ -592,27 +592,27 @@ end
 ---Calculate maximum window width, maintaining desired padding.
 ---
 ---@return integer
-M.win.__max_width = function()
-  return math.floor(vim.o.columns * M.win.__MAXSIZE) - 2
+function M.win._max_width()
+  return math.floor(vim.o.columns * M.win._MAXSIZE) - 2
 end
 
 ---Calculate maximum window height, maintaining desired padding.
 ---
 ---@return integer
-M.win.__max_height = function()
-  return math.floor(vim.api.nvim_win_get_height(0) * M.win.__MAXSIZE)
+function M.win._max_height()
+  return math.floor(vim.api.nvim_win_get_height(0) * M.win._MAXSIZE)
 end
 
 ---Calculate window width.
 ---
 ---@param data number|string[] buffer | buffer contents
 ---@return integer
-M.win.__width = function(data)
+function M.win._width(data)
   if type(data) == 'number' then
-    return M.win.__max_width()
+    return M.win._max_width()
   else
     local len = M.tbl.max_len(data)
-    return math.min(len > 0 and len or 1, M.win.__max_width())
+    return math.min(len > 0 and len or 1, M.win._max_width())
   end
 end
 
@@ -620,14 +620,14 @@ end
 ---
 ---@param data number|string[] buffer | buffer contents
 ---@return integer
-M.win.__height = function(data)
+function M.win._height(data)
   if type(data) == 'number' then
-    return M.win.__max_height()
+    return M.win._max_height()
   end
 
   local maxw = vim.o.columns - 2
   if M.tbl.max_len(data) < maxw then
-    return math.min(#data > 0 and #data or 1, M.win.__max_height())
+    return math.min(#data > 0 and #data or 1, M.win._max_height())
   end
 
   local h, showbreak = #data, vim.fn.strdisplaywidth(vim.o.showbreak)
@@ -647,14 +647,14 @@ M.win.__height = function(data)
     end
   end
 
-  return math.min(h, M.win.__max_height())
+  return math.min(h, M.win._max_height())
 end
 
 ---Calculate appropriate window anchor and required offset for centering the
 ---window, based on the current cursor position.
 ---
 ---@return 'NW'|'SW' anchor, 0|1 offset
-M.win.anchor_offset = function()
+function M.win.anchor_offset()
   local anchor = vim.fn.winline() - (vim.fn.winheight(0) / 2) > 0 and 'SW'
     or 'NW'
   local offset = anchor == 'NW' and 1 or 0
@@ -666,7 +666,7 @@ end
 ---@param window number
 ---@param base number? window id to make the new active window
 ---@param pos {[1]:number,[2]:number}? (1,0)-indexed cursor position
-M.win.close = function(window, base, pos)
+function M.win.close(window, base, pos)
   if not window or not vim.api.nvim_win_is_valid(window) then
     return
   end
@@ -681,7 +681,7 @@ end
 ---
 ---@param window number
 ---@return boolean
-M.win.is_cur_valid = function(window)
+function M.win.is_cur_valid(window)
   return (
     vim.api.nvim_get_current_win() == window
     and vim.api.nvim_win_is_valid(window)
@@ -694,20 +694,20 @@ end
 ---@param enter boolean
 ---@param config table? config passed to `nvim_open_win()`
 ---@return WinData
-M.win.open = function(lines, enter, config)
+function M.win.open(lines, enter, config)
   ---@type WinData
   local data = {
     obuf = vim.api.nvim_get_current_buf(),
     owin = vim.api.nvim_get_current_win(),
     nbuf = -1,
     nwin = -1,
-    width = M.win.__width(
+    width = M.win._width(
       type(lines) == 'number' and lines
         -- if title is present, ensure that it's not cut off
         ---@diagnostic disable-next-line: param-type-mismatch
-        or { M.win.__parse_title(config), unpack(lines) }
+        or { M.win._parse_title(config), unpack(lines) }
     ),
-    height = M.win.__height(lines),
+    height = M.win._height(lines),
   }
 
   ---@diagnostic disable-next-line: redefined-local
@@ -716,7 +716,7 @@ M.win.open = function(lines, enter, config)
     anchor = 'NW',
     row = 1,
     col = type(lines) == 'table' and -1
-      or math.floor(vim.o.columns * M.win.__OFFSET),
+      or math.floor(vim.o.columns * M.win._OFFSET),
     width = data.width,
     height = data.height,
     border = 'single',
@@ -747,12 +747,12 @@ end
 ---@param enter boolean
 ---@param config table? config passed to `nvim_open_win()`
 ---@return WinData
-M.win.open_center = function(lines, enter, config)
+function M.win.open_center(lines, enter, config)
   config = vim.tbl_extend('keep', config or {}, {
     relative = 'editor',
     anchor = 'NW',
-    row = math.floor(vim.o.lines * M.win.__OFFSET) - 1,
-    col = math.floor(vim.o.columns * M.win.__OFFSET),
+    row = math.floor(vim.o.lines * M.win._OFFSET) - 1,
+    col = math.floor(vim.o.columns * M.win._OFFSET),
   })
 
   return M.win.open(lines, enter, config)
@@ -765,7 +765,7 @@ end
 ---@param enter boolean
 ---@param config table? config passed to `nvim_open_win()`
 ---@return WinData
-M.win.open_cursor = function(lines, enter, config)
+function M.win.open_cursor(lines, enter, config)
   local anchor, row = M.win.anchor_offset()
 
   config = vim.tbl_extend('keep', config or {}, {
@@ -784,7 +784,7 @@ end
 ---Disable keymaps to enter visual mode in buffer `bufnr`.
 ---
 ---@param bufnr number
-M.key.__disable_visual_keymaps = function(bufnr)
+function M.key._disable_visual_keymaps(bufnr)
   for _, lhs in pairs({ 'v', 'V', '<C-v>' }) do
     M.key.nnmap(lhs, '', { buffer = bufnr })
   end
@@ -795,7 +795,7 @@ end
 ---@param mode 'i'|'n'|'v'|'c'|'t'
 ---@param map_opts table?
 ---@return fun(lhs:string,rhs:string|function,opts:table?)
-M.key.__map = function(mode, map_opts)
+function M.key._map(mode, map_opts)
   map_opts = map_opts or { noremap = true }
   ---Wraps vim.keymap.set. The mode is derived from the overarching call.
   ---
@@ -808,11 +808,11 @@ M.key.__map = function(mode, map_opts)
   end
 end
 
-M.key.inmap = M.key.__map('i')
-M.key.nnmap = M.key.__map('n')
-M.key.vnmap = M.key.__map('v')
-M.key.cnmap = M.key.__map('c')
-M.key.tnmap = M.key.__map('t')
+M.key.inmap = M.key._map('i')
+M.key.nnmap = M.key._map('n')
+M.key.vnmap = M.key._map('v')
+M.key.cnmap = M.key._map('c')
+M.key.tnmap = M.key._map('t')
 
 ---Set map for one or more modes.
 ---
@@ -820,7 +820,7 @@ M.key.tnmap = M.key.__map('t')
 ---@param lhs string
 ---@param rhs string|function
 ---@param opts table?
-M.key.modemap = function(modes, lhs, rhs, opts)
+function M.key.modemap(modes, lhs, rhs, opts)
   opts = vim.tbl_extend('force', { noremap = true }, opts or {})
   vim.keymap.set(modes, lhs, rhs, opts)
 end
@@ -830,7 +830,7 @@ end
 ---@param modes string|string[]
 ---@param lhs string
 ---@param opts table?
-M.key.unmap = function(modes, lhs, opts)
+function M.key.unmap(modes, lhs, opts)
   vim.keymap.del(modes, lhs, opts or {})
 end
 
