@@ -35,13 +35,12 @@ local function generateConstructorsPrompt(_, ctx)
     )
   end
 
-  local constructors = res.result.constructors
-  if L.tbl.is_empty(constructors) then
+  if L.tbl.is_empty(res.result.constructors) then
     vim.notify('No constructors found', vim.log.levels.INFO)
     return
   end
 
-  constructors = L.ui.pick(constructors, {}, format, {
+  local constructors = L.ui.pick(res.result.constructors, {}, format, {
     title = {
       { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
       { 'generateConstructors:constructors ', 'FloatTitle' },
@@ -61,7 +60,7 @@ local function generateConstructorsPrompt(_, ctx)
     end
 
     local preselect = {}
-    for i = 1, #res.result.fields do
+    for i = 1, #fields do
       table.insert(preselect, i)
     end
 
@@ -78,6 +77,95 @@ local function generateConstructorsPrompt(_, ctx)
     { context = ctx.params, constructors = constructors, fields = fields }
   err, res =
     L.lsp.request(client, 'java/generateConstructors', params, ctx.bufnr)
+
+  if err then
+    L.lsp.notify_error(err)
+    return
+  end
+
+  L.lsp.apply_edit(res[1])
+end
+
+local function generateDelegateMethodsPrompt(_, ctx)
+  local client = vim.lsp.get_client_by_id(ctx.client_id)
+  local err, res
+
+  err, res = L.lsp.request(
+    client,
+    'java/checkDelegateMethodsStatus',
+    ctx.params,
+    ctx.bufnr
+  )
+
+  if err then
+    L.lsp.notify_error(err)
+    return
+  end
+
+  res = res[1]
+  if not res or L.tbl.is_empty(res.result.delegateFields) then
+    vim.notify('Delegate methods already exist', vim.log.levels.INFO)
+    return
+  end
+
+  local function format(item, selected)
+    return ('%s%s %s'):format(
+      selected and '* ' or '',
+      item.field.type,
+      item.field.name
+    )
+  end
+
+  local field = #res.result.delegateFields == 1 and res.result.delegateFields[1]
+    or L.ui.pick(res.result.delegateFields, {}, format, {
+      title = {
+        { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
+        { 'generateDelegateMethods:target ', 'FloatTitle' },
+        { '<ESC> to confirm ', 'NeutralFloat' },
+      },
+    })[1]
+
+  if not field then
+    return
+  end
+  if #field.delegateMethods == 0 then
+    vim.notify('Delegate methods already exist', vim.log.levels.INFO)
+    return
+  end
+
+  ---@diagnostic disable-next-line: redefined-local
+  local function format(item, selected)
+    return ('%s%s(%s)'):format(
+      selected and '* ' or '',
+      item.name,
+      table.concat(item.parameters, ',')
+    )
+  end
+
+  local methods = L.ui.pick(field.delegateMethods, {}, format, {
+    title = {
+      { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
+      { 'generateDelegateMethods:method ', 'FloatTitle' },
+      { '<ESC> to confirm ', 'NeutralFloat' },
+    },
+  })
+
+  if L.tbl.is_empty(methods) then
+    return
+  end
+
+  local params = {
+    context = ctx.params,
+    delegateEntries = vim.tbl_map(function(method)
+      return {
+        field = field.field,
+        delegateMethod = method,
+      }
+    end, methods),
+  }
+
+  err, res =
+    L.lsp.request(client, 'java/generateDelegateMethods', params, ctx.bufnr)
 
   if err then
     L.lsp.notify_error(err)
@@ -327,6 +415,7 @@ end
 
 M.commands = {
   ['java.action.generateConstructorsPrompt'] = generateConstructorsPrompt,
+  ['java.action.generateDelegateMethodsPrompt'] = generateDelegateMethodsPrompt,
   ['java.action.generateToStringPrompt'] = generateToStringPrompt,
   ['java.action.hashCodeEqualsPrompt'] = hashCodeEqualsPrompt,
   ['java.action.organizeImports.chooseImports'] = organizeImportsChooseImports,
