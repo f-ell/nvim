@@ -6,6 +6,87 @@ M._util = {
   end),
 }
 
+local function generateConstructorsPrompt(_, ctx)
+  local client = vim.lsp.get_client_by_id(ctx.client_id)
+  local err, res
+
+  err, res =
+    L.lsp.request(client, 'java/checkConstructorsStatus', ctx.params, ctx.bufnr)
+
+  if err then
+    L.lsp.notify_error(err)
+    return
+  end
+
+  res = res[1]
+  if
+    not res
+    or not res.result.constructors
+    or #res.result.constructors == 0
+  then
+    return
+  end
+
+  local function format(item, selected)
+    return ('%s%s(%s)'):format(
+      selected and '* ' or '',
+      item.name,
+      table.concat(item.parameters, ',')
+    )
+  end
+
+  local constructors = res.result.constructors
+  if L.tbl.is_empty(constructors) then
+    vim.notify('No constructors found', vim.log.levels.INFO)
+    return
+  end
+
+  constructors = L.ui.pick(constructors, {}, format, {
+    title = {
+      { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
+      { 'generateConstructors:constructors ', 'FloatTitle' },
+      { '<ESC> to confirm ', 'NeutralFloat' },
+    },
+  })
+
+  if L.tbl.is_empty(constructors) then
+    return
+  end
+
+  local fields = res.result.fields
+  if fields then
+    ---@diagnostic disable-next-line: redefined-local
+    local function format(item, selected)
+      return ('%s%s %s'):format(selected and '* ' or '', item.type, item.name)
+    end
+
+    local preselect = {}
+    for i = 1, #res.result.fields do
+      table.insert(preselect, i)
+    end
+
+    fields = L.ui.pick(fields, preselect, format, {
+      title = {
+        { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
+        { 'generateConstructors:fields ', 'FloatTitle' },
+        { '<ESC> to confirm ', 'NeutralFloat' },
+      },
+    })
+  end
+
+  local params =
+    { context = ctx.params, constructors = constructors, fields = fields }
+  err, res =
+    L.lsp.request(client, 'java/generateConstructors', params, ctx.bufnr)
+
+  if err then
+    L.lsp.notify_error(err)
+    return
+  end
+
+  L.lsp.apply_edit(res[1])
+end
+
 local function generateToStringPrompt(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
 
@@ -245,6 +326,7 @@ local function overrideMethodsPrompt(_, ctx)
 end
 
 M.commands = {
+  ['java.action.generateConstructorsPrompt'] = generateConstructorsPrompt,
   ['java.action.generateToStringPrompt'] = generateToStringPrompt,
   ['java.action.hashCodeEqualsPrompt'] = hashCodeEqualsPrompt,
   ['java.action.organizeImports.chooseImports'] = organizeImportsChooseImports,
