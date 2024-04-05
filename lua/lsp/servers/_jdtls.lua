@@ -40,7 +40,7 @@ local function generateConstructorsPrompt(_, ctx)
     return
   end
 
-  local constructors = L.ui.pick(res.result.constructors, {}, format, {
+  local constructors = L.ui.pick(res.result.constructors, true, format, {
     title = {
       { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
       { 'generateConstructors:constructors ', 'FloatTitle' },
@@ -59,12 +59,7 @@ local function generateConstructorsPrompt(_, ctx)
       return ('%s%s %s'):format(selected and '* ' or '', item.type, item.name)
     end
 
-    local preselect = {}
-    for i = 1, #fields do
-      table.insert(preselect, i)
-    end
-
-    fields = L.ui.pick(fields, preselect, format, {
+    fields = L.ui.pick(fields, { -1 }, format, {
       title = {
         { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
         { 'generateConstructors:fields ', 'FloatTitle' },
@@ -117,7 +112,7 @@ local function generateDelegateMethodsPrompt(_, ctx)
   end
 
   local field = #res.result.delegateFields == 1 and res.result.delegateFields[1]
-    or L.ui.pick(res.result.delegateFields, {}, format, {
+    or L.ui.pick(res.result.delegateFields, false, format, {
       title = {
         { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
         { 'generateDelegateMethods:target ', 'FloatTitle' },
@@ -142,7 +137,7 @@ local function generateDelegateMethodsPrompt(_, ctx)
     )
   end
 
-  local methods = L.ui.pick(field.delegateMethods, {}, format, {
+  local methods = L.ui.pick(field.delegateMethods, true, format, {
     title = {
       { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
       { 'generateDelegateMethods:method ', 'FloatTitle' },
@@ -199,12 +194,7 @@ local function generateToStringPrompt(_, ctx)
     return ('%s%s %s'):format(selected and '* ' or '', item.type, item.name)
   end
 
-  local preselect = {}
-  for i = 1, #res.result.fields do
-    table.insert(preselect, i)
-  end
-
-  local items = L.ui.pick(res.result.fields, preselect, format, {
+  local items = L.ui.pick(res.result.fields, { -1 }, format, {
     title = {
       { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
       { 'toString ', 'FloatTitle' },
@@ -264,12 +254,7 @@ local function hashCodeEqualsPrompt(_, ctx)
     return ('%s%s %s'):format(selected and '* ' or '', item.type, item.name)
   end
 
-  local preselect = {}
-  for i = 1, #res.result.fields do
-    table.insert(preselect, i)
-  end
-
-  local items = L.ui.pick(res.result.fields, preselect, format, {
+  local items = L.ui.pick(res.result.fields, { -1 }, format, {
     title = {
       { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
       { 'hashCodeEquals ', 'FloatTitle' },
@@ -340,7 +325,7 @@ local function organizeImportsChooseImports(result)
         return ('%s%s'):format(selected and '* ' or '', item.fullyQualifiedName)
       end
 
-      local items = L.ui.pick(candidates, nil, format, {
+      local items = L.ui.pick(candidates, false, format, {
         title = {
           { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
           { 'chooseImports:' .. type .. ' ', 'FloatTitle' },
@@ -383,14 +368,14 @@ local function overrideMethodsPrompt(_, ctx)
     )
   end
 
-  local preselect = {}
+  local multi = {}
   for i = 1, #res.result.methods do
     if res.result.methods[i].declaringClass == 'java.lang.Object' then
-      table.insert(preselect, i)
+      table.insert(multi, i)
     end
   end
 
-  local items = L.ui.pick(res.result.methods, preselect, format, {
+  local items = L.ui.pick(res.result.methods, multi, format, {
     title = {
       { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
       { '@Override ', 'FloatTitle' },

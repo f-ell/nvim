@@ -442,17 +442,26 @@ end
 ---Open floating window and allow selection of zero or more items, returning all
 ---selected items.
 ---
+---`multi`:
+---If `true`, allow selection of multiple items. If `false`, pre-select the
+---first item and disallow multiple selections; the function will return `T[]`
+---regardless.
+---
+---If array, it's interpreted as indices of items to pre-select. As a special
+---case, if the first element is `-1`, all items are pre-selected; subsequent
+---indices are ignored.
+---
 ---NOTE: `getchar()` does not allow the visual cursor to update properly before
 ---0.10.
 ---
 ---@generic T
 ---@param items T[]
----@param preselect number[]? indices of items to preselect
+---@param multi boolean|number[]
 ---@param format fun(item:T,selected:boolean,index:number):string transform item to string representation
 ---@param config table? config passed to `nvim_open_win()`
 ---@return T[] selected
-function M.ui.pick(items, preselect, format, config)
-  if not items or #items == 0 then
+function M.ui.pick(items, multi, format, config)
+  if M.tbl.is_empty(items) then
     return {}
   end
 
@@ -476,9 +485,16 @@ function M.ui.pick(items, preselect, format, config)
 
   do
     local sparse = {}
-    preselect = preselect or {}
-    for i = 1, #preselect do
-      sparse[preselect[i]] = true
+    if type(multi) == 'table' and multi[1] == -1 then
+      for i = 1, #items do
+        sparse[i] = true
+      end
+    elseif type(multi) == 'table' then
+      for i = 1, #multi do
+        sparse[multi[i]] = true
+      end
+    elseif multi == false then
+      sparse[1] = true
     end
 
     local tbl = {}
@@ -501,8 +517,17 @@ function M.ui.pick(items, preselect, format, config)
   local function select(i)
     vim.api.nvim_win_set_cursor(data.nwin, { i, 0 })
 
-    items[i].selected = not items[i].selected
-    lines[i] = i .. ' ' .. format(items[i].item, items[i].selected, i)
+    if multi == false then
+      for j = 1, #items do
+        items[j].selected = false
+        lines[j] = j .. ' ' .. format(items[j].item, items[j].selected, j)
+      end
+      items[i].selected = true
+      lines[i] = i .. ' ' .. format(items[i].item, items[i].selected, i)
+    else
+      items[i].selected = not items[i].selected
+      lines[i] = i .. ' ' .. format(items[i].item, items[i].selected, i)
+    end
 
     vim.bo[data.nbuf].modifiable = true
     vim.api.nvim_buf_set_lines(data.nbuf, 0, -1, true, lines)
