@@ -390,8 +390,7 @@ end
 function M.tbl.max_len(tbl)
   local max = 0
   for i = 1, #tbl do
-    -- FIX: returns incorrect width for some strings (replace with `strwidth`?)
-    local len = vim.fn.strdisplaywidth(tbl[i])
+    local len = vim.fn.strwidth(tbl[i])
     if len > max then
       max = len
     end
