@@ -445,13 +445,11 @@ end
 ---If `true`, allow selection of multiple items. If `false`, pre-select the
 ---first item and disallow multiple selections; the function will return `T[]`
 ---regardless.
+---If number-array, it's interpreted as indices of items to pre-select. As a
+---special case, if the first element is `-1`, all items are pre-selected;
+---subsequent -indices are ignored.
 ---
----If array, it's interpreted as indices of items to pre-select. As a special
----case, if the first element is `-1`, all items are pre-selected; subsequent
----indices are ignored.
----
----NOTE: `getchar()` does not allow the visual cursor to update properly before
----0.10.
+---NOTE: `getchar()` doesn't allow updates to cursor position before 0.10.
 ---
 ---@generic T
 ---@param items T[]
@@ -482,32 +480,33 @@ function M.ui.pick(items, multi, format, config)
     end
   end
 
-  do
-    local sparse = {}
-    if type(multi) == 'table' and multi[1] == -1 then
-      for i = 1, #items do
-        sparse[i] = true
-      end
-    elseif type(multi) == 'table' then
-      for i = 1, #multi do
-        sparse[multi[i]] = true
-      end
-    elseif multi == false then
-      sparse[1] = true
-    end
+  local vmaps = { 22, 86, 118 }
+  local selected = {}
 
-    local tbl = {}
+  if type(multi) == 'table' and multi[1] == -1 then
     for i = 1, #items do
-      table.insert(tbl, { item = items[i], selected = sparse[i] })
+      selected[i] = true
     end
-    items = tbl
+  elseif type(multi) == 'table' then
+    for i = 1, #items do
+      selected[items[i]] = true
+    end
+  elseif multi == false then
+    selected[1] = true
   end
 
   local lines = {}
   for i = 1, #items do
-    table.insert(lines, i .. ' ' .. format(items[i].item, items[i].selected, i))
+    table.insert(lines, i .. ' ' .. format(items[i], selected[i] or false, i))
   end
 
+  config.width = math.min(
+    M.tbl.max_len({ M.win._parse_title(config), unpack(lines) })
+      + math.abs(
+        format(items[1], true, 1):len() - format(items[1], false, 1):len()
+      ),
+    M.win._max_width()
+  )
   local data = M.win.open_cursor(lines, true, config)
   set_highlights(data.nbuf)
 
@@ -517,32 +516,27 @@ function M.ui.pick(items, multi, format, config)
     vim.api.nvim_win_set_cursor(data.nwin, { i, 0 })
 
     if multi == false then
-      for j = 1, #items do
-        items[j].selected = false
-        lines[j] = j .. ' ' .. format(items[j].item, items[j].selected, j)
+      -- guard clause with goto label breaks stylua (v0.20.0)
+      if not selected[i] then
+        for j, _ in pairs(selected) do
+          selected[j] = nil
+          lines[j] = j .. ' ' .. format(items[j], false, j)
+        end
+
+        selected[i] = true
       end
-      items[i].selected = true
-      lines[i] = i .. ' ' .. format(items[i].item, items[i].selected, i)
     else
-      items[i].selected = not items[i].selected
-      lines[i] = i .. ' ' .. format(items[i].item, items[i].selected, i)
+      -- order important; `truthy and nil` doesn't short-circuit
+      selected[i] = not selected[i] and true or nil
     end
+
+    lines[i] = i .. ' ' .. format(items[i], selected[i] or false, i)
 
     vim.bo[data.nbuf].modifiable = true
     vim.api.nvim_buf_set_lines(data.nbuf, 0, -1, true, lines)
     vim.bo[data.nbuf].modifiable = false
-    vim.api.nvim_win_set_width(
-      data.nwin,
-      M.win._width({ M.win._parse_title(config), unpack(lines) })
-    )
     set_highlights(data.nbuf)
   end
-
-  local i_indices = {}
-  for i = 1, #items do
-    table.insert(i_indices, i)
-  end
-  local vmaps = { 22, 86, 118 }
 
   while true do
     vim.cmd('redraw!')
@@ -578,12 +572,9 @@ function M.ui.pick(items, multi, format, config)
   M.win.close(data.nwin)
 
   local tbl = {}
-  for i = 1, #items do
-    if items[i].selected then
-      table.insert(tbl, items[i].item)
-    end
+  for i, _ in pairs(selected) do
+    table.insert(tbl, items[i])
   end
-
   return tbl
 end
 
