@@ -269,7 +269,7 @@ M:add_component({
     end
 
     return table.concat({
-      '%#Git# ' .. self.meta.head,
+      '%#Git# ' .. self.meta.head,
       ' ',
       diff,
       '%#Statusline#',
