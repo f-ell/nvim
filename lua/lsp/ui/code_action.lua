@@ -214,6 +214,7 @@ function M:_open(raw)
       { 'Code Actions ', 'FloatTitle' },
     },
     zindex = 2,
+    noautocmd = true,
   })
   data.proc = proc
   data.res = raw

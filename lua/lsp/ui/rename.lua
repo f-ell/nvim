@@ -39,6 +39,7 @@ M.rename = function()
     end
   end
 
+  -- TODO: normal message
   assert(declaration, 'Could not get declaration for symbol under cursor')
 
   local s, e = declaration.result.range.start, declaration.result.range['end']
@@ -140,9 +141,10 @@ function M:_open(raw)
       { ' ' .. self._util.signs[3].text, self._util.signs[3].texthl },
       { 'Rename ', 'FloatTitle' },
     },
-    width = math.min(len < min and min or len + 1, max),
-    col = -1,
     zindex = 2,
+    col = -1,
+    width = math.min(len < min and min or len + 1, max),
+    noautocmd = true,
   })
   data.proc = proc
 

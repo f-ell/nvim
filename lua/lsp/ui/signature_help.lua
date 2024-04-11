@@ -164,6 +164,7 @@ function M:_open(raw)
       { proc.title, 'NeutralFloat' },
     },
     zindex = 2,
+    noautocmd = true,
   })
 
   self:_set_highlights(data.nbuf, proc)

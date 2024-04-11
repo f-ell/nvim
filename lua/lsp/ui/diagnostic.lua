@@ -180,6 +180,7 @@ function M:_open(raw)
       L.tbl.max_len(content),
       proc.title.icon[1]:len() + ('Diagnostics '):len() + proc.title.loc:len()
     ),
+    noautocmd = true,
   })
 
   self:_set_highlights(data.nbuf, proc)
