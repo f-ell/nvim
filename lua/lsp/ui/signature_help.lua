@@ -73,6 +73,7 @@ function M:_preprocess(raw)
   tbl.parameter = (
     res.result.activeParameter and res.result.activeParameter
     or res.result.signatures[tbl.signature].activeParameter
+    or 0
   ) + 1
 
   for i = 1, #res.result.signatures do
