@@ -80,7 +80,7 @@ return {
         format = function(entry, item)
           item.abbr = entry.source.name == 'cmdline' and item.abbr
             or string.sub(item.abbr, 1, 24)
-          item.kind = string.format('%s', icons[item.kind])
+          item.kind = icons[item.kind]
           item.menu = ({
             luasnip = '-Snp-',
             nvim_lsp = '-Lsp-',

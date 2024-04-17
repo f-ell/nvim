@@ -1,10 +1,3 @@
-local L = require('lib')
-
----@class (exact) LspUiModuleDiagnostic:LspUiModule
----@field goto_next fun()
----@field goto_prev fun()
----@field get_line fun()
-
 ---@type LspUiModuleDiagnostic
 ---@diagnostic disable-next-line: missing-fields
 local M = {}
@@ -19,7 +12,7 @@ function M.goto_next()
   local pos = vim.diagnostic.get_next_pos()
 
   if not pos then
-    vim.notify('No diagnostics available.', 2)
+    vim.notify('No diagnostics found', vim.log.levels.INFO)
     return
   end
 
@@ -31,7 +24,7 @@ function M.goto_next()
   )
 
   if #diag == 0 then
-    vim.notify('No diagnostics found at location.', 3)
+    vim.notify('No diagnostics at position', vim.log.levels.INFO)
     return
   end
 
@@ -42,7 +35,7 @@ function M.goto_prev()
   local pos = vim.diagnostic.get_prev_pos()
 
   if not pos then
-    vim.notify('No diagnostics available.', 2)
+    vim.notify('No diagnostics found', vim.log.levels.INFO)
     return
   end
 
@@ -54,7 +47,7 @@ function M.goto_prev()
   )
 
   if #diag == 0 then
-    vim.notify('No diagnostics found at location.', 3)
+    vim.notify('No diagnostics at position', vim.log.levels.INFO)
     return
   end
 
@@ -66,7 +59,7 @@ function M.get_line()
   local diag = vim.diagnostic.get(0, { lnum = pos[2] - 1 })
 
   if #diag == 0 then
-    vim.notify('No diagnostics found at location.', 3)
+    vim.notify('No diagnostics at position', vim.log.levels.INFO)
     return
   end
 
@@ -187,6 +180,7 @@ function M:_open(raw)
       L.tbl.max_len(content),
       proc.title.icon[1]:len() + ('Diagnostics '):len() + proc.title.loc:len()
     ),
+    noautocmd = true,
   })
 
   self:_set_highlights(data.nbuf, proc)

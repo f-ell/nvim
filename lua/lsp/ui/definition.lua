@@ -1,10 +1,3 @@
-local L = require('lib')
-
----@class (exact) LspUiModuleDefinition:LspUiModule
----@field peek fun(self:LspUiModule)
----@field open fun(self:LspUiModule)
----@field type fun(self:LspUiModule)
-
 ---@type LspUiModuleDefinition
 ---@diagnostic disable-next-line: missing-fields
 local M = {}
@@ -18,13 +11,19 @@ M._util = {
 
 function M.peek()
   local clients = L.lsp.clients_by_cap('definition')
-  local res = L.lsp.request(
+  local err, res = L.lsp.request(
     clients,
     'textDocument/definition',
     vim.lsp.util.make_position_params(),
     0
   )
+
+  if err then
+    L.lsp.notify_error(err)
+    return
+  end
   if L.tbl.is_empty(res) then
+    vim.notify('No definition available', vim.log.levels.INFO)
     return
   end
 
@@ -38,13 +37,19 @@ end
 
 function M.open()
   local clients = L.lsp.clients_by_cap('definition')
-  local res = L.lsp.request(
+  local err, res = L.lsp.request(
     clients,
     'textDocument/definition',
     vim.lsp.util.make_position_params(),
     0
   )
+
+  if err then
+    L.lsp.notify_error(err)
+    return
+  end
   if L.tbl.is_empty(res) then
+    vim.notify('No definition available', vim.log.levels.INFO)
     return
   end
 
@@ -58,13 +63,19 @@ end
 
 function M.type()
   local clients = L.lsp.clients_by_cap('typeDefinition')
-  local res = L.lsp.request(
+  local err, res = L.lsp.request(
     clients,
     'textDocument/typeDefinition',
     vim.lsp.util.make_position_params(),
     0
   )
+
+  if err then
+    L.lsp.notify_error(err)
+    return
+  end
   if L.tbl.is_empty(res) then
+    vim.notify('No definition available', vim.log.levels.INFO)
     return
   end
 
@@ -137,15 +148,18 @@ function M._util.definition.open(data, index)
     vim.api.nvim_win_set_buf(data.owin, bufnr)
     M._util.definition.set_highlights(bufnr, proc.def[index])
     vim.api.nvim_win_set_cursor(data.owin, proc.def[index].start)
+    vim.cmd('filetype detect')
+    vim.cmd('norm zz')
     return
   end
 
-  ---@diagnostic disable-next-line: redefined-local
-  local data = L.win.open_center(bufnr, true, {
+  data = L.win.open_center(bufnr, true, {
     title = ' ' .. vim.fn.fnamemodify(vim.fn.bufname(bufnr), ':t') .. ' ',
     zindex = 1,
     style = '',
   })
+  vim.cmd('filetype detect')
+  vim.cmd('norm zz')
 
   vim.bo[data.nbuf].bufhidden = 'hide'
   vim.bo[data.nbuf].modifiable = true

@@ -33,8 +33,6 @@ return {
 
     vim.lsp.handlers['textDocument/hover'] =
       vim.lsp.with(vim.lsp.handlers.hover, { border = 'single' })
-    vim.lsp.handlers['textDocument/signatureHelp'] =
-      vim.lsp.with(vim.lsp.handlers.signature_help, { border = 'single' })
 
     require('mason').setup({ ui = { border = 'single' } })
 
@@ -52,7 +50,7 @@ return {
       key.nnmap('<leader>ca', ui.cda.codeaction, { buffer = 0 })
       key.nnmap('<leader>rn', ui.ren.rename, { buffer = 0 })
       key.modemap({ 'i', 'n' }, '<C-s>', ui.sig.active)
-      key.modemap({ 'i', 'n' }, '<C-S-s>', ui.sig.available)
+      key.modemap({ 'i', 'n' }, '<C-A-s>', ui.sig.available)
 
       key.nnmap('<leader>h', ui.dgn.get_line, { buffer = 0 })
       key.nnmap('<leader>j', ui.dgn.goto_next, { buffer = 0 })
@@ -66,11 +64,13 @@ return {
       vim.lsp.protocol.make_client_capabilities()
     )
 
-    for _, server in
-      pairs(vim.fn.readdir(vim.fn.stdpath('config') .. '/lua/lsp/servers'))
-    do
+    local servers = vim.tbl_filter(function(s)
+      return not vim.startswith(s, '_')
+    end, vim.fn.readdir(vim.fn.stdpath('config') .. '/lua/lsp/servers'))
+
+    for i = 1, #servers do
       local opts = { on_attach = on_attach, capabilities = capabilities }
-      server = server:gsub('%.lua$', '')
+      local server = servers[i]:gsub('%.lua$', '')
 
       local req, tbl = pcall(require, 'lsp.servers.' .. server)
       if req then

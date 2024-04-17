@@ -21,11 +21,12 @@ return {
     'nvim-tree/nvim-web-devicons',
   },
   config = function()
-    local tls = require('telescope')
-    local tslu = require('telescope.utils')
-    local tlsal = require('telescope.actions.layout')
+    local t = require('telescope')
+    local utils = require('telescope.utils')
+    local actions = require('telescope.actions')
+    local layout = require('telescope.actions.layout')
 
-    tls.setup({
+    t.setup({
       defaults = {
         initial_mode = 'normal',
         path_display = {
@@ -87,11 +88,15 @@ return {
             ['<C-c>'] = 'close',
             ['<C-j>'] = 'move_selection_next',
             ['<C-k>'] = 'move_selection_previous',
-            ['<C-p>'] = tlsal.toggle_preview,
+            ['<C-p>'] = layout.toggle_preview,
             ['<C-b>'] = 'preview_scrolling_up',
             ['<C-f>'] = 'preview_scrolling_down',
             ['<C-u>'] = false,
             ['<C-d>'] = false,
+            ['<C-q>'] = function(bufnr)
+              actions.smart_send_to_qflist(bufnr)
+              actions.open_qflist(bufnr)
+            end,
           },
           n = {
             ['<ESC>'] = false,
@@ -104,16 +109,21 @@ return {
             ['k'] = 'move_selection_previous',
             ['gg'] = 'move_to_top',
             ['G'] = 'move_to_bottom',
-            ['<C-p>'] = tlsal.toggle_preview,
+            ['<C-p>'] = layout.toggle_preview,
             ['<C-b>'] = 'preview_scrolling_up',
             ['<C-f>'] = 'preview_scrolling_down',
             ['<C-u>'] = false,
             ['<C-d>'] = false,
+            ['<C-q>'] = function(bufnr)
+              actions.smart_send_to_qflist(bufnr)
+              actions.open_qflist(bufnr)
+            end,
           },
         },
       },
+
       pickers = {
-        cwd = tslu.buffer_dir(),
+        cwd = utils.buffer_dir(),
         hidden = true,
 
         buffers = {
@@ -164,6 +174,6 @@ return {
       },
     })
 
-    tls.load_extension('zf-native')
+    t.load_extension('zf-native')
   end,
 }

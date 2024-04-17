@@ -3,8 +3,6 @@ return {
   lazy = true,
   ft = { 'plaintex', 'tex' },
   config = function()
-    local L = require('lib')
-
     vim.g.vimtex_syntax_enabled = 0
     vim.g.vimtex_compiler_method = 'tectonic'
     vim.g.vimtex_compiler_tectonic = {
@@ -30,6 +28,7 @@ return {
       'biblatex.*Using fall-back BibTeX(8) backend',
     }
 
+    vim.g.vimtex_view_automatic = 0
     vim.g.vimtex_view_method = 'zathura'
     vim.g.vimtex_view_forward_search_on_start = 0
 

@@ -1,16 +1,3 @@
----@class Component
----@field name string,
----@field enabled boolean?
----@field init fun(self:self)?
----@field events fun(self:self)|Listener[]?
----@field get string|number|fun(self:self):string
----@field [any] any
-
----@class Listener
----@field [1] string|string[]
----@field [2] fun(component:Component, tbl: table?)
-
-local L = require('lib')
 L.fs.mktmpdir()
 
 -- PERF: register running jobs and deregister in on_exit to prevent duplication
@@ -51,7 +38,7 @@ local M = {
       end
     end
 
-    return ' ' .. vim.fn.trim(tbl:concat(' ')) .. '%< '
+    return (' %s%%< '):format(vim.fn.trim(tbl:concat(' ')))
   end,
 
   ---Components may contain additional fields used to keep state or perform
@@ -132,7 +119,7 @@ M:add_component({
   },
   get = function(self)
     return table.concat({
-      '%#mode' .. self.meta.mode .. '#',
+      ('%%#mode%s#'):format(self.meta.mode),
       self.meta.mode,
       '%#Statusline#',
     })
@@ -282,7 +269,7 @@ M:add_component({
     end
 
     return table.concat({
-      '%#Git# ' .. self.meta.head,
+      '%#Git# ' .. self.meta.head,
       ' ',
       diff,
       '%#Statusline#',
@@ -472,11 +459,11 @@ M:add_component({
         local part = {}
         for i = 1, #self.meta.diagnostics.count do
           if self.meta.diagnostics.count[i] ~= 0 then
-            part[#part + 1] = '%#'
-              .. self.meta.signs[i].texthl
-              .. '#'
-              .. self.meta.signs[i].text
-              .. self.meta.diagnostics.count[i]
+            part[#part + 1] = ('%%#%s#%s%s'):format(
+              self.meta.signs[i].texthl,
+              self.meta.signs[i].text,
+              self.meta.diagnostics.count[i]
+            )
           end
         end
 

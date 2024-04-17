@@ -1,9 +1,3 @@
-local L = require('lib')
-
----@class (exact) LspUiModuleSignatureHelp:LspUiModule
----@field active fun()
----@field available fun()
-
 ---@type LspUiModuleSignatureHelp
 ---@diagnostic disable-next-line: missing-fields
 local M = {}
@@ -16,46 +10,55 @@ M._util = {
 
 M.active = function()
   local params = vim.lsp.util.make_position_params()
-
-  local res = L.lsp.request(
+  local err, res = L.lsp.request(
     L.lsp.clients_by_cap('signatureHelp'),
     'textDocument/signatureHelp',
     params,
     0
-  )[1]
+  )
 
-  if not L.tbl.is_empty(res) then
-    if L.tbl.is_empty(res.result.signatures) then
-      vim.notify('No signature help available.', 3)
-      return
-    end
-
-    M:_open({ res = res, active = true })
+  if err then
+    L.lsp.notify_error(err)
+    return
   end
+  if L.tbl.is_empty(res[1]) or L.tbl.is_empty(res[1].result.signatures) then
+    vim.notify('No signature help available', vim.log.levels.INFO)
+    return
+  end
+  if L.tbl.is_empty(res[1].result.signatures[1].parameters) then
+    vim.notify('Function takes no arguments', vim.log.levels.INFO)
+    return
+  end
+
+  M:_open({ res = res, active = true })
 end
 
 M.available = function()
   local params = vim.lsp.util.make_position_params()
-
-  local res = L.lsp.request(
+  local err, res = L.lsp.request(
     L.lsp.clients_by_cap('signatureHelp'),
     'textDocument/signatureHelp',
     params,
     0
-  )[1]
+  )
 
-  if not L.tbl.is_empty(res) then
-    if L.tbl.is_empty(res.result.signatures) then
-      vim.notify('No signature help available.', 3)
-      return
-    end
-
-    M:_open({ res = res, active = false })
+  if err then
+    L.lsp.notify_error(err)
+    return
   end
+  if L.tbl.is_empty(res[1]) or L.tbl.is_empty(res[1].result.signatures) then
+    vim.notify('No signature help available', vim.log.levels.INFO)
+  end
+  if L.tbl.is_empty(res[1].result.signatures[1].parameters) then
+    vim.notify('Function takes no arguments', vim.log.levels.INFO)
+    return
+  end
+
+  M:_open({ res = res, active = false })
 end
 
 function M:_preprocess(raw)
-  local res = raw.res
+  local res = raw.res[1]
   local tbl = { active = raw.active }
 
   local i0, i1
@@ -78,6 +81,7 @@ function M:_preprocess(raw)
   tbl.parameter = (
     res.result.activeParameter and res.result.activeParameter
     or res.result.signatures[tbl.signature].activeParameter
+    or 0
   ) + 1
 
   for i = 1, #res.result.signatures do
@@ -169,6 +173,7 @@ function M:_open(raw)
       { proc.title, 'NeutralFloat' },
     },
     zindex = 2,
+    noautocmd = true,
   })
 
   self:_set_highlights(data.nbuf, proc)

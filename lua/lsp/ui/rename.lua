@@ -1,8 +1,3 @@
-local L = require('lib')
-
----@class (exact) LspUiModuleRename:LspUiModule
----@field rename fun()
-
 ---@type LspUiModuleRename
 ---@diagnostic disable-next-line: missing-fields
 local M = {}
@@ -14,12 +9,22 @@ M._util = {
 }
 
 M.rename = function()
-  local client = L.lsp.clients_by_cap('references')
   local params = vim.lsp.util.make_position_params(0)
   params.context = { includeDeclaration = true }
 
-  local res = L.lsp.request(client, 'textDocument/references', params, 0)
+  local err, res = L.lsp.request(
+    L.lsp.clients_by_cap('references'),
+    'textDocument/references',
+    params,
+    0
+  )
+
+  if err then
+    L.lsp.notify_error(err)
+    return
+  end
   if L.tbl.is_empty(res) then
+    vim.notify('No rename results found', vim.log.levels.INFO)
     return
   end
 
@@ -34,10 +39,9 @@ M.rename = function()
     end
   end
 
-  if not declaration then
-    vim.notify('Could not get declaration for symbol under cursor.', 4)
-    return
-  end
+  -- TODO: normal message
+  assert(declaration, 'Could not get declaration for symbol under cursor')
+
   local s, e = declaration.result.range.start, declaration.result.range['end']
   local cword = declaration
       and vim.api.nvim_buf_get_text(
@@ -137,9 +141,10 @@ function M:_open(raw)
       { ' ' .. self._util.signs[3].text, self._util.signs[3].texthl },
       { 'Rename ', 'FloatTitle' },
     },
-    width = math.min(len < min and min or len + 1, max),
-    col = -1,
     zindex = 2,
+    col = -1,
+    width = math.min(len < min and min or len + 1, max),
+    noautocmd = true,
   })
   data.proc = proc
 

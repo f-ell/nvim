@@ -7,8 +7,8 @@ local tabline = function()
     name = name == '' and '[null]' or (name:match('([^/]-/?)$') or '_ERR')
 
     local tab = {
-      string.format('%%%sT', i),
-      '%#Tab' .. (i == vim.fn.tabpagenr() and 'Active' or 'Inactive') .. '#',
+      ('%%%sT'):format(i),
+      ('%%#Tab%s#'):format(i == vim.fn.tabpagenr() and 'Active' or 'Inactive'),
       '▎',
       vim.bo[bufnr].modified and ' + ' or '  ',
       name .. '  ',

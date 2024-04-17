@@ -1,5 +1,3 @@
-local L = require('lib')
-
 -- bootstrap
 local std = vim.fn.stdpath
 local path = std('data') .. '/lazy/lazy.nvim'
@@ -16,6 +14,8 @@ if not vim.loop.fs_stat(path) then
 end
 
 -- init
+L = require('lib')
+
 vim.g.mapleader = ' '
 vim.opt.runtimepath:prepend(path)
 
