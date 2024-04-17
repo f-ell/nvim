@@ -138,14 +138,16 @@ function M:_set_highlights(bufnr, proc)
         :sub(proc[proc.signature].labels[1][1] + 1)
         :len()
 
-    vim.api.nvim_buf_add_highlight(
-      bufnr,
-      -1,
-      'Search',
-      0,
-      proc[proc.signature].labels[proc.parameter][1] - offset,
-      proc[proc.signature].labels[proc.parameter][2] - offset
-    )
+    if proc.parameter <= #proc[proc.signature].labels then
+      vim.api.nvim_buf_add_highlight(
+        bufnr,
+        -1,
+        'Search',
+        0,
+        proc[proc.signature].labels[proc.parameter][1] - offset,
+        proc[proc.signature].labels[proc.parameter][2] - offset
+      )
+    end
 
     return
   end
