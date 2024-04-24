@@ -76,8 +76,7 @@ function M:_preprocess(raw)
   for i = 1, #diag do
     tbl[i] = {
       data = {},
-      src = vim.startswith(diag[i].source, 'Lua ') and 'lua_ls'
-        or diag[i].source,
+      src = diag[i].source,
       sev = diag[i].severity,
       ln = diag[i].lnum + 1,
       col = diag[i].col + 1,
@@ -165,6 +164,7 @@ function M:_open(raw)
   local content = self:_format(proc)
 
   if proc.type == 'dir' then
+    vim.cmd('mark`')
     vim.fn.cursor({ proc[#proc].ln, proc[#proc].col })
   end
 
