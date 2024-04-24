@@ -614,7 +614,7 @@ end
 ---
 ---@return integer
 function M.win._max_height()
-  return math.floor(vim.api.nvim_win_get_height(0) * M.win._MAXSIZE)
+  return math.floor(vim.o.lines * M.win._MAXSIZE)
 end
 
 ---Calculate window width.
