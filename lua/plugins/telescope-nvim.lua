@@ -30,7 +30,7 @@ return {
       defaults = {
         initial_mode = 'normal',
         path_display = {
-          shorten = { len = 1, exclude = { -2, -1, 1 } },
+          shorten = { len = 1, exclude = { -2, -1, 1, 2 } },
           truncate = 1,
           vimgrep_arguments = {
             'rg',
