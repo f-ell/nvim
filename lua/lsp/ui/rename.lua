@@ -127,6 +127,18 @@ function M:_register_float_actions(data)
   L.cmd.event({ 'WinLeave', 'QuitPre' }, data.nbuf, function()
     close_win()
   end)
+  L.cmd.event({ 'TextChanged', 'TextChangedI' }, data.nbuf, function()
+    local lines = vim.api.nvim_buf_get_lines(data.nbuf, 0, -1, true)
+    local len = L.tbl.max_len(lines)
+
+    data.width =
+      math.min(len < data.minwidth and data.minwidth or len + 1, data.maxwidth)
+    -- subtraction accounts for cmdheight and window borders
+    data.height = math.min(#lines, vim.o.lines - vim.o.cmdheight - 3)
+
+    vim.api.nvim_win_set_width(data.nwin, data.width)
+    vim.api.nvim_win_set_height(data.nwin, data.height)
+  end)
 end
 
 function M:_open(raw)
@@ -147,6 +159,8 @@ function M:_open(raw)
     noautocmd = true,
   })
   data.proc = proc
+  data.minwidth = min
+  data.maxwidth = max
 
   vim.bo[data.nbuf].modifiable = true
 
