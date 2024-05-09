@@ -166,6 +166,7 @@ M:add_component({
     })
   end,
 }, {
+  -- FIX: head / diff doesn't update on commit (updates on FocusGained though)
   name = 'git',
   meta = {
     relative_name = nil,
@@ -478,7 +479,7 @@ M:add_component({
 
     return table.concat({
       '%#StatuslineLspinfo#',
-      table.concat(self.meta.clients, ', '),
+      vim.o.columns < 100 and '' or table.concat(self.meta.clients, ', '),
       #self.meta.diagnostics.string == 0 and ''
         or ' ' .. self.meta.diagnostics.string,
       '%#Statusline#',
@@ -505,10 +506,11 @@ M:add_component({
     },
   },
   get = function(self)
-    return table.concat({
-      '%#StatuslineBytecount#﬘%#Statusline#',
-      self.meta.bytes .. self.meta.unit,
-    }, ' ')
+    return vim.o.columns < 80 and ''
+      or table.concat({
+        '%#StatuslineBytecount#﬘%#Statusline#',
+        self.meta.bytes .. self.meta.unit,
+      }, ' ')
   end,
   __round = function(number, quotient)
     return vim.fn.round((number * 10) / quotient) / 10
