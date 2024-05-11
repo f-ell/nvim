@@ -457,7 +457,7 @@ end
 ---@param format fun(item:T,selected:boolean,index:number):string transform item to string representation
 ---@param config table? config passed to `nvim_open_win()`
 ---@return T[] selected
-function M.ui.pick(items, multi, format, config)
+function M.ui.pick(items, multi, format, config, center)
   if M.tbl.is_empty(items) then
     return {}
   end
@@ -500,6 +500,7 @@ function M.ui.pick(items, multi, format, config)
     table.insert(lines, i .. ' ' .. format(items[i], selected[i] or false, i))
   end
 
+  config = config or {}
   config.width = math.min(
     M.tbl.max_len({ M.win._parse_title(config), unpack(lines) })
       + math.abs(
