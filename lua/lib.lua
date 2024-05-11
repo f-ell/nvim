@@ -390,7 +390,7 @@ end
 function M.tbl.max_len(tbl)
   local max = 0
   for i = 1, #tbl do
-    local len = vim.fn.strwidth(tbl[i])
+    local len = vim.fn.strcharlen(tbl[i])
     if len > max then
       max = len
     end
