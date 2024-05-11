@@ -46,26 +46,36 @@ return {
           },
         },
 
-        sorting_strategy = 'descending',
+        sorting_strategy = 'ascending',
         scroll_strategy = 'limit',
         file_ignore_patterns = { '.cache/', 'undo/' },
 
-        borderchars = { '─', '│', '─', '│', '┌', '┐', '┘', '└' },
-        layout_strategy = 'vertical',
-        theme = 'dropdown',
+        borderchars = {
+          prompt = { ' ', ' ', '─', ' ', ' ', ' ', ' ', ' ' },
+          results = { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+          preview = { '─', '│', '─', '│', '┌', '┐', '┘', '└' },
+        },
+        layout_strategy = 'flex',
         layout_config = {
-          prompt_position = 'bottom',
-          width = 0.80,
-          height = 0.70,
+          flex = { flip_columns = 120 },
+
+          width = function(_, cols, _)
+            return cols
+          end,
+          height = function(_, _, rows)
+            return rows
+          end,
+
+          prompt_position = 'top',
           horizontal = {
-            preview_width = 0.65,
-            results_width = 0.3,
+            preview_cutoff = 10,
+            preview_width = 0.5,
           },
           vertical = {
-            preview_height = 0.45,
-            mirror = false,
+            mirror = true,
+            preview_cutoff = 10,
+            preview_width = 0.5,
           },
-          preview_cutoff = 12,
         },
 
         prompt_prefix = ' ',
@@ -75,7 +85,7 @@ return {
         preview = {
           filesize_limit = 0.3,
           timeout = 100,
-          hide_on_startup = true,
+          hide_on_startup = false,
         },
         color_devicons = true,
 
@@ -147,7 +157,6 @@ return {
           preview = {
             filesize_limit = 0.3,
             timeout = 100,
-            hide_on_startup = false,
           },
         },
 
