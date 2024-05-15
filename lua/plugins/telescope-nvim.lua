@@ -78,6 +78,7 @@ return {
           },
         },
 
+        results_title = false,
         prompt_prefix = ' ',
         entry_prefix = '  ',
         selection_caret = '> ',
@@ -138,18 +139,15 @@ return {
 
         buffers = {
           initial_mode = 'insert',
-          results_title = false,
           ignore_current_buffer = true,
         },
 
         find_files = {
           initial_mode = 'insert',
-          results_title = false,
           find_command = { 'fd', '-tf', '-H', '-d10', '--strip-cwd-prefix' },
         },
         git_files = {
           initial_mode = 'insert',
-          results_title = false,
         },
 
         live_grep = {
@@ -162,7 +160,6 @@ return {
 
         current_buffer_fuzzy_find = {
           initial_mode = 'insert',
-          results_title = false,
           skip_empty_lines = true,
         },
       },
