@@ -11,8 +11,15 @@ vim.o.showbreak = '> '
 vim.o.cmdheight = 1
 
 vim.o.list = true
-vim.opt.listchars =
-  { eol = '¬', tab = '| ', lead = '.', trail = '~', nbsp = '+' }
+vim.opt.listchars = {
+  eol = '¬',
+  tab = '| ',
+  lead = '.',
+  trail = '~',
+  nbsp = '+',
+  extends = '>',
+  precedes = '<',
+}
 vim.opt.fillchars = { diff = '╱' }
 
 vim.o.cursorline = true
