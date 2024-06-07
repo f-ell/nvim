@@ -30,13 +30,14 @@ local c = {
   },
   misc = {
     git = '#fca326',
+    yel = '#55544a',
   },
 }
 
 local highlights = {
   -- search
-  { 0, 'Search', { fg = c.bg[3], bg = c.pastel.gre } },
-  { 0, 'IncSearch', { fg = c.bg[3], bg = c.pastel.red } },
+  { 0, 'Search', { fg = c.fg[2], bg = c.misc.yel } },
+  { 0, 'IncSearch', { fg = c.bg[3], bg = c.pastel.yel } },
   { 0, 'CurSearch', { link = 'IncSearch' } },
   { 0, 'Substitute', { link = 'IncSearch' } },
   { 0, 'Visual', { fg = c._, bg = '#3d5665' } },
@@ -50,6 +51,10 @@ local highlights = {
   { 0, 'DiagnosticSignWarn', { fg = c.pastel.yel } },
   { 0, 'DiagnosticSignInfo', { fg = c.pastel.gre } },
   { 0, 'DiagnosticSignHint', { fg = c.pastel.blu } },
+  { 0, 'DiagnosticUnderlineError', { sp = c.pastel.red, underline = true } },
+  { 0, 'DiagnosticUnderlineWarn', { sp = c.pastel.yel, underline = true } },
+  { 0, 'DiagnosticUnderlineInfo', { sp = c.pastel.gre, underline = true } },
+  { 0, 'DiagnosticUnderlineHint', { sp = c.pastel.blu, underline = true } },
 
   -- float
   { 0, 'NormalFloat', { fg = c._, bg = c._ } },
