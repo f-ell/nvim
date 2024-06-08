@@ -11,8 +11,8 @@ M._util = {
 M.active = function()
   local params = vim.lsp.util.make_position_params()
   local err, res = L.lsp.request(
-    L.lsp.clients_by_cap('signatureHelp'),
-    'textDocument/signatureHelp',
+    L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_signatureHelp),
+    vim.lsp.protocol.Methods.textDocument_signatureHelp,
     params,
     0
   )
@@ -36,8 +36,8 @@ end
 M.available = function()
   local params = vim.lsp.util.make_position_params()
   local err, res = L.lsp.request(
-    L.lsp.clients_by_cap('signatureHelp'),
-    'textDocument/signatureHelp',
+    L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_signatureHelp),
+    vim.lsp.protocol.Methods.textDocument_signatureHelp,
     params,
     0
   )

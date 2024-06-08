@@ -42,10 +42,16 @@ return {
       ui.open()
     end
 
-    local clients = L.lsp.clients_by_cap('executeCommand')
+    local clients =
+      L.lsp.clients_by_method(vim.lsp.protocol.Methods.workspace_executeCommand)
     ---@diagnostic disable-next-line: redefined-local
     local execute = function(clients, args)
-      local _, res = L.lsp.request(clients, 'workspace/executeCommand', args, 0)
+      local _, res = L.lsp.request(
+        clients,
+        vim.lsp.protocol.Methods.workspace_executeCommand,
+        args,
+        0
+      )
       return res
     end
 
@@ -79,7 +85,7 @@ return {
     dap.adapters.java = function(callback, _)
       local err, res = L.lsp.request(
         clients,
-        'workspace/executeCommand',
+        vim.lsp.protocol.Methods.workspace_executeCommand,
         { command = 'vscode.java.startDebugSession' },
         0
       )

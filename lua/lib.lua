@@ -190,28 +190,30 @@ function M.lsp.apply_edit(response)
   end
 end
 
----Get all lsp clients with capability `cap` .. "Provider" attached to the
----buffer.
+---Get all lsp clients that support `method` attached to the buffer.
 ---
----@param capabilities string|string[]
----@param filter (fun(client:LspClient):boolean)? determines whether a client is returned
----@return LspClient[] clients
-function M.lsp.clients_by_cap(capabilities, filter)
+---`method` should be any value found in `vim.lsp.protocol.Methods`.
+---
+---@param method string|string[]
+---@param filter (fun(client:vim.lsp.Client):boolean)? determines whether a client is returned
+---@return vim.lsp.Client[] clients
+function M.lsp.clients_by_method(method, filter)
   local clients = vim.tbl_filter(
     function(client)
-      if type(capabilities) == 'string' then
-        return not not client.server_capabilities[capabilities .. 'Provider']
+      if type(method) == 'string' then
+        return client.supports_method(method)
       end
 
-      for i = 1, #capabilities do
-        if not client.server_capabilities[capabilities[i] .. 'Provider'] then
+      for i = 1, #method do
+        if not client.supports_method(method[i]) then
           return false
         end
       end
 
       return true
     end,
-    vim.lsp.get_active_clients({
+
+    vim.lsp.get_clients({
       buffer = vim.api.nvim_get_current_buf(),
     })
   )
@@ -248,7 +250,7 @@ end
 ---Ignores global handlers (i.e. `vim.lsp.handlers`), but respects client-local
 ---handlers. Handlers on clients are expected to return `{ err, result }`-tuples.
 ---
----@param clients LspClient|LspClient[]
+---@param clients vim.lsp.Client|vim.lsp.Client[]
 ---@param method string
 ---@param params TextDocumentPositionParams
 ---@param bufnr number
@@ -457,7 +459,7 @@ end
 ---@param format fun(item:T,selected:boolean,index:number):string transform item to string representation
 ---@param config table? config passed to `nvim_open_win()`
 ---@return T[] selected
-function M.ui.pick(items, multi, format, config, center)
+function M.ui.pick(items, multi, format, config)
   if M.tbl.is_empty(items) then
     return {}
   end

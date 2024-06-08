@@ -13,8 +13,8 @@ M.rename = function()
   params.context = { includeDeclaration = true }
 
   local err, res = L.lsp.request(
-    L.lsp.clients_by_cap('references'),
-    'textDocument/references',
+    L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_references),
+    vim.lsp.protocol.Methods.textDocument_references,
     params,
     0
   )

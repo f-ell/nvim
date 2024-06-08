@@ -31,7 +31,7 @@ return {
       sign = { active = signs },
     })
 
-    vim.lsp.handlers['textDocument/hover'] =
+    vim.lsp.handlers[vim.lsp.protocol.Methods.textDocument_hover] =
       vim.lsp.with(vim.lsp.handlers.hover, { border = 'single' })
 
     require('mason').setup({ ui = { border = 'single' } })
@@ -39,7 +39,6 @@ return {
     local key = require('lib').key
     local ui = require('lsp.ui')
     local on_attach = function()
-      key.nnmap('K', vim.lsp.buf.hover, { buffer = 0 })
       key.nnmap('<leader>fb', vim.lsp.buf.format, { buffer = 0 })
       key.nnmap('<leader>rf', vim.lsp.buf.references, { buffer = 0 })
 
