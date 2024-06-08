@@ -30,7 +30,7 @@ local c = {
   },
   misc = {
     git = '#fca326',
-    yel = '#55544a',
+    yel = '#65645a',
   },
 }
 
