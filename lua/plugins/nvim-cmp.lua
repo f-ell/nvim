@@ -54,6 +54,7 @@ return {
           max_item_count = 4,
           keyword_length = 1,
         },
+        { name = 'lazydev', group_index = 0 },
         { name = 'nvim_lsp', keyword_length = 1 },
         {
           name = 'buffer',
