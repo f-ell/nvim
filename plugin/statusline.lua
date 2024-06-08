@@ -9,7 +9,7 @@ local M = {
 
     vim.api.nvim_create_autocmd(self.__buf_events, {
       callback = function()
-        self.__realpath = vim.loop.fs_realpath(vim.fn.expand('%:p'))
+        self.__realpath = vim.uv.fs_realpath(vim.fn.expand('%:p'))
       end,
     })
 
@@ -285,7 +285,7 @@ M:add_component({
       '.git',
       { upward = true, path = vim.fs.dirname(M.__realpath) }
     )[1]
-    local stat = vim.loop.fs_stat(path or '')
+    local stat = vim.uv.fs_stat(path or '')
 
     self.meta.root = {
       global = stat and (stat.type == 'file' and L.io

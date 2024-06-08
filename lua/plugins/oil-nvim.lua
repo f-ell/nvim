@@ -4,8 +4,10 @@ return {
   keys = { { '<leader>o', '<CMD>Oil<CR>' } },
   dependencies = { 'nvim-tree/nvim-web-devicons' },
   init = function()
-    if vim.fn.argc() == 0 then return end
-    local stat = vim.loop.fs_stat(vim.fn.argv()[1])
+    if vim.fn.argc() == 0 then
+      return
+    end
+    local stat = vim.uv.fs_stat(vim.fn.argv()[1])
     if stat ~= nil and stat.type == 'directory' then
       require('oil')
     end
@@ -26,8 +28,8 @@ return {
         ['<C-v>'] = 'actions.select_vsplit',
         ['<C-s>'] = 'actions.select_split',
         ['<C-t>'] = 'actions.select_tab',
-        ['<CR>'] = 'actions.select'
-      }
+        ['<CR>'] = 'actions.select',
+      },
     })
-  end
+  end,
 }

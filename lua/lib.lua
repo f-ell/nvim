@@ -38,13 +38,13 @@ M.fs.user_dir = vim.fn.stdpath('run') .. '/nvim.user/'
 ---@param name string
 ---@return string filename
 function M.fs._unique(name)
-  if not vim.loop.fs_stat(name) then
+  if not vim.uv.fs_stat(name) then
     return name
   end
 
   local i = 1
   name = name .. '-' .. i
-  while vim.loop.fs_stat(name) do
+  while vim.uv.fs_stat(name) do
     i = i + 1
     name = name:sub(0, -2) .. i
   end
@@ -64,12 +64,12 @@ end)()
 
 ---Create temporary directory for miscellaneous runtime user files.
 function M.fs.mktmpdir()
-  if vim.loop.fs_stat(M.fs.user_dir) then
+  if vim.uv.fs_stat(M.fs.user_dir) then
     return
   end
 
   assert(
-    vim.loop.fs_mkdir(M.fs.user_dir, 448),
+    vim.uv.fs_mkdir(M.fs.user_dir, 448),
     "couldn't create " .. M.fs.user_dir
   )
 end
@@ -82,7 +82,7 @@ end
 ---@param name string? basename of the file to write or uniquely generated name
 ---@return string filename
 function M.fs.writetmpfile(buffer, data, remove, name)
-  if not vim.loop.fs_stat(M.fs.user_dir) then
+  if not vim.uv.fs_stat(M.fs.user_dir) then
     M.fs.mktmpdir()
   end
 
