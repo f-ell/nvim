@@ -25,6 +25,7 @@ L.key.vnmap('<leader>*', function()
   local start_ln, end_ln = vim.fn.getpos('v')[2], vim.fn.getpos('.')[2]
   local sel = start_ln < end_ln and vim.fn.getline(start_ln, end_ln)
     or vim.fn.getline(end_ln, start_ln)
+  ---@cast sel -string
 
   -- escape substrings
   for i, s in pairs(sel) do

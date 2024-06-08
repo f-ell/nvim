@@ -440,7 +440,7 @@ M:add_component({
 
         self.meta.clients = vim.tbl_map(function(v)
           return v.name
-        end, vim.lsp.get_active_clients({ bufnr = 0 }))
+        end, vim.lsp.get_clients({ bufnr = 0 }))
       end,
     },
     {
