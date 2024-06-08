@@ -11,10 +11,10 @@ return {
   end,
   config = function()
     local signs = {
-      { 'DiagnosticSignError', '⬥' },
-      { 'DiagnosticSignWarn', '▴' },
+      { 'DiagnosticSignError', '•' },
+      { 'DiagnosticSignWarn', '•' },
       { 'DiagnosticSignInfo', '•' },
-      { 'DiagnosticSignHint', '▪' },
+      { 'DiagnosticSignHint', '•' },
     }
     for i = 1, #signs do
       vim.fn.sign_define(
