@@ -47,6 +47,7 @@ local highlights = {
   { 0, 'WarningText', { sp = c.pastel.yel, underline = true } },
   { 0, 'InfoText', { sp = c.pastel.gre, underline = true } },
   { 0, 'HintText', { sp = c.pastel.blu, underline = true } },
+  { 0, 'DiagnosticOk', { fg = c.pastel.pur } },
   { 0, 'DiagnosticSignError', { fg = c.pastel.red } },
   { 0, 'DiagnosticSignWarn', { fg = c.pastel.yel } },
   { 0, 'DiagnosticSignInfo', { fg = c.pastel.gre } },

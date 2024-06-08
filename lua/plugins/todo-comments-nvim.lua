@@ -11,19 +11,25 @@ return {
         FIX = {
           icon = '• ',
           color = 'error',
-          alt = { 'FIXME', 'BUG', 'FIXIT', 'ISSUE' }, -- a set of other keywords that all map to this FIX keywords
-          -- signs = false, -- configure signs for some keywords individually
+          alt = { 'FIXME', 'BUG', 'FIXIT', 'ISSUE' },
         },
         TODO = { icon = '• ', color = 'info' },
         HACK = { icon = '• ', color = 'warning' },
         WARN = { icon = '• ', color = 'warning', alt = { 'WARNING' } },
-        PERF = { icon = '• ', alt = { 'OPTIM', 'OPTIMIZE', 'PERFORMANCE' } },
+        PERF = {
+          icon = '• ',
+          color = 'performance',
+          alt = { 'OPTIM', 'OPTIMIZE', 'PERFORMANCE' },
+        },
         NOTE = { icon = '• ', color = 'hint', alt = { 'INFO' } },
         TEST = {
           icon = '• ',
           color = 'test',
           alt = { 'TESTING', 'PASSED', 'FAILED' },
         },
+      },
+      colors = {
+        performance = { 'DiagnosticOk' },
       },
     })
   end,
