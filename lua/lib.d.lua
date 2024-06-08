@@ -38,4 +38,5 @@
 ---@field nwin number window number of newly opened window
 ---@field width integer
 ---@field height integer
+---@field config vim.api.keyset.win_config
 ---@field [any] any

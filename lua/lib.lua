@@ -749,6 +749,8 @@ function M.win.open(lines, enter, config)
     vim.api.nvim_win_set_buf(data.nwin, data.nbuf)
   end
 
+  data.config = vim.api.nvim_win_get_config(data.nwin)
+
   vim.bo[data.nbuf].bufhidden = 'wipe'
   vim.bo[data.nbuf].modifiable = false
   if type(lines) == 'table' then

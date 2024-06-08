@@ -6,6 +6,7 @@ M._util = {
   signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
     return vim.startswith(s.name, 'DiagnosticSign')
   end),
+  active_wins = {},
 }
 
 function M.goto_next()
@@ -168,6 +169,11 @@ function M:_open(raw)
     vim.fn.cursor({ proc[#proc].ln, proc[#proc].col })
   end
 
+  vim.iter(M._util.active_wins):each(function(i)
+    L.win.close(i)
+  end)
+  M._util.active_wins = {}
+
   local data = L.win.open_cursor(content, false, {
     title = {
       proc.title.icon,
@@ -183,13 +189,21 @@ function M:_open(raw)
     noautocmd = true,
   })
 
+  table.insert(M._util.active_wins, data.nwin)
   self:_set_highlights(data.nbuf, proc)
 
+  -- TODO: WinScrolled - move window to new cursor position instead
   L.cmd.event(
-    { 'BufLeave', 'CursorMoved', 'InsertEnter', 'WinNew' },
+    { 'BufLeave', 'CursorMoved', 'InsertEnter', 'WinScrolled' },
     data.obuf,
     function()
       L.win.close(data.nwin)
+      M._util.active_wins = vim
+        .iter(M._util.active_wins)
+        :filter(function(i)
+          return i ~= data.nwin
+        end)
+        :totable()
     end
   )
 end
