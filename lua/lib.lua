@@ -449,9 +449,9 @@ end
 ---regardless.
 ---If number-array, it's interpreted as indices of items to pre-select. As a
 ---special case, if the first element is `-1`, all items are pre-selected;
----subsequent -indices are ignored.
+---subsequent array entries are ignored.
 ---
----NOTE: `getchar()` doesn't allow updates to cursor position before 0.10.
+---NOTE: requires 0.10 for `nvim__redraw`
 ---
 ---@generic T
 ---@param items T[]
@@ -482,7 +482,11 @@ function M.ui.pick(items, multi, format, config)
     end
   end
 
-  local vmaps = { 22, 86, 118 }
+  local vmaps = {
+    22 --[[ <C-v> ]],
+    86 --[[ v ]],
+    118 --[[ <S-v> ]],
+  }
   local selected = {}
 
   if type(multi) == 'table' and multi[1] == -1 then
@@ -542,14 +546,18 @@ function M.ui.pick(items, multi, format, config)
   end
 
   while true do
-    vim.cmd('redraw!')
+    vim.api.nvim__redraw({ flush = true, win = data.nwin, cursor = true })
     local c, num = vim.fn.getchar(), nil
 
-    if c == 27 then
+    if
+      c == 27 --[[ <esc> ]]
+    then
       break
     end
 
-    if c == 13 then
+    if
+      c == 13 --[[ <enter> ]]
+    then
       select(vim.fn.line('.'))
       goto continue
     end
@@ -566,7 +574,8 @@ function M.ui.pick(items, multi, format, config)
       goto continue
     end
 
-    -- NOTE: does not handle operator-pending mappings
+    -- other key -- handle as normal
+    -- NOTE: does not handle composite mappings
     vim.fn.feedkeys(vim.fn.nr2char(c), 'x')
 
     ::continue::
@@ -713,6 +722,7 @@ end
 ---@return WinData
 function M.win.open(lines, enter, config)
   ---@type WinData
+  ---@diagnostic disable-next-line: missing-fields
   local data = {
     obuf = vim.api.nvim_get_current_buf(),
     owin = vim.api.nvim_get_current_win(),
