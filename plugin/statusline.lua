@@ -469,6 +469,7 @@ M:add_component({
         end
 
         self.meta.diagnostics.string = table.concat(part, ' ')
+        vim.cmd('redrawstatus')
       end,
     },
   },
