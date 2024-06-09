@@ -451,7 +451,7 @@ end
 ---special case, if the first element is `-1`, all items are pre-selected;
 ---subsequent array entries are ignored.
 ---
----NOTE: requires 0.10 for `nvim__redraw`
+---Requires 0.10 for `nvim__redraw`.
 ---
 ---@generic T
 ---@param items T[]

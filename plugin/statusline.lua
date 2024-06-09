@@ -215,7 +215,7 @@ M:add_component({
           on_stdout = function(_, data, _)
             local hstate = { unpack(data, 1, #data - 1) }
 
-            -- PERF: prefer equality checks to redundant writes
+            -- prefer equality checks to redundant writes
             if
               not (
                 self.meta.state.head

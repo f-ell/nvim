@@ -185,7 +185,7 @@ function M:_register_float_actions(data)
     local ln = vim.fn.line('.')
     local offset = 0
 
-    -- PERF: suboptimal but good enough for any reasonable use-case
+    -- suboptimal; performance should good enough for any reasonable use-case
     for i = 1, #data.proc do
       for _ = 2, #data.proc[i].msg do
         table.insert(data.res, offset + i, data.res[offset + i])

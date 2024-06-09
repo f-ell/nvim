@@ -195,8 +195,7 @@ function M:_preprocess(raw)
   vim.fn.flatten(res, 1)
   local home = os.getenv('HOME')
 
-  -- PERF: potentially significant runtime overhead for increased usability
-
+  -- potentially significant runtime overhead for increased usability
   for i = 1, #res do
     local range = res[i].result.range or res[i].result.targetSelectionRange
     local def = {
