@@ -465,16 +465,18 @@ function M.ui.pick(items, multi, format, config)
   end
 
   local function set_highlights(bufnr)
-    -- FIX: don't rely on diagnostic signs being set
-    local signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
-      return vim.startswith(s.name, 'DiagnosticSign')
-    end)
+    local texthl = {
+      'ErrorFloat',
+      'WarningFloat',
+      'InfoFloat',
+      'HintFloat',
+    }
 
     for i = 1, #vim.api.nvim_buf_get_lines(bufnr, 0, -1, true) do
       vim.api.nvim_buf_add_highlight(
         bufnr,
         -1,
-        signs[i % #signs ~= 0 and i % #signs or #signs].texthl,
+        texthl[i % #texthl ~= 0 and i % #texthl or #texthl],
         i - 1,
         0,
         string.len(i)
@@ -575,7 +577,7 @@ function M.ui.pick(items, multi, format, config)
     end
 
     -- other key -- handle as normal
-    -- NOTE: does not handle composite mappings
+    -- TODO: handle composite keys
     vim.fn.feedkeys(vim.fn.nr2char(c), 'x')
 
     ::continue::
