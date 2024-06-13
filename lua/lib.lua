@@ -552,6 +552,12 @@ function M.ui.pick(items, multi, format, config)
     local c, num = vim.fn.getchar(), nil
 
     if
+      c == 3 --[[ <c-c> ]]
+    then
+      return {}
+    end
+
+    if
       c == 27 --[[ <esc> ]]
     then
       break
@@ -569,7 +575,7 @@ function M.ui.pick(items, multi, format, config)
     end
 
     num = tonumber(vim.fn.nr2char(c))
-    if num then
+    if num and num > 0 then
       if num <= #items then
         select(num)
       end
