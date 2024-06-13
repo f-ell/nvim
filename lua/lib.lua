@@ -577,8 +577,12 @@ function M.ui.pick(items, multi, format, config)
     end
 
     -- other key -- handle as normal
-    -- TODO: handle composite keys
-    vim.fn.feedkeys(vim.fn.nr2char(c), 'x')
+    --
+    -- FIX: does not handle multi-character commands. Could be implmented by
+    -- storing queued keys as typeahead-string and checking whether string is a
+    -- valid command-sequence. See `maplist` | `maparg`.
+    vim.fn.feedkeys(vim.fn.nr2char(c))
+    vim.fn.feedkeys('', 'x')
 
     ::continue::
   end
