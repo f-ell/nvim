@@ -1,5 +1,3 @@
-L.fs.mktmpdir()
-
 -- PERF: register running jobs and deregister in on_exit to prevent duplication
 local M = {
   init = function(self)
@@ -178,11 +176,9 @@ local git = {
     },
     tracked = false,
     head = 'HEAD',
-    state = {
-      head = nil,
-      buffer = nil,
-    },
+    hstate = nil,
     diff = {
+      unmerged = true,
       add = 0,
       cha = 0,
       del = 0,
@@ -213,7 +209,7 @@ local git = {
     {
       'User',
       function(self, args)
-        if not vim.startswith(args.match, 'GitSigns') then
+        if not self:_root() or not vim.startswith(args.match, 'GitSigns') then
           return
         end
 
@@ -239,6 +235,8 @@ local git = {
     local diff = ''
     if not self.meta.tracked then
       diff = '%#GitZero#untracked'
+    elseif self.meta.diff.unmerged then
+      diff = '%#GitDel# unmerged'
     else
       local hl = {
         '%#Git' .. (self.meta.diff.add == 0 and 'Zero' or 'Add') .. '#',
@@ -331,92 +329,67 @@ local git = {
       cwd = self.meta.root._local,
       stdout_buffered = true,
       on_stdout = function(_, data, _)
-        local hstate = { unpack(data, 1, #data - 1) }
-
-        -- prefer equality checks to redundant writes
-        if
-          not (
-            self.meta.state.head
-            and vim.deep_equal(L.io.tbl_read(self.meta.state.head), hstate)
-          )
-        then
-          self.meta.state.head = L.fs.writetmpfile(
-            vim.fn.bufnr(),
-            hstate,
-            false,
-            -- WARN: not portable
-            vim.fn.expand('%:p'):gsub('/', '%%')
-          )
-        end
+        self.meta.hstate = { unpack(data, 1, #data - 1) }
       end,
     })
     vim.fn.jobwait({ id }, 100)
   end,
   _diff = function(self)
-    local update_diff = function(_, data, _)
-      for i = 1, #data do
-        if not vim.startswith(data[i], '@@') then
-          goto continue
-        end
-        if vim.startswith(data[i], '@@@') then
-          return '%#GitDel# unmerged'
-        end
-
-        local d = { data[i]:match('^@@ %-%d+,?(%d*) %+%d+,?(%d*) @@') }
-        if d[1] == '' then
-          d[1] = '1'
-        end
-        if d[2] == '' then
-          d[2] = '1'
-        end
-
-        d = vim.tbl_map(function(v)
-          return tonumber(v)
-        end, d)
-
-        if d[1] == 0 then
-          self.meta.diff.add = self.meta.diff.add + d[2]
-        elseif d[2] == 0 then
-          self.meta.diff.del = self.meta.diff.del + d[1]
-        else
-          self.meta.diff.cha = self.meta.diff.cha + math.min(d[1], d[2])
-          if d[2] > d[1] then
-            self.meta.diff.add = self.meta.diff.add + (d[2] - d[1])
-          elseif d[2] < d[1] then
-            self.meta.diff.del = self.meta.diff.del + (d[1] - d[2])
-          end
-        end
-
-        ::continue::
-      end
-    end
+    local data = vim.fn.split(
+      vim.diff(
+        table.concat(self.meta.hstate, '\n'),
+        table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), '\n'),
+        ---@diagnostic disable-next-line: missing-fields
+        {
+          result_type = 'unified',
+        }
+      ) --[[@as string]],
+      '\n'
+    )
 
     self.meta.diff = {
+      unmerged = false,
       add = 0,
       cha = 0,
       del = 0,
     }
 
-    -- FIX: use vim.diff instead
-    local id = vim.fn.jobstart({
-      'git',
-      'diff',
-      '-U0',
-      '--no-index',
-      self.meta.state.head,
-      '-',
-    }, {
-      cwd = self.meta.root._local,
-      stdout_buffered = true,
-      on_stdout = update_diff,
-    })
+    for i = 1, #data do
+      if not vim.startswith(data[i], '@@') then
+        goto continue
+      end
+      if vim.startswith(data[i], '@@@') then
+        self.meta.diff.unmerged = true
+        return
+      end
 
-    local bstate = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-    table.insert(bstate, '')
+      local d = { data[i]:match('^@@ %-%d+,?(%d*) %+%d+,?(%d*) @@') }
+      if d[1] == '' then
+        d[1] = '1'
+      end
+      if d[2] == '' then
+        d[2] = '1'
+      end
 
-    vim.fn.chansend(id, bstate)
-    vim.fn.chanclose(id, 'stdin')
-    vim.fn.jobwait({ id }, 100)
+      d = vim.tbl_map(function(v)
+        return tonumber(v)
+      end, d)
+
+      if d[1] == 0 then
+        self.meta.diff.add = self.meta.diff.add + d[2]
+      elseif d[2] == 0 then
+        self.meta.diff.del = self.meta.diff.del + d[1]
+      else
+        self.meta.diff.cha = self.meta.diff.cha + math.min(d[1], d[2])
+        if d[2] > d[1] then
+          self.meta.diff.add = self.meta.diff.add + (d[2] - d[1])
+        elseif d[2] < d[1] then
+          self.meta.diff.del = self.meta.diff.del + (d[1] - d[2])
+        end
+      end
+
+      ::continue::
+    end
   end,
 }
 
