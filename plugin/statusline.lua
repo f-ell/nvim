@@ -236,7 +236,7 @@ local git = {
     if not self.meta.tracked then
       diff = '%#GitZero#untracked'
     elseif self.meta.diff.unmerged then
-      diff = '%#GitDel# unmerged'
+      diff = '%#GitDel#unmerged'
     else
       local hl = {
         '%#Git' .. (self.meta.diff.add == 0 and 'Zero' or 'Add') .. '#',
@@ -335,17 +335,14 @@ local git = {
     vim.fn.jobwait({ id }, 100)
   end,
   _diff = function(self)
-    local data = vim.fn.split(
-      vim.diff(
-        table.concat(self.meta.hstate, '\n'),
-        table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), '\n'),
-        ---@diagnostic disable-next-line: missing-fields
-        {
-          result_type = 'unified',
-        }
-      ) --[[@as string]],
-      '\n'
-    )
+    local diff = vim.diff(
+      table.concat(self.meta.hstate, '\n'),
+      table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), '\n'),
+      ---@diagnostic disable-next-line: missing-fields
+      {
+        result_type = 'unified',
+      }
+    ) --[[@as string]]
 
     self.meta.diff = {
       unmerged = false,
@@ -354,15 +351,21 @@ local git = {
       del = 0,
     }
 
-    for i = 1, #data do
-      if not vim.startswith(data[i], '@@') then
-        goto continue
-      end
-      if vim.startswith(data[i], '@@@') then
-        self.meta.diff.unmerged = true
-        return
-      end
+    local it = vim.iter(vim.split(diff, '\n'))
 
+    local data = it:filter(function(i)
+      return i:sub(0, 2) == '@@'
+    end):totable()
+
+    -- order important - `any` consumes iterator
+    if it:any(function(i)
+      return i:sub(0, 3) == '@@@'
+    end) then
+      self.meta.diff.unmerged = true
+      return
+    end
+
+    for i = 1, #data do
       local d = { data[i]:match('^@@ %-%d+,?(%d*) %+%d+,?(%d*) @@') }
       if d[1] == '' then
         d[1] = '1'
@@ -381,14 +384,13 @@ local git = {
         self.meta.diff.del = self.meta.diff.del + d[1]
       else
         self.meta.diff.cha = self.meta.diff.cha + math.min(d[1], d[2])
+
         if d[2] > d[1] then
           self.meta.diff.add = self.meta.diff.add + (d[2] - d[1])
         elseif d[2] < d[1] then
           self.meta.diff.del = self.meta.diff.del + (d[1] - d[2])
         end
       end
-
-      ::continue::
     end
   end,
 }
