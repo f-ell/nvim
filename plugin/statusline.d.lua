@@ -1,7 +1,6 @@
 ---@meta
 
 ---@class Component
----@field name string,
 ---@field enabled boolean?
 ---@field init fun(self:self)?
 ---@field events fun(self:self)|Listener[]?
