@@ -166,7 +166,6 @@ M:add_component({
     })
   end,
 }, {
-  -- FIX: head / diff doesn't update on commit (updates on FocusGained though)
   name = 'git',
   meta = {
     relative_name = nil,
@@ -204,47 +203,28 @@ M:add_component({
           return
         end
 
-        local id = vim.fn.jobstart({
-          'git',
-          'cat-file',
-          'blob',
-          'HEAD:' .. self.meta.relative_name,
-        }, {
-          cwd = self.meta.root._local,
-          stdout_buffered = true,
-          on_stdout = function(_, data, _)
-            local hstate = { unpack(data, 1, #data - 1) }
-
-            -- prefer equality checks to redundant writes
-            if
-              not (
-                self.meta.state.head
-                and vim.deep_equal(L.io.tbl_read(self.meta.state.head), hstate)
-              )
-            then
-              self.meta.state.head = L.fs.writetmpfile(
-                vim.fn.bufnr(),
-                hstate,
-                false,
-                -- WARN: not portable
-                vim.fn.expand('%:p'):gsub('/', '%%')
-              )
-            end
-          end,
-        })
-        vim.fn.jobwait({ id }, 100)
-
+        self:__update_headstate()
         self:__diff()
       end,
     },
     {
-      { 'TextChanged', 'TextChangedI', 'TextChangedP', 'TextChangedT' },
-      function(self)
-        if not (self.meta.root.global and self.meta.tracked) then
+      'User',
+      function(self, args)
+        if not vim.startswith(args.match, 'GitSigns') then
           return
         end
 
+        -- safe to proceed w/o further checks - the event is related to git
+        self:__tracked()
+        self:__head()
+
+        if not self.meta.tracked then
+          return
+        end
+
+        self:__update_headstate()
         self:__diff()
+        vim.cmd('redrawstatus')
       end,
     },
   },
@@ -337,6 +317,37 @@ M:add_component({
     end
 
     self.meta.head = head
+  end,
+  __update_headstate = function(self)
+    local id = vim.fn.jobstart({
+      'git',
+      'cat-file',
+      'blob',
+      ':' .. self.meta.relative_name,
+    }, {
+      cwd = self.meta.root._local,
+      stdout_buffered = true,
+      on_stdout = function(_, data, _)
+        local hstate = { unpack(data, 1, #data - 1) }
+
+        -- prefer equality checks to redundant writes
+        if
+          not (
+            self.meta.state.head
+            and vim.deep_equal(L.io.tbl_read(self.meta.state.head), hstate)
+          )
+        then
+          self.meta.state.head = L.fs.writetmpfile(
+            vim.fn.bufnr(),
+            hstate,
+            false,
+            -- WARN: not portable
+            vim.fn.expand('%:p'):gsub('/', '%%')
+          )
+        end
+      end,
+    })
+    vim.fn.jobwait({ id }, 100)
   end,
   __diff = function(self)
     local update_diff = function(_, data, _)
