@@ -114,8 +114,8 @@ function M:_preprocess(raw)
   else
     local max_sev = vim
       .iter(tbl.diag)
-      :map(function(i)
-        return i.sev
+      :map(function(d)
+        return d.sev
       end)
       :fold(math.huge, function(min, i)
         if i < min then
@@ -190,8 +190,8 @@ function M:_open(raw)
     vim.fn.cursor({ proc.diag[#proc.diag].ln, proc.diag[#proc.diag].col })
   end
 
-  vim.iter(M._util.active_wins):each(function(i)
-    L.win.close(i)
+  vim.iter(M._util.active_wins):each(function(w)
+    L.win.close(w)
   end)
   M._util.active_wins = {}
 
@@ -221,8 +221,8 @@ function M:_open(raw)
       L.win.close(data.nwin)
       M._util.active_wins = vim
         .iter(M._util.active_wins)
-        :filter(function(i)
-          return i ~= data.nwin
+        :filter(function(w)
+          return w ~= data.nwin
         end)
         :totable()
     end
