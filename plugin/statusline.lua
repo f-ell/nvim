@@ -87,8 +87,10 @@ local M = {
   ---@type string
   _realpath = nil,
   _buf_events = {
+    'BufNewFile',
     'BufEnter',
     'BufFilePost',
+    'BufWritePost',
     'WinClosed',
     'FocusGained',
     'FileChangedShellPost',
@@ -143,10 +145,10 @@ local buffer = {
           local ext = i and name:sub(i) or ''
           local offset = ext:len() > 0 and 2 + ext:len() or 4
           name = name
-            :sub(0, maxlen - (offset + fillchars:len()))
-            :gsub('%%', '%%%%') .. fillchars .. name
-            :sub(-offset)
-            :gsub('%%', '%%%%')
+              :sub(0, maxlen - (offset + fillchars:len()))
+              :gsub('%%', '%%%%') .. fillchars .. name
+              :sub(-offset)
+              :gsub('%%', '%%%%')
         end
 
         self.meta.name = name
@@ -193,7 +195,7 @@ local git = {
         end
 
         self.meta.relative_name = './'
-          .. M._realpath:sub(self.meta.root._local:len() + 1)
+            .. M._realpath:sub(self.meta.root._local:len() + 1)
 
         self:_tracked()
         self:_head()
@@ -258,13 +260,9 @@ local git = {
     })
   end,
   _root = function(self)
-    if M._realpath == nil then
-      return false
-    end
-
     local path = vim.fs.find(
       '.git',
-      { upward = true, path = vim.fs.dirname(M._realpath) }
+      { upward = true, path = vim.fs.dirname(M._realpath or './') }
     )[1]
     local stat = vim.uv.fs_stat(path or '')
 
@@ -353,14 +351,14 @@ local git = {
 
     local it = vim.iter(vim.split(diff, '\n'))
 
-    local data = it:filter(function(i)
-      return i:sub(0, 2) == '@@'
+    local data = it:filter(function(d)
+      return d:sub(0, 2) == '@@'
     end):totable()
 
     -- order important - `any` consumes iterator
-    if it:any(function(i)
-      return i:sub(0, 3) == '@@@'
-    end) then
+    if it:any(function(d)
+          return d:sub(0, 3) == '@@@'
+        end) then
       self.meta.diff.unmerged = true
       return
     end
@@ -443,7 +441,7 @@ local lsp = {
         local diagnostics = vim.diagnostic.get(0)
         for i = 1, #diagnostics do
           self.meta.diagnostics.count[diagnostics[i].severity] = self.meta.diagnostics.count[diagnostics[i].severity]
-            + 1
+              + 1
         end
 
         local part = {}
@@ -471,7 +469,7 @@ local lsp = {
       '%#StatuslineLspinfo#',
       vim.o.columns < 100 and '' or table.concat(self.meta.clients, ', '),
       #self.meta.diagnostics.string == 0 and ''
-        or ' ' .. self.meta.diagnostics.string,
+      or ' ' .. self.meta.diagnostics.string,
       '%#Statusline#',
     })
   end,
@@ -499,10 +497,10 @@ local bytes = {
   },
   get = function(self)
     return vim.o.columns < 80 and ''
-      or table.concat({
-        '%#StatuslineBytecount#﬘%#Statusline#',
-        self.meta.bytes .. self.meta.unit,
-      }, ' ')
+        or table.concat({
+          '%#StatuslineBytecount#﬘%#Statusline#',
+          self.meta.bytes .. self.meta.unit,
+        }, ' ')
   end,
   _round = function(number, quotient)
     return vim.fn.round((number * 10) / quotient) / 10
