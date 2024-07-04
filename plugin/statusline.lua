@@ -25,13 +25,13 @@ local M = {
 
     for i = 1, #self._components do
       if
-        self._components[i].enabled == nil
-        or self._components[i].enabled == true
+          self._components[i].enabled == nil
+          or self._components[i].enabled == true
       then
         tbl:insert(
           type(self._components[i].get) == 'function'
-              and self._components[i]:get()
-            or self._components[i].get
+          and self._components[i]:get()
+          or self._components[i].get
         )
       end
     end
@@ -194,11 +194,14 @@ local git = {
           return
         end
 
+        self:_head()
+        if not M._realpath then
+          return
+        end
+
         self.meta.relative_name = './'
             .. M._realpath:sub(self.meta.root._local:len() + 1)
-
         self:_tracked()
-        self:_head()
 
         if not self.meta.tracked then
           return
@@ -216,8 +219,8 @@ local git = {
         end
 
         -- safe to proceed w/o further checks - the event is related to git
-        self:_tracked()
         self:_head()
+        self:_tracked()
 
         if not self.meta.tracked then
           return
