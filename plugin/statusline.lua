@@ -214,7 +214,7 @@ local git = {
     {
       'User',
       function(self, args)
-        if not self:_root() or not vim.startswith(args.match, 'GitSigns') then
+        if not (self:_root() and vim.startswith(args.match, 'GitSigns') and M._realpath) then
           return
         end
 
