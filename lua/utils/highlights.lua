@@ -20,6 +20,14 @@ local c = {
     red = '#e67e80',
     yel = '#dbbc7f',
   },
+  darkened = {
+    aqu = '#4f7459',
+    blu = '#4d716d',
+    gre = '#65744e',
+    pur = '#825d6e',
+    red = '#8b4c4e',
+    yel = '#85724d',
+  },
   vivid = {
     aqu = '#35a77c',
     blu = '#3a94c5',
@@ -94,11 +102,18 @@ local highlights = {
     { bg = '#3d5665', sp = c.pastel.blu, underline = true },
   },
   { 0, 'DiffDelete', { fg = c.fg[3], bg = c._ } },
+
   { 0, 'Git', { fg = c.misc.git, bg = c._ } },
-  { 0, 'GitZero', { fg = c.fg[3], bg = c._ } },
-  { 0, 'GitAdd', { fg = c.pastel.gre, bg = c._ } },
-  { 0, 'GitCha', { fg = c.pastel.blu, bg = c._ } },
-  { 0, 'GitDel', { fg = c.pastel.red, bg = c._ } },
+  { 0, 'GitZero', { link = 'Grey' } },
+  { 0, 'GitAdd', { link = 'GreenSign' } },
+  { 0, 'GitCha', { link = 'BlueSign' } },
+  { 0, 'GitDel', { link = 'RedSign' } },
+  { 0, 'GitSignsStagedAdd', { fg = c.darkened.gre } },
+  { 0, 'GitSignsStagedChange', { fg = c.darkened.blu } },
+  { 0, 'GitSignsStagedDelete', { fg = c.darkened.red } },
+  { 0, 'GitSignsStagedTopdelete', { fg = c.darkened.red } },
+  { 0, 'GitSignsStagedChangeDelete', { fg = c.darkened.blu } },
+
   { 0, 'SpellBad', { sp = c.pastel.red, undercurl = true } },
 
   ---- plugins ----
