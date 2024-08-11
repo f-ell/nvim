@@ -6,7 +6,7 @@ return {
     'nvim-treesitter/nvim-treesitter-textobjects',
     {
       'JoosepAlviste/nvim-ts-context-commentstring',
-      opts = { enable = true, enable_autocmd = false }
+      opts = { enable = true, enable_autocmd = false },
     },
     {
       'nvim-treesitter/nvim-treesitter-context',
@@ -15,18 +15,21 @@ return {
         mode = 'cursor',
         trim_scope = 'outer',
         max_lines = 4,
-        min_window_height = 24
-      }
-    }
+        min_window_height = 24,
+      },
+    },
   },
   config = function()
     require('nvim-treesitter.configs').setup({
       auto_install = false,
+      sync_install = false,
       ensure_installed = {},
+      ignore_install = {},
+      modules = {},
 
       highlight = {
         enable = true,
-        additional_vim_regex_highlighting = false
+        additional_vim_regex_highlighting = false,
       },
 
       textobjects = {
@@ -37,15 +40,17 @@ return {
           keymaps = { -- queries located in textobjects.scm
             ['aa'] = '@parameter.outer',
             ['ia'] = '@parameter.inner',
-            ['af'] = '@function.outer',
-            ['if'] = '@function.inner',
             ['ac'] = '@conditional.outer',
             ['ic'] = '@conditional.inner',
+            ['al'] = '@loop.outer',
+            ['il'] = '@loop.inner',
+            ['af'] = '@function.outer',
+            ['if'] = '@function.inner',
             ['aC'] = '@class.outer',
-            ['iC'] = '@class.inner'
-          }
-        }
+            ['iC'] = '@class.inner',
+          },
+        },
       },
     })
-  end
+  end,
 }
