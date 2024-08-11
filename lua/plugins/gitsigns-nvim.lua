@@ -17,8 +17,10 @@ return {
   event = 'BufReadPost',
   keys = {
     { 'gsh', toggle_diff },
-    { 'gsj', '<CMD>silent Gitsigns next_hunk<CR>zz' },
-    { 'gsk', '<CMD>silent Gitsigns prev_hunk<CR>zz' },
+    { 'gsj', '<CMD>silent Gitsigns nav_hunk next<CR>zz' },
+    { 'gsk', '<CMD>silent Gitsigns nav_hunk prev<CR>zz' },
+    { 'gsJ', '<CMD>silent Gitsigns nav_hunk next target=staged<CR>zz' },
+    { 'gsK', '<CMD>silent Gitsigns nav_hunk prev target=staged<CR>zz' },
     { 'gsl', '<CMD>Gitsigns toggle_deleted<CR>' },
     { 'gsc', '<CMD>Gitsigns toggle_linehl<CR>' },
     { '<leader><', '<CMD>diffget gitsigns://*:0\\\\|2:<CR>' },
