@@ -14,7 +14,6 @@ return {
   end,
   config = function()
     require('oil').setup({
-      view_options = { show_hidden = true },
       preview = { border = 'single' },
       use_default_keymaps = false,
       keymaps = {
