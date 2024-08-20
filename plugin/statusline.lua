@@ -25,13 +25,13 @@ local M = {
 
     for i = 1, #self._components do
       if
-          self._components[i].enabled == nil
-          or self._components[i].enabled == true
+        self._components[i].enabled == nil
+        or self._components[i].enabled == true
       then
         tbl:insert(
           type(self._components[i].get) == 'function'
-          and self._components[i]:get()
-          or self._components[i].get
+              and self._components[i]:get()
+            or self._components[i].get
         )
       end
     end
@@ -145,10 +145,10 @@ local buffer = {
           local ext = i and name:sub(i) or ''
           local offset = ext:len() > 0 and 2 + ext:len() or 4
           name = name
-              :sub(0, maxlen - (offset + fillchars:len()))
-              :gsub('%%', '%%%%') .. fillchars .. name
-              :sub(-offset)
-              :gsub('%%', '%%%%')
+            :sub(0, maxlen - (offset + fillchars:len()))
+            :gsub('%%', '%%%%') .. fillchars .. name
+            :sub(-offset)
+            :gsub('%%', '%%%%')
         end
 
         self.meta.name = name
@@ -200,7 +200,7 @@ local git = {
         end
 
         self.meta.relative_name = './'
-            .. M._realpath:sub(self.meta.root._local:len() + 1)
+          .. M._realpath:sub(self.meta.root._local:len() + 1)
         self:_tracked()
 
         if not self.meta.tracked then
@@ -214,7 +214,13 @@ local git = {
     {
       'User',
       function(self, args)
-        if not (self:_root() and vim.startswith(args.match, 'GitSigns') and M._realpath) then
+        if
+          not (
+            self:_root()
+            and vim.startswith(args.match, 'GitSigns')
+            and M._realpath
+          )
+        then
           return
         end
 
@@ -360,8 +366,8 @@ local git = {
 
     -- order important - `any` consumes iterator
     if it:any(function(d)
-          return d:sub(0, 3) == '@@@'
-        end) then
+      return d:sub(0, 3) == '@@@'
+    end) then
       self.meta.diff.unmerged = true
       return
     end
@@ -444,7 +450,7 @@ local lsp = {
         local diagnostics = vim.diagnostic.get(0)
         for i = 1, #diagnostics do
           self.meta.diagnostics.count[diagnostics[i].severity] = self.meta.diagnostics.count[diagnostics[i].severity]
-              + 1
+            + 1
         end
 
         local part = {}
@@ -469,10 +475,13 @@ local lsp = {
     end
 
     return table.concat({
+      #self.meta.diagnostics.string == 0 and '' or self.meta.diagnostics.string,
       '%#StatuslineLspinfo#',
-      vim.o.columns < 100 and '' or table.concat(self.meta.clients, ', '),
-      #self.meta.diagnostics.string == 0 and ''
-      or ' ' .. self.meta.diagnostics.string,
+      vim.o.columns < 100 and ''
+        or (' %%@v:lua.user_sl_lsp@[%s client%s]%%X'):format(
+          #self.meta.clients,
+          #self.meta.clients > 1 and 's' or ''
+        ),
       '%#Statusline#',
     })
   end,
@@ -500,10 +509,10 @@ local bytes = {
   },
   get = function(self)
     return vim.o.columns < 80 and ''
-        or table.concat({
-          '%#StatuslineBytecount#﬘%#Statusline#',
-          self.meta.bytes .. self.meta.unit,
-        }, ' ')
+      or table.concat({
+        '%#StatuslineBytecount#﬘%#Statusline#',
+        self.meta.bytes .. self.meta.unit,
+      }, ' ')
   end,
   _round = function(number, quotient)
     return vim.fn.round((number * 10) / quotient) / 10
@@ -589,6 +598,9 @@ M:add_component(
 
 _G.statusline = function()
   return M:render()
+end
+_G.user_sl_lsp = function()
+  print(table.concat(lsp.meta.clients, ', '))
 end
 vim.o.laststatus = 3
 vim.o.statusline = '%!v:lua.statusline()'
