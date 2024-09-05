@@ -15,7 +15,7 @@ local function dec2hex()
     s_pos[3] - 1,
     e_pos[2] - 1,
     e_pos[3],
-    { ('0x%x'):format(vim.fn.expand('<cword>')) }
+    { ('0x%02x'):format(vim.fn.expand('<cword>')) }
   )
 
   vim.api.nvim_feedkeys(
