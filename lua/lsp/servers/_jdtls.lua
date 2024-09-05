@@ -10,8 +10,12 @@ local function generateConstructorsPrompt(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   local err, res
 
-  err, res =
-    L.lsp.request(client, 'java/checkConstructorsStatus', ctx.params, ctx.bufnr)
+  err, res = L.lsp.request(
+    { client },
+    'java/checkConstructorsStatus',
+    ctx.params,
+    ctx.bufnr
+  )
 
   if err then
     L.lsp.notify_error(err)
@@ -71,7 +75,7 @@ local function generateConstructorsPrompt(_, ctx)
   local params =
     { context = ctx.params, constructors = constructors, fields = fields }
   err, res =
-    L.lsp.request(client, 'java/generateConstructors', params, ctx.bufnr)
+    L.lsp.request({ client }, 'java/generateConstructors', params, ctx.bufnr)
 
   if err then
     L.lsp.notify_error(err)
@@ -86,7 +90,7 @@ local function generateDelegateMethodsPrompt(_, ctx)
   local err, res
 
   err, res = L.lsp.request(
-    client,
+    { client },
     'java/checkDelegateMethodsStatus',
     ctx.params,
     ctx.bufnr
@@ -160,7 +164,7 @@ local function generateDelegateMethodsPrompt(_, ctx)
   }
 
   err, res =
-    L.lsp.request(client, 'java/generateDelegateMethods', params, ctx.bufnr)
+    L.lsp.request({ client }, 'java/generateDelegateMethods', params, ctx.bufnr)
 
   if err then
     L.lsp.notify_error(err)
@@ -174,7 +178,7 @@ local function generateToStringPrompt(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
 
   local err, res =
-    L.lsp.request(client, 'java/checkToStringStatus', ctx.params, ctx.bufnr)
+    L.lsp.request({ client }, 'java/checkToStringStatus', ctx.params, ctx.bufnr)
 
   if err then
     L.lsp.notify_error(err)
@@ -203,7 +207,7 @@ local function generateToStringPrompt(_, ctx)
   })
 
   err, res = L.lsp.request(
-    client,
+    { client },
     'java/generateToString',
     { context = ctx.params, fields = items },
     ctx.bufnr
@@ -221,7 +225,7 @@ local function hashCodeEqualsPrompt(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
 
   local err, res = L.lsp.request(
-    client,
+    { client },
     'java/checkHashCodeEqualsStatus',
     ctx.params,
     ctx.bufnr
@@ -263,7 +267,7 @@ local function hashCodeEqualsPrompt(_, ctx)
   })
 
   err, res = L.lsp.request(
-    client,
+    { client },
     'java/generateHashCodeEquals',
     { context = ctx.params, fields = items },
     ctx.bufnr
@@ -345,8 +349,12 @@ local function overrideMethodsPrompt(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   local err, res
 
-  err, res =
-    L.lsp.request(client, 'java/listOverridableMethods', ctx.params, ctx.bufnr)
+  err, res = L.lsp.request(
+    { client },
+    'java/listOverridableMethods',
+    ctx.params,
+    ctx.bufnr
+  )
 
   if err then
     L.lsp.notify_error(err)
@@ -384,7 +392,7 @@ local function overrideMethodsPrompt(_, ctx)
   })
 
   err, res = L.lsp.request(
-    client,
+    { client },
     'java/addOverridableMethods',
     { context = ctx.params, overridableMethods = items },
     ctx.bufnr

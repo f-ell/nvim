@@ -20,6 +20,14 @@ local c = {
     red = '#e67e80',
     yel = '#dbbc7f',
   },
+  darkened = {
+    aqu = '#4f7459',
+    blu = '#4d716d',
+    gre = '#65744e',
+    pur = '#825d6e',
+    red = '#8b4c4e',
+    yel = '#85724d',
+  },
   vivid = {
     aqu = '#35a77c',
     blu = '#3a94c5',
@@ -30,13 +38,14 @@ local c = {
   },
   misc = {
     git = '#fca326',
+    yel = '#65645a',
   },
 }
 
 local highlights = {
   -- search
-  { 0, 'Search', { fg = c.bg[3], bg = c.pastel.gre } },
-  { 0, 'IncSearch', { fg = c.bg[3], bg = c.pastel.red } },
+  { 0, 'Search', { fg = c.fg[2], bg = c.misc.yel } },
+  { 0, 'IncSearch', { fg = c.bg[3], bg = c.pastel.yel } },
   { 0, 'CurSearch', { link = 'IncSearch' } },
   { 0, 'Substitute', { link = 'IncSearch' } },
   { 0, 'Visual', { fg = c._, bg = '#3d5665' } },
@@ -46,10 +55,15 @@ local highlights = {
   { 0, 'WarningText', { sp = c.pastel.yel, underline = true } },
   { 0, 'InfoText', { sp = c.pastel.gre, underline = true } },
   { 0, 'HintText', { sp = c.pastel.blu, underline = true } },
+  { 0, 'DiagnosticOk', { fg = c.pastel.pur } },
   { 0, 'DiagnosticSignError', { fg = c.pastel.red } },
   { 0, 'DiagnosticSignWarn', { fg = c.pastel.yel } },
   { 0, 'DiagnosticSignInfo', { fg = c.pastel.gre } },
   { 0, 'DiagnosticSignHint', { fg = c.pastel.blu } },
+  { 0, 'DiagnosticUnderlineError', { sp = c.pastel.red, underline = true } },
+  { 0, 'DiagnosticUnderlineWarn', { sp = c.pastel.yel, underline = true } },
+  { 0, 'DiagnosticUnderlineInfo', { sp = c.pastel.gre, underline = true } },
+  { 0, 'DiagnosticUnderlineHint', { sp = c.pastel.blu, underline = true } },
 
   -- float
   { 0, 'NormalFloat', { fg = c._, bg = c._ } },
@@ -88,11 +102,18 @@ local highlights = {
     { bg = '#3d5665', sp = c.pastel.blu, underline = true },
   },
   { 0, 'DiffDelete', { fg = c.fg[3], bg = c._ } },
+
   { 0, 'Git', { fg = c.misc.git, bg = c._ } },
-  { 0, 'GitZero', { fg = c.fg[3], bg = c._ } },
-  { 0, 'GitAdd', { fg = c.pastel.gre, bg = c._ } },
-  { 0, 'GitCha', { fg = c.pastel.blu, bg = c._ } },
-  { 0, 'GitDel', { fg = c.pastel.red, bg = c._ } },
+  { 0, 'GitZero', { link = 'Grey' } },
+  { 0, 'GitAdd', { link = 'GreenSign' } },
+  { 0, 'GitCha', { link = 'BlueSign' } },
+  { 0, 'GitDel', { link = 'RedSign' } },
+  { 0, 'GitSignsStagedAdd', { fg = c.darkened.gre } },
+  { 0, 'GitSignsStagedChange', { fg = c.darkened.blu } },
+  { 0, 'GitSignsStagedDelete', { fg = c.darkened.red } },
+  { 0, 'GitSignsStagedTopdelete', { fg = c.darkened.red } },
+  { 0, 'GitSignsStagedChangeDelete', { fg = c.darkened.blu } },
+
   { 0, 'SpellBad', { sp = c.pastel.red, undercurl = true } },
 
   ---- plugins ----

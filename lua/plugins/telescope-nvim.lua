@@ -30,7 +30,7 @@ return {
       defaults = {
         initial_mode = 'normal',
         path_display = {
-          shorten = { len = 1, exclude = { -2, -1, 1 } },
+          shorten = { len = 1, exclude = { -2, -1, 1, 2 } },
           truncate = 1,
           vimgrep_arguments = {
             'rg',
@@ -46,28 +46,39 @@ return {
           },
         },
 
-        sorting_strategy = 'descending',
+        sorting_strategy = 'ascending',
         scroll_strategy = 'limit',
         file_ignore_patterns = { '.cache/', 'undo/' },
 
-        borderchars = { '─', '│', '─', '│', '┌', '┐', '┘', '└' },
-        layout_strategy = 'vertical',
-        theme = 'dropdown',
+        borderchars = {
+          prompt = { ' ', ' ', '─', ' ', ' ', ' ', ' ', ' ' },
+          results = { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+          preview = { '─', '│', '─', '│', '┌', '┐', '┘', '└' },
+        },
+        layout_strategy = 'flex',
         layout_config = {
-          prompt_position = 'bottom',
-          width = 0.80,
-          height = 0.70,
+          flex = { flip_columns = 120 },
+
+          width = function(_, cols, _)
+            return cols
+          end,
+          height = function(_, _, rows)
+            return rows
+          end,
+
+          prompt_position = 'top',
           horizontal = {
-            preview_width = 0.65,
-            results_width = 0.3,
+            preview_cutoff = 10,
+            preview_width = 0.5,
           },
           vertical = {
-            preview_height = 0.45,
-            mirror = false,
+            mirror = true,
+            preview_cutoff = 10,
+            preview_height = 0.5,
           },
-          preview_cutoff = 12,
         },
 
+        results_title = false,
         prompt_prefix = ' ',
         entry_prefix = '  ',
         selection_caret = '> ',
@@ -75,7 +86,7 @@ return {
         preview = {
           filesize_limit = 0.3,
           timeout = 100,
-          hide_on_startup = true,
+          hide_on_startup = false,
         },
         color_devicons = true,
 
@@ -128,18 +139,15 @@ return {
 
         buffers = {
           initial_mode = 'insert',
-          results_title = false,
           ignore_current_buffer = true,
         },
 
         find_files = {
           initial_mode = 'insert',
-          results_title = false,
           find_command = { 'fd', '-tf', '-H', '-d10', '--strip-cwd-prefix' },
         },
         git_files = {
           initial_mode = 'insert',
-          results_title = false,
         },
 
         live_grep = {
@@ -147,13 +155,11 @@ return {
           preview = {
             filesize_limit = 0.3,
             timeout = 100,
-            hide_on_startup = false,
           },
         },
 
         current_buffer_fuzzy_find = {
           initial_mode = 'insert',
-          results_title = false,
           skip_empty_lines = true,
         },
       },

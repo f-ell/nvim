@@ -10,10 +10,11 @@ M._util = {
 }
 
 function M.peek()
-  local clients = L.lsp.clients_by_cap('definition')
+  local clients =
+    L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_definition)
   local err, res = L.lsp.request(
     clients,
-    'textDocument/definition',
+    vim.lsp.protocol.Methods.textDocument_definition,
     vim.lsp.util.make_position_params(),
     0
   )
@@ -36,10 +37,11 @@ function M.peek()
 end
 
 function M.open()
-  local clients = L.lsp.clients_by_cap('definition')
+  local clients =
+    L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_definition)
   local err, res = L.lsp.request(
     clients,
-    'textDocument/definition',
+    vim.lsp.protocol.Methods.textDocument_definition,
     vim.lsp.util.make_position_params(),
     0
   )
@@ -62,10 +64,12 @@ function M.open()
 end
 
 function M.type()
-  local clients = L.lsp.clients_by_cap('typeDefinition')
+  local clients = L.lsp.clients_by_method(
+    vim.lsp.protocol.Methods.textDocument_typeDefinition
+  )
   local err, res = L.lsp.request(
     clients,
-    'textDocument/typeDefinition',
+    vim.lsp.protocol.Methods.textDocument_typeDefinition,
     vim.lsp.util.make_position_params(),
     0
   )
@@ -191,8 +195,7 @@ function M:_preprocess(raw)
   vim.fn.flatten(res, 1)
   local home = os.getenv('HOME')
 
-  -- PERF: potentially significant runtime overhead for increased usability
-
+  -- potentially significant runtime overhead for increased usability
   for i = 1, #res do
     local range = res[i].result.range or res[i].result.targetSelectionRange
     local def = {

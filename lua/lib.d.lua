@@ -1,21 +1,5 @@
 ---@meta
 
----@class LspClient
----@field id number
----@field name string
----@field rpc table
----@field offset_encoding string
----@field handlers table
----@field requests table
----@field config table
----@field server_capabilities table
----@field request fun(method:string,params:table,handler:fun()?,bufnr:number)
----@field request_sync fun(method:string,params:table,timeout_ms:number,bufnr:number)
----@field notify fun(method:string,params:table)
----@field stop fun(force:boolean?)
----@field is_stopped fun():boolean
----@field on_attach fun(client:LspClient,bufnr:number)
-
 ---@class RequestError
 ---@field name string
 ---@field method string
@@ -54,4 +38,5 @@
 ---@field nwin number window number of newly opened window
 ---@field width integer
 ---@field height integer
+---@field config vim.api.keyset.win_config
 ---@field [any] any

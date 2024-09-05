@@ -6,6 +6,7 @@ M._util = {
   signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
     return vim.startswith(s.name, 'DiagnosticSign')
   end),
+  active_wins = {},
 }
 
 function M.goto_next()
@@ -71,13 +72,13 @@ function M:_preprocess(raw)
   local tbl = {
     title = {},
     type = raw.type,
+    diag = {},
   }
 
   for i = 1, #diag do
-    tbl[i] = {
-      data = {},
-      src = vim.startswith(diag[i].source, 'Lua ') and 'lua_ls'
-        or diag[i].source,
+    tbl.diag[i] = {
+      msg = {},
+      src = diag[i].source,
       sev = diag[i].severity,
       ln = diag[i].lnum + 1,
       col = diag[i].col + 1,
@@ -88,30 +89,50 @@ function M:_preprocess(raw)
     }
 
     for ln in diag[i].message:gmatch('(.-)\r?\n') do
-      table.insert(tbl[i].data, ln)
+      table.insert(tbl.diag[i].msg, ln)
     end
     -- WARN: unstable use of character class
-    table.insert(tbl[i].data, diag[i].message:match('[\r\n]*([^\r\n]*)$'))
+    table.insert(tbl.diag[i].msg, diag[i].message:match('[\r\n]*([^\r\n]*)$'))
 
-    tbl[i].data[1] = self._util.signs[tbl[i].sev].text .. tbl[i].data[1]
+    tbl.diag[i].msg[1] = self._util.signs[tbl.diag[i].sev].text
+      .. tbl.diag[i].msg[1]
   end
 
-  for i = 1, #tbl do
-    for j = 2, #tbl[i].data do
-      tbl[i].data[j] = (' '):rep(
-        vim.fn.strdisplaywidth(self._util.signs[tbl[i].sev].text)
-      ) .. tbl[i].data[j]
+  for i = 1, #tbl.diag do
+    for j = 2, #tbl.diag[i].msg do
+      tbl.diag[i].msg[j] = (' '):rep(
+        vim.fn.strdisplaywidth(self._util.signs[tbl.diag[i].sev].text)
+      ) .. tbl.diag[i].msg[j]
     end
   end
 
-  tbl.title.icon = raw.type == 'line'
-      and { ' ' .. self._util.signs[3].text, self._util.signs[3].texthl }
-    or {
-      ' ' .. self._util.signs[tbl[1].sev].text,
-      self._util.signs[tbl[1].sev].texthl,
+  if raw.type == 'dir' then
+    tbl.title.icon = {
+      ' ' .. self._util.signs[tbl.diag[1].sev].text,
+      self._util.signs[tbl.diag[1].sev].texthl,
     }
+  else
+    local max_sev = vim
+      .iter(tbl.diag)
+      :map(function(d)
+        return d.sev
+      end)
+      :fold(math.huge, function(min, i)
+        if i < min then
+          min = i
+        end
+        return min
+      end)
+
+    tbl.title.icon = {
+      ' ' .. self._util.signs[max_sev].text,
+      self._util.signs[max_sev].texthl,
+    }
+  end
+
   tbl.title.loc = (
-    raw.type == 'line' and tbl[1].ln or tbl[1].ln .. ':' .. tbl[1].vcol
+    raw.type == 'line' and tbl.diag[1].ln
+    or tbl.diag[1].ln .. ':' .. tbl.diag[1].vcol
   ) .. ' '
 
   return tbl
@@ -120,14 +141,14 @@ end
 function M:_format(proc)
   local tbl = {}
 
-  for i = 1, #proc do
-    for j = 1, #proc[i].data do
-      table.insert(tbl, proc[i].data[j])
+  for i = 1, #proc.diag do
+    for j = 1, #proc.diag[i].msg do
+      table.insert(tbl, proc.diag[i].msg[j])
     end
 
     tbl[#tbl] = tbl[#tbl]
       .. ' '
-      .. (proc.type == 'dir' and proc[i].src or proc[i].vcol)
+      .. (proc.type == 'dir' and proc.diag[i].src or proc.diag[i].vcol)
   end
 
   return tbl
@@ -136,26 +157,26 @@ end
 function M:_set_highlights(bufnr, proc)
   local offset = -1
 
-  for i = 1, #proc do
+  for i = 1, #proc.diag do
     vim.api.nvim_buf_add_highlight(
       bufnr,
       -1,
-      self._util.signs[proc[i].sev].texthl,
+      self._util.signs[proc.diag[i].sev].texthl,
       offset + i,
       0,
-      vim.fn.byteidx(proc[i].data[1], 1)
+      vim.fn.byteidx(proc.diag[i].msg[1], 1)
     )
     vim.api.nvim_buf_add_highlight(
       bufnr,
       -1,
       'NeutralFloat',
-      offset + (#proc[i].data > 1 and #proc[i].data - 1 or 0) + i,
-      proc[i].data[#proc[i].data]:len(),
+      offset + (#proc.diag[i].msg > 1 and #proc.diag[i].msg - 1 or 0) + i,
+      proc.diag[i].msg[#proc.diag[i].msg]:len(),
       -1
     )
 
-    if #proc[i].data > 1 then
-      offset = offset + #proc[i].data - 1
+    if #proc.diag[i].msg > 1 then
+      offset = offset + #proc.diag[i].msg - 1
     end
   end
 end
@@ -165,8 +186,14 @@ function M:_open(raw)
   local content = self:_format(proc)
 
   if proc.type == 'dir' then
-    vim.fn.cursor({ proc[#proc].ln, proc[#proc].col })
+    vim.cmd('mark`')
+    vim.fn.cursor({ proc.diag[#proc.diag].ln, proc.diag[#proc.diag].col })
   end
+
+  vim.iter(M._util.active_wins):each(function(w)
+    L.win.close(w)
+  end)
+  M._util.active_wins = {}
 
   local data = L.win.open_cursor(content, false, {
     title = {
@@ -183,13 +210,21 @@ function M:_open(raw)
     noautocmd = true,
   })
 
+  table.insert(M._util.active_wins, data.nwin)
   self:_set_highlights(data.nbuf, proc)
 
+  -- TODO: WinScrolled - move window to new cursor position instead
   L.cmd.event(
-    { 'BufLeave', 'CursorMoved', 'InsertEnter', 'WinNew' },
+    { 'BufLeave', 'CursorMoved', 'InsertEnter', 'WinScrolled' },
     data.obuf,
     function()
       L.win.close(data.nwin)
+      M._util.active_wins = vim
+        .iter(M._util.active_wins)
+        :filter(function(w)
+          return w ~= data.nwin
+        end)
+        :totable()
     end
   )
 end

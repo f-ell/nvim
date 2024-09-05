@@ -33,7 +33,11 @@ return {
   handlers = {
     ['language/status'] = function() end, -- disable prints
     ['$/progress'] = function() end, -- disable progress warnings
-    ['textDocument/definition'] = function(err, res, ctx)
+    [vim.lsp.protocol.Methods.textDocument_definition] = function(
+      err,
+      res,
+      ctx
+    )
       local uri, range = res.uri or res[1].uri, res.range or res[1].range
       if not vim.endswith(uri, '.class') then
         return { err = err, result = res }
@@ -44,8 +48,8 @@ return {
       end
 
       err, res = L.lsp.request(
-        vim.lsp.get_client_by_id(ctx.client_id),
-        'workspace/executeCommand',
+        { vim.lsp.get_client_by_id(ctx.client_id) },
+        vim.lsp.protocol.Methods.workspace_executeCommand,
         {
           command = 'java.decompile',
           arguments = { uri },
@@ -93,7 +97,6 @@ return {
     },
 
     extendedClientCapabilities = {
-      advancedExtractRefactoringSupport = true,
       advancedOrganizeImportsSupport = true,
       classFileContentsSupport = true,
       executeClientCommandSupport = true,
@@ -101,14 +104,7 @@ return {
       generateDelegateMethodsPromptSupport = true,
       generateToStringPromptSupport = true,
       hashCodeEqualsPromptSupport = true,
-      moveRefactoringSupport = true,
       overrideMethodsPromptSupport = true,
-      inferSelectionSupport = {
-        'extractMethod',
-        'extractVariable',
-        'extractConstant',
-        'extractVariableAllOccurrence',
-      },
     },
   },
 

@@ -13,8 +13,8 @@ function M.codeaction()
   params.context = { diagnostics = vim.lsp.diagnostic.get_line_diagnostics(0) }
 
   local err, res = L.lsp.request(
-    L.lsp.clients_by_cap('codeAction'),
-    'textDocument/codeAction',
+    L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_codeAction),
+    vim.lsp.protocol.Methods.textDocument_codeAction,
     params,
     0
   )
@@ -121,25 +121,37 @@ function M:_register_float_actions(data)
       local cmd = type(res.command) == 'table' and res.command or act.result
       local client = vim.lsp.get_client_by_id(act.id)
 
-      local provider = client.server_capabilities.executeCommandProvider
-      assert(provider, 'Missing `executeCommandProvider`')
+      assert(
+        client
+          and client.supports_method(
+            vim.lsp.protocol.Methods.workspace_executeCommand
+          ),
+        'Missing `executeCommand provider`'
+      )
 
       if
         client.config.init_options.extendedClientCapabilities.executeClientCommandSupport
         and vim.lsp.commands[cmd.command]
       then
         vim.lsp.commands[cmd.command](cmd, {
-          method = 'textDocument/codeAction',
+          method = vim.lsp.protocol.Methods.textDocument_codeAction,
           bufnr = data.obuf,
           client_id = act.id,
           params = vim.lsp.util.make_range_params(),
         })
-      elseif provider.commands[cmd.command] then
-        L.lsp.request(client, 'workspace/executeCommand', {
-          command = cmd.command,
-          arguments = cmd.arguments,
-          workDoneToken = cmd.workDoneToken,
-        }, 0)
+      elseif
+        client.server_capabilities.executeCommandProvider.commands[cmd.command]
+      then
+        L.lsp.request(
+          client,
+          vim.lsp.protocol.Methods.workspace_executeCommand,
+          {
+            command = cmd.command,
+            arguments = cmd.arguments,
+            workDoneToken = cmd.workDoneToken,
+          },
+          0
+        )
       else
         vim.notify(
           ('`%s` not supported by client'):format(cmd.command),
@@ -149,8 +161,8 @@ function M:_register_float_actions(data)
     else
       local err
       err, res = L.lsp.request(
-        vim.lsp.get_client_by_id(act.id),
-        'codeAction/resolve',
+        { vim.lsp.get_client_by_id(act.id) },
+        vim.lsp.protocol.Methods.codeAction_resolve,
         res,
         0,
         -1
@@ -173,7 +185,7 @@ function M:_register_float_actions(data)
     local ln = vim.fn.line('.')
     local offset = 0
 
-    -- PERF: suboptimal but good enough for any reasonable use-case
+    -- suboptimal; performance should good enough for any reasonable use-case
     for i = 1, #data.proc do
       for _ = 2, #data.proc[i].msg do
         table.insert(data.res, offset + i, data.res[offset + i])

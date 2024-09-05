@@ -11,8 +11,8 @@ M._util = {
 M.active = function()
   local params = vim.lsp.util.make_position_params()
   local err, res = L.lsp.request(
-    L.lsp.clients_by_cap('signatureHelp'),
-    'textDocument/signatureHelp',
+    L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_signatureHelp),
+    vim.lsp.protocol.Methods.textDocument_signatureHelp,
     params,
     0
   )
@@ -36,8 +36,8 @@ end
 M.available = function()
   local params = vim.lsp.util.make_position_params()
   local err, res = L.lsp.request(
-    L.lsp.clients_by_cap('signatureHelp'),
-    'textDocument/signatureHelp',
+    L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_signatureHelp),
+    vim.lsp.protocol.Methods.textDocument_signatureHelp,
     params,
     0
   )
@@ -48,6 +48,7 @@ M.available = function()
   end
   if L.tbl.is_empty(res[1]) or L.tbl.is_empty(res[1].result.signatures) then
     vim.notify('No signature help available', vim.log.levels.INFO)
+    return
   end
   if L.tbl.is_empty(res[1].result.signatures[1].parameters) then
     vim.notify('Function takes no arguments', vim.log.levels.INFO)
@@ -66,8 +67,9 @@ function M:_preprocess(raw)
 
   -- stupid lsp spec. just send the darn location.
   if type(sig.parameters[1].label) == 'string' then
-    i0 = ({ sig.label:find(sig.parameters[1].label) })[1] - 1
-    i1 = ({ sig.label:find(sig.parameters[#sig.parameters].label) })[2] + 1
+    i0 = ({ sig.label:find(sig.parameters[1].label, 0, true) })[1] - 1
+    i1 = ({ sig.label:find(sig.parameters[#sig.parameters].label, 0, true) })[2]
+      + 1
   else
     i0 = sig.parameters[1].label[1]
     i1 = sig.parameters[#sig.parameters].label[2] + 1
@@ -138,14 +140,16 @@ function M:_set_highlights(bufnr, proc)
         :sub(proc[proc.signature].labels[1][1] + 1)
         :len()
 
-    vim.api.nvim_buf_add_highlight(
-      bufnr,
-      -1,
-      'Search',
-      0,
-      proc[proc.signature].labels[proc.parameter][1] - offset,
-      proc[proc.signature].labels[proc.parameter][2] - offset
-    )
+    if proc.parameter <= #proc[proc.signature].labels then
+      vim.api.nvim_buf_add_highlight(
+        bufnr,
+        -1,
+        'Search',
+        0,
+        proc[proc.signature].labels[proc.parameter][1] - offset,
+        proc[proc.signature].labels[proc.parameter][2] - offset
+      )
+    end
 
     return
   end

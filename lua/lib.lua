@@ -38,13 +38,13 @@ M.fs.user_dir = vim.fn.stdpath('run') .. '/nvim.user/'
 ---@param name string
 ---@return string filename
 function M.fs._unique(name)
-  if not vim.loop.fs_stat(name) then
+  if not vim.uv.fs_stat(name) then
     return name
   end
 
   local i = 1
   name = name .. '-' .. i
-  while vim.loop.fs_stat(name) do
+  while vim.uv.fs_stat(name) do
     i = i + 1
     name = name:sub(0, -2) .. i
   end
@@ -64,12 +64,12 @@ end)()
 
 ---Create temporary directory for miscellaneous runtime user files.
 function M.fs.mktmpdir()
-  if vim.loop.fs_stat(M.fs.user_dir) then
+  if vim.uv.fs_stat(M.fs.user_dir) then
     return
   end
 
   assert(
-    vim.loop.fs_mkdir(M.fs.user_dir, 448),
+    vim.uv.fs_mkdir(M.fs.user_dir, 448),
     "couldn't create " .. M.fs.user_dir
   )
 end
@@ -82,7 +82,7 @@ end
 ---@param name string? basename of the file to write or uniquely generated name
 ---@return string filename
 function M.fs.writetmpfile(buffer, data, remove, name)
-  if not vim.loop.fs_stat(M.fs.user_dir) then
+  if not vim.uv.fs_stat(M.fs.user_dir) then
     M.fs.mktmpdir()
   end
 
@@ -190,28 +190,30 @@ function M.lsp.apply_edit(response)
   end
 end
 
----Get all lsp clients with capability `cap` .. "Provider" attached to the
----buffer.
+---Get all lsp clients that support `method` attached to the buffer.
 ---
----@param capabilities string|string[]
----@param filter (fun(client:LspClient):boolean)? determines whether a client is returned
----@return LspClient[] clients
-function M.lsp.clients_by_cap(capabilities, filter)
+---`method` should be any value found in `vim.lsp.protocol.Methods`.
+---
+---@param method string|string[]
+---@param filter (fun(client:vim.lsp.Client):boolean)? determines whether a client is returned
+---@return vim.lsp.Client[] clients
+function M.lsp.clients_by_method(method, filter)
   local clients = vim.tbl_filter(
     function(client)
-      if type(capabilities) == 'string' then
-        return not not client.server_capabilities[capabilities .. 'Provider']
+      if type(method) == 'string' then
+        return client.supports_method(method)
       end
 
-      for i = 1, #capabilities do
-        if not client.server_capabilities[capabilities[i] .. 'Provider'] then
+      for i = 1, #method do
+        if not client.supports_method(method[i]) then
           return false
         end
       end
 
       return true
     end,
-    vim.lsp.get_active_clients({
+
+    vim.lsp.get_clients({
       buffer = vim.api.nvim_get_current_buf(),
     })
   )
@@ -248,7 +250,7 @@ end
 ---Ignores global handlers (i.e. `vim.lsp.handlers`), but respects client-local
 ---handlers. Handlers on clients are expected to return `{ err, result }`-tuples.
 ---
----@param clients LspClient|LspClient[]
+---@param clients vim.lsp.Client|vim.lsp.Client[]
 ---@param method string
 ---@param params TextDocumentPositionParams
 ---@param bufnr number
@@ -390,7 +392,7 @@ end
 function M.tbl.max_len(tbl)
   local max = 0
   for i = 1, #tbl do
-    local len = vim.fn.strwidth(tbl[i])
+    local len = vim.fn.strcharlen(tbl[i])
     if len > max then
       max = len
     end
@@ -447,9 +449,9 @@ end
 ---regardless.
 ---If number-array, it's interpreted as indices of items to pre-select. As a
 ---special case, if the first element is `-1`, all items are pre-selected;
----subsequent -indices are ignored.
+---subsequent array entries are ignored.
 ---
----NOTE: `getchar()` doesn't allow updates to cursor position before 0.10.
+---Requires 0.10 for `nvim__redraw`.
 ---
 ---@generic T
 ---@param items T[]
@@ -463,16 +465,18 @@ function M.ui.pick(items, multi, format, config)
   end
 
   local function set_highlights(bufnr)
-    -- FIX: don't rely on diagnostic signs being set
-    local signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
-      return vim.startswith(s.name, 'DiagnosticSign')
-    end)
+    local texthl = {
+      'ErrorFloat',
+      'WarningFloat',
+      'InfoFloat',
+      'HintFloat',
+    }
 
     for i = 1, #vim.api.nvim_buf_get_lines(bufnr, 0, -1, true) do
       vim.api.nvim_buf_add_highlight(
         bufnr,
         -1,
-        signs[i % #signs ~= 0 and i % #signs or #signs].texthl,
+        texthl[i % #texthl ~= 0 and i % #texthl or #texthl],
         i - 1,
         0,
         string.len(i)
@@ -480,7 +484,11 @@ function M.ui.pick(items, multi, format, config)
     end
   end
 
-  local vmaps = { 22, 86, 118 }
+  local vmaps = {
+    22 --[[ <C-v> ]],
+    86 --[[ v ]],
+    118 --[[ <S-v> ]],
+  }
   local selected = {}
 
   if type(multi) == 'table' and multi[1] == -1 then
@@ -500,6 +508,7 @@ function M.ui.pick(items, multi, format, config)
     table.insert(lines, i .. ' ' .. format(items[i], selected[i] or false, i))
   end
 
+  config = config or {}
   config.width = math.min(
     M.tbl.max_len({ M.win._parse_title(config), unpack(lines) })
       + math.abs(
@@ -539,14 +548,24 @@ function M.ui.pick(items, multi, format, config)
   end
 
   while true do
-    vim.cmd('redraw!')
+    vim.api.nvim__redraw({ flush = true, win = data.nwin, cursor = true })
     local c, num = vim.fn.getchar(), nil
 
-    if c == 27 then
+    if
+      c == 3 --[[ <c-c> ]]
+    then
+      return {}
+    end
+
+    if
+      c == 27 --[[ <esc> ]]
+    then
       break
     end
 
-    if c == 13 then
+    if
+      c == 13 --[[ <enter> ]]
+    then
       select(vim.fn.line('.'))
       goto continue
     end
@@ -556,15 +575,20 @@ function M.ui.pick(items, multi, format, config)
     end
 
     num = tonumber(vim.fn.nr2char(c))
-    if num then
+    if num and num > 0 then
       if num <= #items then
         select(num)
       end
       goto continue
     end
 
-    -- NOTE: does not handle operator-pending mappings
-    vim.fn.feedkeys(vim.fn.nr2char(c), 'x')
+    -- other key -- handle as normal
+    --
+    -- FIX: does not handle multi-character commands. Could be implmented by
+    -- storing queued keys as typeahead-string and checking whether string is a
+    -- valid command-sequence. See `maplist` | `maparg`.
+    vim.fn.feedkeys(vim.fn.nr2char(c))
+    vim.fn.feedkeys('', 'x')
 
     ::continue::
   end
@@ -614,7 +638,7 @@ end
 ---
 ---@return integer
 function M.win._max_height()
-  return math.floor(vim.api.nvim_win_get_height(0) * M.win._MAXSIZE)
+  return math.floor(vim.o.lines * M.win._MAXSIZE)
 end
 
 ---Calculate window width.
@@ -710,6 +734,7 @@ end
 ---@return WinData
 function M.win.open(lines, enter, config)
   ---@type WinData
+  ---@diagnostic disable-next-line: missing-fields
   local data = {
     obuf = vim.api.nvim_get_current_buf(),
     owin = vim.api.nvim_get_current_win(),
@@ -745,6 +770,8 @@ function M.win.open(lines, enter, config)
   else
     vim.api.nvim_win_set_buf(data.nwin, data.nbuf)
   end
+
+  data.config = vim.api.nvim_win_get_config(data.nwin)
 
   vim.bo[data.nbuf].bufhidden = 'wipe'
   vim.bo[data.nbuf].modifiable = false

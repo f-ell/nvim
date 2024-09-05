@@ -11,9 +11,18 @@ vim.o.showbreak = '> '
 vim.o.cmdheight = 1
 
 vim.o.list = true
-vim.opt.listchars =
-  { eol = '¬', tab = '| ', lead = '.', trail = '~', nbsp = '+' }
+vim.o.sidescrolloff = 1
+vim.opt.listchars = {
+  eol = '¬',
+  tab = '| ',
+  lead = '.',
+  trail = '~',
+  nbsp = '+',
+  extends = '>',
+  precedes = '<',
+}
 vim.opt.fillchars = { diff = '╱' }
+vim.opt.jumpoptions = { 'stack', 'view' }
 
 vim.o.cursorline = true
 vim.o.ignorecase = true
