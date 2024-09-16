@@ -115,6 +115,7 @@ local highlights = {
   { 0, 'GitSignsStagedChangeDelete', { fg = c.darkened.blu } },
 
   { 0, 'SpellBad', { sp = c.pastel.red, undercurl = true } },
+  { 0, 'QuickFixLine', { fg = c.bg[3], bg = c.pastel.gre } },
 
   ---- plugins ----
   -- cmp

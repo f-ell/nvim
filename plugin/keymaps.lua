@@ -43,12 +43,6 @@ key.modemap({ 'n', 'v' }, '<leader>y', '"+y')
 key.modemap({ 'n', 'v' }, '<leader>d', '"_d')
 
 -- qf / loc
-key.nnmap('<leader>cj', function()
-  return '<CMD>' .. vim.v.count .. 'cnext<CR>'
-end, { expr = true })
-key.nnmap('<leader>ck', function()
-  return '<CMD>' .. vim.v.count .. 'cprev<CR>'
-end, { expr = true })
 key.nnmap('<leader>co', '<CMD>copen<CR>')
 key.nnmap('<leader>cc', '<CMD>cclose<CR>')
 
