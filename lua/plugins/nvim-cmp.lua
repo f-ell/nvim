@@ -11,19 +11,13 @@ return {
   config = function()
     -- stylua: ignore
     local icons = {
-      Class       = '', Color    = '', Constructor   = '', Enum      = '',
-      EnumMember  = '', Event    = '', Field         = '', File      = '',
-      Folder      = '', Function = '', Interface     = '', Keyword   = '',
-      Method      = 'm', Module   = '', Property      = '', Reference = '',
-      Snippet     = '', Text     = '', TypeParameter = '', Unit      = '',
-      Constant    = '', Struct   = '', Operator      = '', Value     = '',
-      Variable    = ''
-    }
-    local window_opts = {
-      border = 'single',
-      winhighlight = 'FloatBorder:FloatBorder',
-      side_padding = 1,
-      col_offset = 1,
+      Class       = '󰠲', Color    = '', Constructor   = '', Enum      = '󱀍',
+      EnumMember  = '', Event    = '󱐋', Field         = '∊', File      = '󰦨',
+      Folder      = '', Function = '', Interface     = '', Keyword   = '',
+      Method      = '󰡱', Module   = '', Property      = '∊', Reference = '',
+      Snippet     = '', Text     = '', TypeParameter = 'T', Unit      = '󰔌',
+      Constant    = 'c', Struct   = '', Operator      = '±', Value     = '',
+      Variable    = '󰀫'
     }
 
     local cmp = require('cmp')
@@ -74,7 +68,14 @@ return {
         },
       },
 
-      window = { completion = window_opts, documentation = window_opts },
+      window = {
+        completion = {
+          winhighlight = 'Normal:CmpFloat,CursorLine:CmpSel',
+          side_padding = 1,
+          col_offset = 1,
+        },
+        documentation = { border = 'single' },
+      },
       view = { entries = { name = 'custom', selection_order = 'near_cursor' } },
 
       formatting = {
@@ -85,9 +86,9 @@ return {
             or string.sub(item.abbr, 1, 24)
           item.kind = icons[item.kind]
           item.menu = ({
-            luasnip = '-Snp-',
-            nvim_lsp = '-Lsp-',
-            buffer = '-Buf-',
+            snippy = 'S',
+            nvim_lsp = 'L',
+            buffer = 'B',
           })[entry.source.name]
           return item
         end,
