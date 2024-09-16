@@ -29,9 +29,8 @@ end
 key.nnmap('<leader>dh', dec2hex)
 
 key.nnmap('--', '<CMD>w<CR>')
-key.nnmap('<leader>~', 'viw~')
 key.nnmap('<leader>w', '<CMD>w !doas tee %<CR>')
-key.nnmap('<leader>x', '<CMD>!chmod 744 %<CR>')
+key.nnmap('<leader>x', '<CMD>!chmod u+x %<CR>')
 key.nnmap('<leader>%', '<CMD>so %<CR>')
 
 key.tnmap('<C-d>', '<C-\\><C-n>')
