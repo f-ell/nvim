@@ -39,23 +39,25 @@ return {
     local key = require('lib').key
     local ui = require('lsp.ui')
     local on_attach = function()
-      key.nnmap('<leader>fb', vim.lsp.buf.format, { buffer = 0 })
-      key.nnmap('<leader>rf', vim.lsp.buf.references, { buffer = 0 })
+      key.nnmap('<leader>fb', function()
+        require('conform').format({ timeout_ms = 500, lsp_format = 'fallback' })
+      end, { buffer = true })
+      key.nnmap('<leader>rf', vim.lsp.buf.references, { buffer = true })
 
-      key.nnmap('gd', ui.def.peek, { buffer = 0 })
-      key.nnmap('<leader>gd', ui.def.open, { buffer = 0 })
-      key.nnmap('<leader>gt', ui.def.type, { buffer = 0 })
+      key.nnmap('gd', ui.def.peek, { buffer = true })
+      key.nnmap('<leader>gd', ui.def.open, { buffer = true })
+      key.nnmap('<leader>gt', ui.def.type, { buffer = true })
 
-      key.nnmap('<leader>ca', ui.cda.codeaction, { buffer = 0 })
-      key.nnmap('<leader>rn', ui.ren.rename, { buffer = 0 })
+      key.nnmap('<leader>ca', ui.cda.codeaction, { buffer = true })
+      key.nnmap('<leader>rn', ui.ren.rename, { buffer = true })
       key.modemap({ 'i', 'n' }, '<C-s>', ui.sig.active)
       key.modemap({ 'i', 'n' }, '<C-A-s>', ui.sig.available)
 
-      key.nnmap('<leader>h', ui.dgn.get_line, { buffer = 0 })
-      key.nnmap('<leader>j', ui.dgn.goto_next, { buffer = 0 })
-      key.nnmap('<leader>k', ui.dgn.goto_prev, { buffer = 0 })
+      key.nnmap('<leader>h', ui.dgn.get_line, { buffer = true })
+      key.nnmap('<leader>j', ui.dgn.goto_next, { buffer = true })
+      key.nnmap('<leader>k', ui.dgn.goto_prev, { buffer = true })
       key.nnmap('<leader>l', function()
-        require('telescope.builtin').diagnostics({ bufnr = 0 })
+        require('telescope.builtin').diagnostics({ bufnr = true })
       end)
     end
 
