@@ -74,6 +74,7 @@ local highlights = {
 
   -- statusline
   { 0, 'Statusline', { fg = c.fg[2], bg = c._ } },
+  { 0, 'FoldColumn', { fg = c.fg[3], bg = c._ } },
   {
     0,
     'StatuslineReadonly',

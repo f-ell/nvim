@@ -1,2 +1,2 @@
-require('utils.settings')
+require('utils.options')
 require('utils.highlights')
