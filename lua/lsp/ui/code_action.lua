@@ -32,6 +32,7 @@ function M.codeaction()
     res[i].result.kind = nil
   end
 
+  ---@diagnostic disable-next-line: param-type-mismatch
   M:_open(vim.fn.uniq(res))
 end
 
@@ -113,7 +114,7 @@ function M:_register_float_actions(data)
     local act = data.res[num]
     local res = act.result
 
-    if res.edit then
+    if not L.tbl.is_empty(res.edit) then
       L.lsp.apply_edit(act)
     elseif res.action and type(res.action) == 'function' then
       res.action()
@@ -130,8 +131,9 @@ function M:_register_float_actions(data)
       )
 
       if
-        client.config.init_options.extendedClientCapabilities.executeClientCommandSupport
-        and vim.lsp.commands[cmd.command]
+        client.config.init_options.extendedClientCapabilities
+        and client.config.init_options.extendedClientCapabilities.executeClientCommandSupport
+        and vim.list_contains(vim.lsp.commands, cmd.command)
       then
         vim.lsp.commands[cmd.command](cmd, {
           method = vim.lsp.protocol.Methods.textDocument_codeAction,
@@ -140,7 +142,10 @@ function M:_register_float_actions(data)
           params = vim.lsp.util.make_range_params(),
         })
       elseif
-        client.server_capabilities.executeCommandProvider.commands[cmd.command]
+        vim.list_contains(
+          client.server_capabilities.executeCommandProvider.commands,
+          cmd.command
+        )
       then
         L.lsp.request(
           client,
