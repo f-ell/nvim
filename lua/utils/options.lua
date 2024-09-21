@@ -70,26 +70,9 @@ vim.o.updatecount = 0
 vim.o.undofile = true
 
 -- folds
+vim.o.foldtext = ''
 vim.o.foldlevel = 0
-_G.user_foldtext = function()
-  local count = vim.v.foldend - vim.v.foldstart + 1
-  local ln = vim.fn.trim(vim.fn.getline(vim.v.lnum))
-
-  if vim.o.foldmethod == 'marker' then
-    local cs = vim.o.commentstring:sub(0, vim.o.commentstring:find('%%s') - 1)
-    local fm = vim.o.foldmarker:sub(0, vim.o.foldmarker:find(',') - 1)
-
-    if vim.startswith(ln, cs) then
-      ln = vim.fn.trim(ln:sub(cs:len()))
-      ln = vim.fn.trim(ln:sub(0, ln:find(fm) - 1), '', 2)
-    else
-      ln = ln:sub(0, ln:find(cs .. '%s*' .. fm .. '%d*$') - 1)
-    end
-  end
-
-  return count .. ' ln: ' .. ln .. ' '
-end
-vim.o.foldtext = 'v:lua.user_foldtext()'
+vim.o.foldnestmax = 2
 
 -- transparency
 vim.o.pumblend = 0
