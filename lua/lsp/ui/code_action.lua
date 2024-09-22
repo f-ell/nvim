@@ -133,7 +133,7 @@ function M:_register_float_actions(data)
       if
         client.config.init_options.extendedClientCapabilities
         and client.config.init_options.extendedClientCapabilities.executeClientCommandSupport
-        and vim.list_contains(vim.lsp.commands, cmd.command)
+        and vim.lsp.commands[cmd.command]
       then
         vim.lsp.commands[cmd.command](cmd, {
           method = vim.lsp.protocol.Methods.textDocument_codeAction,
