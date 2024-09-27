@@ -18,10 +18,14 @@ vim.opt.listchars = {
   lead = '.',
   trail = '~',
   nbsp = '+',
-  extends = '>',
-  precedes = '<',
+  extends = '',
+  precedes = '',
 }
-vim.opt.fillchars = { diff = '╱' }
+vim.opt.fillchars = {
+  diff = '╱',
+  foldopen = '',
+  foldclose = '',
+}
 vim.opt.jumpoptions = { 'stack', 'view' }
 
 vim.o.cursorline = true
@@ -31,7 +35,6 @@ vim.o.shortmess = 'asWFS'
 
 vim.o.wrap = false
 vim.o.textwidth = 80
-vim.o.signcolumn = 'yes'
 vim.o.number = true
 vim.o.relativenumber = true
 vim.o.pumheight = 7
@@ -65,6 +68,11 @@ vim.o.ruler = false
 vim.o.autochdir = true
 vim.o.updatecount = 0
 vim.o.undofile = true
+
+-- folds
+vim.o.foldtext = ''
+vim.o.foldlevel = 0
+vim.o.foldnestmax = 2
 
 -- transparency
 vim.o.pumblend = 0

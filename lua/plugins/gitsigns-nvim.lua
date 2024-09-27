@@ -12,19 +12,19 @@ local toggle_diff = function()
 end
 
 return {
-  'lewis6991/gitsigns.nvim',
+  'leis6991/gitsigns.nvim',
   lazy = true,
   event = 'BufReadPost',
   keys = {
-    { 'gsh', toggle_diff },
-    { 'gsj', '<CMD>silent Gitsigns nav_hunk next<CR>zz' },
     { 'gsk', '<CMD>silent Gitsigns nav_hunk prev<CR>zz' },
     { 'gsJ', '<CMD>silent Gitsigns nav_hunk next target=staged<CR>zz' },
+    { 'gsh', toggle_diff },
+    { 'gsj', '<CMD>silent Gitsigns nav_hunk next<CR>zz' },
     { 'gsK', '<CMD>silent Gitsigns nav_hunk prev target=staged<CR>zz' },
     { 'gsl', '<CMD>Gitsigns toggle_deleted<CR>' },
     { 'gsc', '<CMD>Gitsigns toggle_linehl<CR>' },
-    { '<leader><', '<CMD>diffget gitsigns://*:0\\\\|2:<CR>' },
-    { '<leader>>', '<CMD>diffget gitsigns://*:3:<CR>' },
+    { 'gs<', '<CMD>diffget gitsigns://*:0\\\\|2:<CR>' },
+    { 'gs>', '<CMD>diffget gitsigns://*:3:<CR>' },
   },
   config = function()
     require('gitsigns').setup({

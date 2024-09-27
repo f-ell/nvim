@@ -16,7 +16,7 @@ return {
     { '<leader>zf', '<CMD>Telescope current_buffer_fuzzy_find<CR>' },
   },
   dependencies = {
-    'natecraddock/telescope-zf-native.nvim',
+    { 'natecraddock/telescope-zf-native.nvim', lazy = true },
     'nvim-lua/plenary.nvim',
     'nvim-tree/nvim-web-devicons',
   },

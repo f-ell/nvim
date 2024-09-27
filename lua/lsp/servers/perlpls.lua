@@ -1,8 +1,9 @@
+-- used solely for keyword completions
 return {
   settings = {
     pls = {
-      perlcritic = { enabled = true },
-      syntax = { enabled = true }
-    }
-  }
+      perlcritic = { enabled = false },
+      syntax = { enabled = false },
+    },
+  },
 }

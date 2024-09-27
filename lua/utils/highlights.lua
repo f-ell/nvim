@@ -74,6 +74,7 @@ local highlights = {
 
   -- statusline
   { 0, 'Statusline', { fg = c.fg[2], bg = c._ } },
+  { 0, 'FoldColumn', { fg = c.fg[3], bg = c._ } },
   {
     0,
     'StatuslineReadonly',
@@ -115,12 +116,16 @@ local highlights = {
   { 0, 'GitSignsStagedChangeDelete', { fg = c.darkened.blu } },
 
   { 0, 'SpellBad', { sp = c.pastel.red, undercurl = true } },
+  { 0, 'QuickFixLine', { fg = c.bg[3], bg = c.pastel.gre } },
 
   ---- plugins ----
   -- cmp
+  { 0, 'CmpFloat', { fg = c.fg[3], bg = c.bg[2] } },
+  { 0, 'CmpSel', { fg = c.bg[3], bg = c.pastel.red } },
   { 0, 'CmpItemMenu', { fg = c.fg[3], bg = c._ } },
   { 0, 'CmpItemAbbrMatch', { fg = c.pastel.red, bg = c._ } },
   { 0, 'CmpItemAbbrMatchFuzzy', { fg = c.pastel.red, bg = c._ } },
+  { 0, 'CmpItemKindText', { fg = c.pastel.blu } },
 
   -- dap
   { 0, 'DapStopped', { fg = c.pastel.gre } },

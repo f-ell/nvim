@@ -1,0 +1,6 @@
+L.key.nnmap('<C-j>', function()
+  vim.cmd('silent ' .. vim.v.count .. 'cnext | wincmd p')
+end, { buffer = true })
+L.key.nnmap('<C-k>', function()
+  vim.cmd('silent ' .. vim.v.count .. 'cprev | wincmd p')
+end, { buffer = true })

@@ -36,6 +36,5 @@ vim.api.nvim_create_autocmd('BufWritePre', {
     end
 
     organizeImports()
-    vim.lsp.buf.format()
   end,
 })

@@ -1,8 +1,8 @@
 return {
-  settings  = {
-    gopls   = {
-      analyses    = { unusedparams = true },
-      staticcheck = true
-    }
-  }
+  settings = {
+    gopls = {
+      analyses = { unusedparams = true },
+      staticcheck = true,
+    },
+  },
 }

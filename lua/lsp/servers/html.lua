@@ -1,3 +1,3 @@
 return {
-  filetypes = { 'html', 'javascript', 'typescript', 'markdown' }
+  filetypes = { 'html', 'javascript', 'typescript', 'markdown' },
 }

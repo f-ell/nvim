@@ -442,6 +442,10 @@ local lsp = {
     {
       { 'BufEnter', 'DiagnosticChanged' },
       function(self)
+        if L.tbl.is_empty(self.meta.signs) then
+          return
+        end
+
         self.meta.diagnostics = {
           count = { 0, 0, 0, 0 },
           string = '',

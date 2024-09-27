@@ -29,9 +29,8 @@ end
 key.nnmap('<leader>dh', dec2hex)
 
 key.nnmap('--', '<CMD>w<CR>')
-key.nnmap('<leader>~', 'viw~')
 key.nnmap('<leader>w', '<CMD>w !doas tee %<CR>')
-key.nnmap('<leader>x', '<CMD>!chmod 744 %<CR>')
+key.nnmap('<leader>x', '<CMD>!chmod u+x %<CR>')
 key.nnmap('<leader>%', '<CMD>so %<CR>')
 
 key.tnmap('<C-d>', '<C-\\><C-n>')
@@ -44,12 +43,6 @@ key.modemap({ 'n', 'v' }, '<leader>y', '"+y')
 key.modemap({ 'n', 'v' }, '<leader>d', '"_d')
 
 -- qf / loc
-key.nnmap('<leader>cj', function()
-  return '<CMD>' .. vim.v.count .. 'cnext<CR>'
-end, { expr = true })
-key.nnmap('<leader>ck', function()
-  return '<CMD>' .. vim.v.count .. 'cprev<CR>'
-end, { expr = true })
 key.nnmap('<leader>co', '<CMD>copen<CR>')
 key.nnmap('<leader>cc', '<CMD>cclose<CR>')
 
