@@ -12,7 +12,7 @@ local toggle_diff = function()
 end
 
 return {
-  'leis6991/gitsigns.nvim',
+  'lewis6991/gitsigns.nvim',
   lazy = true,
   event = 'BufReadPost',
   keys = {
