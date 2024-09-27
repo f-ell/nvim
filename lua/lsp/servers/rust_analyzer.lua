@@ -1,10 +1,10 @@
 return {
   imports = {
     granularity = { group = 'module' },
-    prefix      = 'self'
+    prefix = 'self',
   },
   cargo = {
-    buildScripts  = { enable = true },
-    procMacro     = { enable = true }
-  }
+    buildScripts = { enable = true },
+    procMacro = { enable = true },
+  },
 }

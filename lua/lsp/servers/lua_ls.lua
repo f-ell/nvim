@@ -4,10 +4,10 @@ return {
     Lua = {
       runtime = { version = 'LuaJIT' },
       diagnostics = {
-        globals = { 'cmp', 'vim', 'use' }
+        globals = { 'cmp', 'vim', 'use' },
       },
       telemetry = { enable = false },
-      workspace = { checkThirdParty = false }
-    }
-  }
+      workspace = { checkThirdParty = false },
+    },
+  },
 }
