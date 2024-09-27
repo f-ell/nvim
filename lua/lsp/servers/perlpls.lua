@@ -1,3 +1,4 @@
+-- used solely for keyword completions
 return {
   settings = {
     pls = {
