@@ -492,59 +492,6 @@ local lsp = {
 }
 
 ---@type Component
-local bytes = {
-  meta = {
-    bytes = 0,
-    unit = 'B',
-  },
-  events = {
-    {
-      M._buf_events,
-      function(self)
-        self:_count()
-      end,
-    },
-    {
-      { 'TextChanged', 'TextChangedI', 'TextChangedP', 'TextChangedT' },
-      function(self)
-        self:_count()
-      end,
-    },
-  },
-  get = function(self)
-    return vim.o.columns < 80 and ''
-      or table.concat({
-        '%#StatuslineBytecount#﬘%#Statusline#',
-        self.meta.bytes .. self.meta.unit,
-      }, ' ')
-  end,
-  _round = function(number, quotient)
-    return vim.fn.round((number * 10) / quotient) / 10
-  end,
-  _count = function(self)
-    local unit = 'B'
-
-    local bytes = vim.fn.line2byte(vim.fn.line('$')) + vim.fn.getline('$'):len()
-    if bytes == -1 then
-      bytes = 0
-    end
-
-    if bytes >= 1048576 then
-      unit = 'MiB'
-      bytes = bit.rshift(bytes * 10, 20) / 10
-    elseif bytes >= 10240 then
-      unit = 'KiB'
-      bytes = bit.rshift(bytes * 10, 10) / 10
-    end
-
-    self.meta = {
-      bytes = bytes,
-      unit = unit,
-    }
-  end,
-}
-
----@type Component
 local search = {
   meta = {
     search = {
@@ -589,16 +536,7 @@ local location = {
 
 M:init()
 
-M:add_component(
-  mode,
-  buffer,
-  git,
-  { get = '%=%<' },
-  lsp,
-  bytes,
-  search,
-  location
-)
+M:add_component(mode, buffer, git, { get = '%=%<' }, lsp, search, location)
 
 _G.statusline = function()
   return M:render()
