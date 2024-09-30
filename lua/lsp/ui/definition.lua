@@ -184,7 +184,7 @@ function M:_preprocess(raw)
       for j = 1, #config.workspace_folders do
         table.insert(workspace_folders, config.workspace_folders[j].uri)
       end
-    else
+    elseif config.root_dir then
       table.insert(workspace_folders, 'file://' .. config.root_dir)
     end
   end
