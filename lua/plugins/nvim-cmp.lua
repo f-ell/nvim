@@ -11,13 +11,11 @@ return {
   config = function()
     -- stylua: ignore
     local icons = {
-      Class       = '󰠲', Color    = '', Constructor   = '', Enum      = '󱀍',
-      EnumMember  = '', Event    = '󱐋', Field         = '∊', File      = '󰦨',
-      Folder      = '', Function = '', Interface     = '', Keyword   = '',
-      Method      = '󰡱', Module   = '', Property      = '∊', Reference = '',
-      Snippet     = '', Text     = '', TypeParameter = 'T', Unit      = '󰔌',
-      Constant    = 'c', Struct   = '', Operator      = '±', Value     = '',
-      Variable    = '󰀫'
+      Text     = '', Method = '󰡱', Function  = '', Constructor = '', Field         = '∊',
+      Variable = '󰀫', Class  = '󰠲', Interface = '', Module      = '', Property      = '∊',
+      Unit     = '󰔌', Value  = '', Enum      = '󱀍', Keyword     = '', Snippet       = '',
+      Color    = '', File   = '󰦨', Reference = '', Folder      = '', EnumMember    = '',
+      Constant = 'c', Struct = '', Event     = '󱐋', Operator    = '±', TypeParameter = 'T',
     }
 
     local cmp = require('cmp')
@@ -50,7 +48,13 @@ return {
           keyword_length = 1,
         },
         { name = 'lazydev', group_index = 0 },
-        { name = 'nvim_lsp', keyword_length = 1 },
+        {
+          name = 'nvim_lsp',
+          keyword_length = 1,
+          entry_filter = function(entry)
+            return cmp.lsp.CompletionItemKind.Snippet ~= entry:get_kind()
+          end,
+        },
         {
           name = 'buffer',
           max_item_count = 4,
@@ -74,7 +78,10 @@ return {
           side_padding = 1,
           col_offset = 1,
         },
-        documentation = { border = 'single' },
+        documentation = {
+          border = 'single',
+          winhighlight = 'FloatBorder:FloatBorder',
+        },
       },
       view = { entries = { name = 'custom', selection_order = 'near_cursor' } },
 
