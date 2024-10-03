@@ -30,32 +30,30 @@ return {
     { 'gs<', '<CMD>diffget gitsigns://*:0\\\\|2:<CR>' },
     { 'gs>', '<CMD>diffget gitsigns://*:3:<CR>' },
   },
-  config = function()
-    require('gitsigns').setup({
-      signs = {
-        add = { text = '│' },
-        change = { text = '│' },
-        delete = { text = '│' },
-        topdelete = { text = '‾' },
-        changedelete = { text = '~' },
-      },
-      signs_staged = {
-        add = { text = '│' },
-        change = { text = '│' },
-        delete = { text = '│' },
-        topdelete = { text = '‾' },
-        changedelete = { text = '~' },
-      },
+  opts = {
+    signs = {
+      add = { text = '│' },
+      change = { text = '│' },
+      delete = { text = '│' },
+      topdelete = { text = '‾' },
+      changedelete = { text = '~' },
+    },
+    signs_staged = {
+      add = { text = '│' },
+      change = { text = '│' },
+      delete = { text = '│' },
+      topdelete = { text = '‾' },
+      changedelete = { text = '~' },
+    },
 
-      signcolumn = true,
-      numhl = false,
-      linehl = false,
-      word_diff = false,
+    signcolumn = true,
+    numhl = false,
+    linehl = false,
+    word_diff = false,
 
-      watch_gitdir = {
-        interval = 500,
-        follow_files = true,
-      },
-    })
-  end,
+    watch_gitdir = {
+      interval = 500,
+      follow_files = true,
+    },
+  },
 }
