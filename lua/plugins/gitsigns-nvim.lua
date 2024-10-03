@@ -1,6 +1,10 @@
 local toggle_diff = function()
   if not vim.wo.diff then
-    return require('gitsigns').diffthis()
+    require('gitsigns').diffthis()
+    for _, win in pairs(vim.api.nvim_tabpage_list_wins(0)) do
+      vim.wo[win].foldcolumn = '0'
+    end
+    return
   end
 
   -- WARN: will break with simultaneous diffs

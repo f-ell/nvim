@@ -23,8 +23,9 @@ vim.opt.listchars = {
 }
 vim.opt.fillchars = {
   diff = '╱',
-  foldopen = '',
+  foldopen = '┌',
   foldclose = '',
+  foldsep = '│',
 }
 vim.opt.jumpoptions = { 'stack', 'view' }
 
@@ -71,7 +72,7 @@ vim.o.undofile = true
 
 -- folds
 vim.o.foldtext = ''
-vim.o.foldlevel = 0
+vim.o.foldlevel = 1
 vim.o.foldnestmax = 2
 
 -- transparency
