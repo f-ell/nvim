@@ -5,6 +5,48 @@ for k, v in pairs(require('lsp.servers._jdtls').commands) do
   vim.lsp.commands[k] = v
 end
 
+local definition_handler = function(err, result, ctx, _)
+  local uri, range =
+    result.uri or result[1].uri, result.range or result[1].range
+  if not vim.endswith(uri, '.class') then
+    return { err = err, result = result }
+  end
+
+  if vim.startswith(uri, 'file://') then
+    uri = vim.uri_from_fname(uri)
+  end
+
+  local params = { command = 'java.decompile', arguments = { uri } }
+  err, result = L.lsp.request(
+    vim.lsp.get_client_by_id(ctx.client_id) --[[@as vim.lsp.Client]],
+    vim.lsp.protocol.Methods.workspace_executeCommand,
+    params,
+    ctx.bufnr
+  )
+
+  if err == nil then
+    uri = uri:sub(0, ({ uri:find('^%w-://.-%.class%?') })[2] - 1)
+    local bufnr = vim.uri_to_bufnr(uri)
+
+    if vim.fn.bufloaded(bufnr) == 0 then
+      vim.bo[bufnr].buftype = 'nowrite'
+      vim.bo[bufnr].bufhidden = 'hide'
+      vim.api.nvim_buf_set_name(bufnr, uri)
+      vim.api.nvim_buf_set_lines(
+        bufnr,
+        0,
+        -1,
+        true,
+        vim.split(result[1].result:gsub('\r\n', '\n'), '\n')
+      )
+    end
+
+    result = { targetUri = uri, range = range }
+  end
+
+  return { err = err, result = result }
+end
+
 return {
   cmd = {
     'jdtls',
@@ -33,68 +75,14 @@ return {
   handlers = {
     ['language/status'] = function() end, -- disable prints
     ['$/progress'] = function() end, -- disable progress warnings
-    [vim.lsp.protocol.Methods.textDocument_definition] = function(
-      err,
-      res,
-      ctx
-    )
-      local uri, range = res.uri or res[1].uri, res.range or res[1].range
-      if not vim.endswith(uri, '.class') then
-        return { err = err, result = res }
-      end
-
-      if vim.startswith(uri, 'file://') then
-        uri = vim.uri_from_fname(uri)
-      end
-
-      err, res = L.lsp.request(
-        { vim.lsp.get_client_by_id(ctx.client_id) },
-        vim.lsp.protocol.Methods.workspace_executeCommand,
-        {
-          command = 'java.decompile',
-          arguments = { uri },
-        },
-        ctx.bufnr
-      )
-
-      if err == nil then
-        uri = uri:sub(0, ({ uri:find('^%w-://.-%.class%?') })[2] - 1)
-        local bufnr = vim.uri_to_bufnr(uri)
-
-        if vim.fn.bufloaded(bufnr) == 0 then
-          vim.bo[bufnr].buftype = 'nofile'
-          vim.bo[bufnr].bufhidden = 'wipe'
-          vim.api.nvim_buf_set_name(bufnr, uri)
-          vim.api.nvim_buf_set_lines(
-            bufnr,
-            0,
-            -1,
-            true,
-            vim.split(res[1].result:gsub('\r\n', '\n'), '\n')
-          )
-        end
-
-        res = {
-          targetUri = uri,
-          range = range,
-        }
-      end
-
-      return { err = err, result = res }
-    end,
+    ['textDocument/definition'] = definition_handler,
   },
 
   -- https://github.com/eclipse/eclipse.jdt.ls/wiki/Running-the-JAVA-LS-server-from-the-command-line#initialize-request
   settings = { java = {} },
 
   init_options = {
-    bundles = {
-      vim.fn.glob(
-        mpc
-          .. '/java-debug-adapter/extension/server/com.microsoft.java.debug.plugin-*.jar'
-      ),
-      vim.fn.glob(mpc .. '/java-test/extension/server/*.jar'),
-    },
+    bundles = { vim.fn.glob(mpc .. '/java-test/extension/server/*.jar') },
 
     extendedClientCapabilities = {
       advancedOrganizeImportsSupport = true,
