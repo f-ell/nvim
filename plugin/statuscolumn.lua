@@ -16,33 +16,34 @@ local lnum = function()
 end
 
 local fold = function()
-  local finfo = ffi.C.fold_info(
-    ffi.C.find_window_by_handle(0, ffi.new('Error')),
-    vim.v.lnum
-  )
+  local wint =
+    ffi.C.find_window_by_handle(vim.g.statusline_winid, ffi.new('Error'))
+  local finfo = ffi.C.fold_info(wint, vim.v.lnum)
 
   if finfo.level == 0 or vim.v.virtnum ~= 0 then
     return ' '
   end
 
-  local l0, l1 = finfo.level, vim.fn.foldlevel(vim.v.lnum + 1)
-  local f = vim.opt.fillchars:get()
+  local l0, l1 = finfo.level, ffi.C.fold_info(wint, vim.v.lnum + 1).level
+  local f = vim.api.nvim_win_call(vim.g.statusline_winid, function()
+    return vim.opt.fillchars:get()
+  end)
   local char = f.foldsep
 
   if vim.v.lnum == finfo.lnum then
-    char = vim.fn.foldclosed(vim.v.lnum) == -1 and f.foldopen or f.foldclose
+    char = vim.api.nvim_win_call(vim.g.statusline_winid, function()
+      return vim.fn.foldclosed(vim.v.lnum)
+    end) == -1 and f.foldopen or f.foldclose
   elseif -- fold end or neighbouring fold
     l1 < l0
     or (
-      ffi.C.fold_info(
-          ffi.C.find_window_by_handle(0, ffi.new('Error')),
-          vim.v.lnum + 1
-        ).lnum
-        == vim.v.lnum + 1
+      ffi.C.fold_info(wint, vim.v.lnum + 1).lnum == vim.v.lnum + 1
       and l1 <= l0
     )
   then
     char = '└'
+  elseif l0 > 1 and vim.v.lnum == finfo.lnum + 1 then
+    char = l0
   end
 
   return '%#FoldColumn#' .. char
