@@ -3,49 +3,31 @@
 local M = {}
 
 M._util = {
-  signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
-    return vim.startswith(s.name, 'DiagnosticSign')
-  end),
+  signs = vim
+    .iter(vim.fn.sign_getdefined())
+    :filter(function(s)
+      return vim.startswith(s.name, 'DiagnosticSign')
+    end)
+    :totable(),
   active_wins = {},
 }
 
-function M.goto_next()
-  local pos = vim.diagnostic.get_next_pos()
+function M.get_dir(dir)
+  assert(dir == 'next' or dir == 'prev', 'invalid direction')
+  local pos = dir == 'next' and vim.diagnostic.get_next_pos()
+    or vim.diagnostic.get_prev_pos()
 
   if not pos then
     vim.notify('No diagnostics found', vim.log.levels.INFO)
     return
   end
 
-  local diag = vim.fn.filter(
-    vim.diagnostic.get(0, { lnum = pos[1] }),
-    function(_, d)
+  local diag = vim
+    .iter(vim.diagnostic.get(0, { lnum = pos[1] }))
+    :filter(function(d)
       return d.col == pos[2]
-    end
-  )
-
-  if #diag == 0 then
-    vim.notify('No diagnostics at position', vim.log.levels.INFO)
-    return
-  end
-
-  M:_open({ type = 'dir', diag = diag })
-end
-
-function M.goto_prev()
-  local pos = vim.diagnostic.get_prev_pos()
-
-  if not pos then
-    vim.notify('No diagnostics found', vim.log.levels.INFO)
-    return
-  end
-
-  local diag = vim.fn.filter(
-    vim.diagnostic.get(0, { lnum = pos[1] }),
-    function(_, d)
-      return d.col == pos[2]
-    end
-  )
+    end)
+    :totable()
 
   if #diag == 0 then
     vim.notify('No diagnostics at position', vim.log.levels.INFO)
@@ -190,9 +172,7 @@ function M:_open(raw)
     vim.fn.cursor({ proc.diag[#proc.diag].ln, proc.diag[#proc.diag].col })
   end
 
-  vim.iter(M._util.active_wins):each(function(w)
-    L.win.close(w)
-  end)
+  vim.iter(M._util.active_wins):each(L.win.close)
   M._util.active_wins = {}
 
   local data = L.win.open_cursor(content, false, {

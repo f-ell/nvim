@@ -316,7 +316,7 @@ function M.lsp.request(clients, method, params, bufnr, timeout)
       return {
         name = clients[i].name,
         method = method,
-        message = 'cliet not available',
+        message = 'client not available',
       }, {}
     end
 
