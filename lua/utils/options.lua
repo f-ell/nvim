@@ -48,6 +48,7 @@ vim.opt.guicursor = {
 }
 vim.o.scrolloff = 1
 vim.o.mouse = 'a'
+vim.o.mousemodel = 'extend'
 
 -- tab-settings
 vim.o.expandtab = true
