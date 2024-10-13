@@ -18,13 +18,13 @@ vim.opt.listchars = {
   lead = '.',
   trail = '~',
   nbsp = '+',
-  extends = '',
-  precedes = '',
+  extends = '›',
+  precedes = '‹',
 }
 vim.opt.fillchars = {
   diff = '╱',
   foldopen = '┌',
-  foldclose = '',
+  foldclose = '›',
   foldsep = '│',
 }
 vim.opt.jumpoptions = { 'stack', 'view' }
