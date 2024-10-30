@@ -76,6 +76,7 @@ return {
     ['language/status'] = function() end, -- disable prints
     ['$/progress'] = function() end, -- disable progress warnings
     ['textDocument/definition'] = definition_handler,
+    ['textDocument/typeDefinition'] = definition_handler,
   },
 
   -- https://github.com/eclipse/eclipse.jdt.ls/wiki/Running-the-JAVA-LS-server-from-the-command-line#initialize-request
