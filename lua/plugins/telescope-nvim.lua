@@ -75,7 +75,7 @@ return {
       results_title = false,
       prompt_prefix = ' ',
       entry_prefix = '  ',
-      selection_caret = ' ',
+      selection_caret = '› ',
       winblend = 0,
       preview = {
         filesize_limit = 0.3,
