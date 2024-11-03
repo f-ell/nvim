@@ -502,9 +502,9 @@ local search = {
     },
   },
   get = function(self)
-    local _, search = pcall(vim.fn.searchcount, { maxcount = 98 })
+    local ok, search = pcall(vim.fn.searchcount, { maxcount = 998 })
 
-    if not _ then
+    if not ok then
       search = self.meta.search
     else
       self.meta.search = search
