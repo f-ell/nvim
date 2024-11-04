@@ -3,7 +3,7 @@ return {
   lazy = true,
   cmd = 'Mason',
   event = { 'BufReadPost', 'BufNewFile', 'BufFilePost' },
-  dependencies = { 'hrsh7th/cmp-nvim-lsp', 'neovim/nvim-lspconfig' },
+  dependencies = { 'neovim/nvim-lspconfig', 'saghen/blink.cmp' },
   init = function()
     if vim.fn.argc() ~= 0 then
       require('mason')
@@ -65,16 +65,20 @@ return {
       end)
     end
 
-    local capabilities = require('cmp_nvim_lsp').default_capabilities(
-      vim.lsp.protocol.make_client_capabilities()
-    )
-
-    local servers = vim.tbl_filter(function(s)
-      return not vim.startswith(s, '_')
-    end, vim.fn.readdir(vim.fn.stdpath('config') .. '/lua/lsp/servers'))
+    local servers = vim
+      .iter(vim.fn.readdir(vim.fn.stdpath('config') .. '/lua/lsp/servers'))
+      :filter(function(s)
+        return not vim.startswith(s, '_')
+      end)
+      :totable()
 
     for i = 1, #servers do
-      local opts = { on_attach = on_attach, capabilities = capabilities }
+      local opts = {
+        on_attach = on_attach,
+        capabilities = require('blink.cmp').get_lsp_capabilities(
+          servers[i].capabilities
+        ),
+      }
       local server = servers[i]:gsub('%.lua$', '')
 
       local req, tbl = pcall(require, 'lsp.servers.' .. server)
