@@ -74,7 +74,7 @@ vim.o.undofile = true
 -- folds
 vim.o.foldtext = ''
 vim.o.foldlevel = 1
-vim.o.foldnestmax = 2
+vim.o.foldnestmax = 3
 
 -- transparency
 vim.o.pumblend = 0
