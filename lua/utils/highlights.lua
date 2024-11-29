@@ -111,13 +111,6 @@ local highlights = {
   -- blink
   { 'BlinkCmpMenuSelection', { fg = c.bg[3], bg = c.pastel.gre } },
 
-  -- dap
-  { 'DapStopped', { fg = c.pastel.gre } },
-  { 'DapLogPoint', { fg = c.pastel.yel } },
-  { 'DapBreakpoint', { fg = c.pastel.red } },
-  { 'DapBreakpointCondition', { fg = c.pastel.pur } },
-  { 'DapBreakpointRejected', { fg = c.pastel.red } },
-
   -- gitsigns
   { 'GitSignsStagedAdd', { fg = c.darkened.gre } },
   { 'GitSignsStagedChange', { fg = c.darkened.blu } },
