@@ -78,21 +78,42 @@ return {
       autocomplete = {
         max_height = 8,
         border = 'none',
-        winhighlight = 'CursorLine:CmpSel,Search:None',
+        winhighlight = 'CursorLine:BlinkCmpMenuSelection,Search:None',
         scrolloff = 1,
-        draw = function(ctx)
-          return {
-            { ' ' },
-            {
-              ctx.kind_icon .. ctx.icon_gap,
-              hl_group = 'BlinkCmpKind' .. ctx.kind,
+        draw = {
+          columns = { { 'kind_icon' }, { 'label', 'source', gap = 1 } },
+          components = {
+            kind_icon = {
+              text = function(ctx)
+                return ctx.kind_icon .. ctx.icon_gap
+              end,
+              highglight = function(ctx)
+                return 'BlinkCmpKind' .. ctx.kind
+              end,
             },
-            { ctx.item.label, fill = true },
-            { ' ' },
-            { ctx.item.source_name:sub(0, 1), hl_group = 'NeutralFloat' },
-            { ' ' },
-          }
-        end,
+
+            label = {
+              width = { fill = true, max = 48 },
+              ellipsis = true,
+              text = function(ctx)
+                return ctx.item.label
+              end,
+              highlight = function(ctx)
+                return ctx.deprecated and 'BlinkCmpLabelDeprecated'
+                  or 'BlinkCmpLabel'
+              end,
+            },
+
+            source = {
+              text = function(ctx)
+                return ctx.item.source_name:sub(0, 1)
+              end,
+              highlight = function()
+                return 'NeutralFloat'
+              end,
+            },
+          },
+        },
       },
       documentation = {
         min_width = 32,
@@ -106,7 +127,6 @@ return {
     },
 
     highlight = { use_nvim_cmp_as_default = true },
-    nerd_font_variant = 'mono',
     -- stylua: ignore
     kind_icons = {
       Text     = '', Method = '󰡱', Function  = '', Constructor = '', Field         = '∊',

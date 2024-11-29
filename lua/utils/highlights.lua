@@ -108,13 +108,8 @@ local highlights = {
   { 'TabInactive', { fg = c.fg[3], bg = c.bg[3] } },
 
   ---- plugins ----
-  -- cmp
-  { 'CmpFloat', { fg = c.fg[3], bg = c.bg[2] } },
-  { 'CmpSel', { fg = c.bg[3], bg = c.pastel.red } },
-  { 'CmpItemMenu', { fg = c.fg[3], bg = c._ } },
-  { 'CmpItemAbbrMatch', { fg = c.pastel.red, bg = c._ } },
-  { 'CmpItemAbbrMatchFuzzy', { fg = c.pastel.red, bg = c._ } },
-  { 'CmpItemKindText', { fg = c.pastel.blu } },
+  -- blink
+  { 'BlinkCmpMenuSelection', { fg = c.bg[3], bg = c.pastel.gre } },
 
   -- dap
   { 'DapStopped', { fg = c.pastel.gre } },
@@ -134,6 +129,7 @@ local highlights = {
   { 'TelescopeBorder', { fg = c.fg[3], bg = c._ } },
   { 'TelescopeMatching', { fg = c.pastel.red, bg = c._ } },
   { 'TelescopeSelection', { fg = c.fg[1], bg = c.bg[2] } },
+  { 'TelescopeSelectionCaret', { fg = c.fg[3], bg = c.bg[2] } },
   { 'TelescopeTitle', { fg = c.pastel.red, bg = c._ } },
   { 'TelescopeNormal', { fg = c.fg[1], bg = c._ } },
   { 'TelescopePreviewTitle', { fg = c.pastel.blu, bg = c._ } },
