@@ -5,10 +5,10 @@ return {
   cmd = 'ConformInfo',
   opts = {
     formatters_by_ft = {
-      lua = { 'stylua' },
-      html = { 'prettierd' },
       css = { 'prettierd' },
+      html = { 'prettierd' },
       javascript = { 'prettierd' },
+      lua = { 'stylua' },
       typescript = { 'prettierd' },
     },
     formatters = {
