@@ -80,6 +80,7 @@ local highlights = {
   { 'CursorLineNr', { fg = c.pastel.gre } },
   { 'SpellBad', { sp = c.pastel.red, undercurl = true } },
   { 'QuickFixLine', { fg = c.bg[3], bg = c.pastel.gre } },
+  { 'Pmenu', { fg = c._, bg = c.bg[2] } },
 
   ---- custom ----
   -- statusline
@@ -108,9 +109,6 @@ local highlights = {
   { 'TabInactive', { fg = c.fg[3], bg = c.bg[3] } },
 
   ---- plugins ----
-  -- blink
-  { 'BlinkCmpMenuSelection', { fg = c.bg[3], bg = c.pastel.gre } },
-
   -- gitsigns
   { 'GitSignsStagedAdd', { fg = c.darkened.gre } },
   { 'GitSignsStagedChange', { fg = c.darkened.blu } },
