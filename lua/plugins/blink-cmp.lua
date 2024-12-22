@@ -17,6 +17,11 @@ return {
       ['<C-f>'] = { 'snippet_forward', 'scroll_documentation_down' },
     },
 
+    fuzzy = {
+      use_frecency = false,
+      sorts = { 'label', 'score', 'kind' },
+    },
+
     completion = {
       keyword = { range = 'full' },
       trigger = { show_on_insert_on_trigger_character = false },
@@ -27,12 +32,6 @@ return {
           enabled = true,
           default_brackets = { '(', '' },
         },
-      },
-
-      fuzzy = {
-        use_frecency = false,
-        max_items = 200,
-        sorts = { 'label', 'score', 'kind' },
       },
 
       menu = {
@@ -48,7 +47,7 @@ return {
               text = function(ctx)
                 return ctx.kind_icon .. ctx.icon_gap
               end,
-              highglight = function(ctx)
+              highlight = function(ctx)
                 return 'BlinkCmpKind' .. ctx.kind
               end,
             },
@@ -87,40 +86,38 @@ return {
           winhighlight = 'FloatBorder:FloatBorder,Search:None',
         },
       },
+    },
 
-      sources = {
-        completion = {
-          enabled_providers = { 'buffer', 'lazydev', 'lsp', 'path' },
+    sources = {
+      default = { 'buffer', 'cmdline', 'lazydev', 'lsp', 'path' },
+      providers = {
+        buffer = {
+          name = 'buffer',
+          module = 'blink.cmp.sources.buffer',
+          score_offset = -2,
         },
-        providers = {
-          buffer = {
-            name = 'buffer',
-            module = 'blink.cmp.sources.buffer',
-            score_offset = -2,
-            fallback_for = { 'lsp' },
-          },
-          lazydev = {
-            name = 'LazyDev',
-            module = 'lazydev.integrations.blink',
-          },
-          lsp = {
-            name = 'lsp',
-            module = 'blink.cmp.sources.lsp',
-            transform_items = function(_, items)
-              return vim
-                .iter(items)
-                :filter(function(i)
-                  return i.kind ~= 15
-                end)
-                :totable()
-            end,
-            fallback_for = { 'lazydev' },
-          },
-          path = {
-            name = 'path',
-            module = 'blink.cmp.sources.path',
-            score_offset = -1,
-          },
+        lazydev = {
+          name = 'LazyDev',
+          module = 'lazydev.integrations.blink',
+          fallbacks = { 'lsp' },
+        },
+        lsp = {
+          name = 'lsp',
+          module = 'blink.cmp.sources.lsp',
+          transform_items = function(_, items)
+            return vim
+              .iter(items)
+              :filter(function(i)
+                return i.kind ~= 15
+              end)
+              :totable()
+          end,
+          fallbacks = { 'buffer' },
+        },
+        path = {
+          name = 'path',
+          module = 'blink.cmp.sources.path',
+          score_offset = -1,
         },
       },
     },
