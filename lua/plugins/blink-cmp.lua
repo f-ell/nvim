@@ -1,7 +1,7 @@
 return {
   'saghen/blink.cmp',
   lazy = true,
-  event = 'InsertEnter',
+  event = { 'InsertEnter', 'CmdlineEnter' },
   version = 'v0.*', -- download release binary
   dependencies = 'folke/lazydev.nvim',
   opts = {
