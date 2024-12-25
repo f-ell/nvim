@@ -195,6 +195,11 @@ local git = {
         end
 
         self:_head()
+        self.meta.diff = {
+          add = 0,
+          cha = 0,
+          del = 0,
+        }
         if not M._realpath then
           return
         end
