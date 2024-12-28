@@ -68,8 +68,13 @@ function M:_preprocess(raw)
   -- stupid lsp spec. just send the darn location.
   if type(sig.parameters[1].label) == 'string' then
     i0 = ({ sig.label:find(sig.parameters[1].label, 0, true) })[1] - 1
-    i1 = ({ sig.label:find(sig.parameters[#sig.parameters].label, 0, true) })[2]
-      + 1
+    i1 = sig.label:len()
+      - ({
+        sig.label
+          :reverse()
+          :find(sig.parameters[#sig.parameters].label:reverse(), 0, true),
+      })[1]
+      + 2
   else
     i0 = sig.parameters[1].label[1]
     i1 = sig.parameters[#sig.parameters].label[2] + 1

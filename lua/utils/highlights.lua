@@ -43,116 +43,99 @@ local c = {
 }
 
 local highlights = {
-  -- search
-  { 0, 'Search', { fg = c.fg[2], bg = c.misc.yel } },
-  { 0, 'IncSearch', { fg = c.bg[3], bg = c.pastel.yel } },
-  { 0, 'CurSearch', { link = 'IncSearch' } },
-  { 0, 'Substitute', { link = 'IncSearch' } },
-  { 0, 'Visual', { fg = c._, bg = '#3d5665' } },
-
+  ---- builtin ----
   -- diagnostics
-  { 0, 'ErrorText', { sp = c.pastel.red, underline = true } },
-  { 0, 'WarningText', { sp = c.pastel.yel, underline = true } },
-  { 0, 'InfoText', { sp = c.pastel.gre, underline = true } },
-  { 0, 'HintText', { sp = c.pastel.blu, underline = true } },
-  { 0, 'DiagnosticOk', { fg = c.pastel.pur } },
-  { 0, 'DiagnosticSignError', { fg = c.pastel.red } },
-  { 0, 'DiagnosticSignWarn', { fg = c.pastel.yel } },
-  { 0, 'DiagnosticSignInfo', { fg = c.pastel.gre } },
-  { 0, 'DiagnosticSignHint', { fg = c.pastel.blu } },
-  { 0, 'DiagnosticUnderlineError', { sp = c.pastel.red, underline = true } },
-  { 0, 'DiagnosticUnderlineWarn', { sp = c.pastel.yel, underline = true } },
-  { 0, 'DiagnosticUnderlineInfo', { sp = c.pastel.gre, underline = true } },
-  { 0, 'DiagnosticUnderlineHint', { sp = c.pastel.blu, underline = true } },
+  { 'ErrorText', { sp = c.pastel.red, underline = true } },
+  { 'WarningText', { sp = c.pastel.yel, underline = true } },
+  { 'InfoText', { sp = c.pastel.gre, underline = true } },
+  { 'HintText', { sp = c.pastel.blu, underline = true } },
+  { 'DiagnosticOk', { fg = c.pastel.pur } },
+  { 'DiagnosticSignError', { fg = c.pastel.red } },
+  { 'DiagnosticSignWarn', { fg = c.pastel.yel } },
+  { 'DiagnosticSignInfo', { fg = c.pastel.gre } },
+  { 'DiagnosticSignHint', { fg = c.pastel.blu } },
+  { 'DiagnosticUnderlineError', { sp = c.pastel.red, underline = true } },
+  { 'DiagnosticUnderlineWarn', { sp = c.pastel.yel, underline = true } },
+  { 'DiagnosticUnderlineInfo', { sp = c.pastel.gre, underline = true } },
+  { 'DiagnosticUnderlineHint', { sp = c.pastel.blu, underline = true } },
+
+  -- diff
+  { 'DiffText', { bg = '#3d5665', sp = c.pastel.blu, underline = true } },
+  { 'DiffDelete', { fg = c.fg[3], bg = c._ } },
 
   -- float
-  { 0, 'NormalFloat', { fg = c._, bg = c._ } },
-  { 0, 'FloatTitle', { fg = c.fg[2], bg = c._ } },
-  { 0, 'FloatBorder', { fg = c.fg[3], bg = c._ } },
+  { 'NormalFloat', { fg = c._, bg = c._ } },
+  { 'FloatTitle', { fg = c.fg[2], bg = c._ } },
+  { 'FloatBorder', { fg = c.fg[3], bg = c._ } },
+  { 'NeutralFloat', { fg = c.fg[3], bg = c._ } },
 
-  { 0, 'NeutralFloat', { fg = c.fg[3], bg = c._ } },
-
-  -- statusline
-  { 0, 'Statusline', { fg = c.fg[2], bg = c._ } },
-  { 0, 'FoldColumn', { fg = c.fg[3], bg = c._ } },
-  {
-    0,
-    'StatuslineReadonly',
-    { fg = c.pastel.red, bg = c._, bold = true },
-  },
-  { 0, 'StatuslineLspinfo', { fg = c.fg[3], bg = c._ } },
-  { 0, 'StatuslineBytecount', { fg = c.pastel.yel, bg = c._ } },
-  { 0, 'StatuslineSearch', { fg = c.pastel.blu, bg = c._ } },
-  { 0, 'StatuslineLocation', { fg = c.pastel.aqu, bg = c._ } },
-
-  { 0, 'modeC', { fg = c.pastel.pur, bg = c._ } },
-  { 0, 'modeI', { fg = c.pastel.blu, bg = c._ } },
-  { 0, 'modeN', { fg = c.pastel.gre, bg = c._ } },
-  { 0, 'modeR', { fg = c.pastel.yel, bg = c._ } },
-  { 0, 'modeT', { fg = c.fg[3], bg = c._ } },
-  { 0, 'modeV', { fg = c.pastel.red, bg = c._ } },
-
-  -- tabline
-  { 0, 'TabActive', { fg = c.fg[2], bg = c.bg[2], bold = true } },
-  { 0, 'TabInactive', { fg = c.fg[3], bg = c.bg[3] } },
+  -- search
+  { 'Search', { fg = c.fg[2], bg = c.misc.yel } },
+  { 'IncSearch', { fg = c.bg[3], bg = c.pastel.yel } },
+  { 'CurSearch', { link = 'IncSearch' } },
+  { 'Substitute', { link = 'IncSearch' } },
+  { 'Visual', { fg = c._, bg = '#3d5665' } },
 
   -- misc
-  {
-    0,
-    'DiffText',
-    { bg = '#3d5665', sp = c.pastel.blu, underline = true },
-  },
-  { 0, 'DiffDelete', { fg = c.fg[3], bg = c._ } },
+  { 'CursorLineNr', { fg = c.pastel.gre } },
+  { 'SpellBad', { sp = c.pastel.red, undercurl = true } },
+  { 'QuickFixLine', { fg = c.bg[3], bg = c.pastel.gre } },
+  { 'Pmenu', { fg = c._, bg = c.bg[2] } },
 
-  { 0, 'Git', { fg = c.misc.git, bg = c._ } },
-  { 0, 'GitZero', { link = 'Grey' } },
-  { 0, 'GitAdd', { link = 'GreenSign' } },
-  { 0, 'GitCha', { link = 'BlueSign' } },
-  { 0, 'GitDel', { link = 'RedSign' } },
-  { 0, 'GitSignsStagedAdd', { fg = c.darkened.gre } },
-  { 0, 'GitSignsStagedChange', { fg = c.darkened.blu } },
-  { 0, 'GitSignsStagedDelete', { fg = c.darkened.red } },
-  { 0, 'GitSignsStagedTopdelete', { fg = c.darkened.red } },
-  { 0, 'GitSignsStagedChangeDelete', { fg = c.darkened.blu } },
+  ---- custom ----
+  -- statusline
+  { 'Statusline', { fg = c.fg[2], bg = c._ } },
+  { 'FoldColumn', { fg = c.fg[3], bg = c._ } },
+  { 'StatuslineReadonly', { fg = c.pastel.red, bg = c._, bold = true } },
+  { 'StatuslineLspinfo', { fg = c.fg[3], bg = c._ } },
+  { 'StatuslineSearch', { fg = c.pastel.blu, bg = c._ } },
+  { 'StatuslineLocation', { fg = c.pastel.aqu, bg = c._ } },
 
-  { 0, 'SpellBad', { sp = c.pastel.red, undercurl = true } },
-  { 0, 'QuickFixLine', { fg = c.bg[3], bg = c.pastel.gre } },
+  { 'modeC', { fg = c.pastel.pur, bg = c._ } },
+  { 'modeI', { fg = c.pastel.blu, bg = c._ } },
+  { 'modeN', { fg = c.pastel.gre, bg = c._ } },
+  { 'modeR', { fg = c.pastel.yel, bg = c._ } },
+  { 'modeT', { fg = c.fg[3], bg = c._ } },
+  { 'modeV', { fg = c.pastel.red, bg = c._ } },
+
+  { 'Git', { fg = c.misc.git, bg = c._ } },
+  { 'GitZero', { link = 'Grey' } },
+  { 'GitAdd', { link = 'GreenSign' } },
+  { 'GitCha', { link = 'BlueSign' } },
+  { 'GitDel', { link = 'RedSign' } },
+
+  -- tabline
+  { 'TabActive', { fg = c.fg[2], bg = c.bg[2], bold = true } },
+  { 'TabInactive', { fg = c.fg[3], bg = c.bg[3] } },
 
   ---- plugins ----
-  -- cmp
-  { 0, 'CmpFloat', { fg = c.fg[3], bg = c.bg[2] } },
-  { 0, 'CmpSel', { fg = c.bg[3], bg = c.pastel.red } },
-  { 0, 'CmpItemMenu', { fg = c.fg[3], bg = c._ } },
-  { 0, 'CmpItemAbbrMatch', { fg = c.pastel.red, bg = c._ } },
-  { 0, 'CmpItemAbbrMatchFuzzy', { fg = c.pastel.red, bg = c._ } },
-  { 0, 'CmpItemKindText', { fg = c.pastel.blu } },
-
-  -- dap
-  { 0, 'DapStopped', { fg = c.pastel.gre } },
-  { 0, 'DapLogPoint', { fg = c.pastel.yel } },
-  { 0, 'DapBreakpoint', { fg = c.pastel.red } },
-  { 0, 'DapBreakpointCondition', { fg = c.pastel.pur } },
-  { 0, 'DapBreakpointRejected', { fg = c.pastel.red } },
+  -- gitsigns
+  { 'GitSignsStagedAdd', { fg = c.darkened.gre } },
+  { 'GitSignsStagedChange', { fg = c.darkened.blu } },
+  { 'GitSignsStagedDelete', { fg = c.darkened.red } },
+  { 'GitSignsStagedTopdelete', { fg = c.darkened.red } },
+  { 'GitSignsStagedChangeDelete', { fg = c.darkened.blu } },
 
   -- telescope
-  { 0, 'TelescopeBorder', { fg = c.fg[3], bg = c._ } },
-  { 0, 'TelescopeMatching', { fg = c.pastel.red, bg = c._ } },
-  { 0, 'TelescopeSelection', { fg = c.fg[1], bg = c.bg[2] } },
-  { 0, 'TelescopeTitle', { fg = c.pastel.red, bg = c._ } },
-  { 0, 'TelescopeNormal', { fg = c.fg[1], bg = c._ } },
-  { 0, 'TelescopePreviewTitle', { fg = c.pastel.blu, bg = c._ } },
-  { 0, 'TelescopePreviewNormal', { fg = c.fg[1], bg = c._ } },
-  { 0, 'TelescopePromptBorder', { fg = c.fg[3], bg = c._ } },
-  { 0, 'TelescopePromptCounter', { fg = c.pastel.gre, bg = c._ } },
-  { 0, 'TelescopePromptNormal', { fg = c.fg[1], bg = c._ } },
-  { 0, 'TelescopePromptPrefix', { fg = c.pastel.gre, bg = c._ } },
-  { 0, 'TelescopePromptTitle', { fg = c.pastel.gre, bg = c._ } },
+  { 'TelescopeBorder', { fg = c.fg[3], bg = c._ } },
+  { 'TelescopeMatching', { fg = c.pastel.red, bg = c._ } },
+  { 'TelescopeSelection', { fg = c.fg[1], bg = c.bg[2] } },
+  { 'TelescopeSelectionCaret', { fg = c.fg[3], bg = c.bg[2] } },
+  { 'TelescopeTitle', { fg = c.pastel.red, bg = c._ } },
+  { 'TelescopeNormal', { fg = c.fg[1], bg = c._ } },
+  { 'TelescopePreviewTitle', { fg = c.pastel.blu, bg = c._ } },
+  { 'TelescopePreviewNormal', { fg = c.fg[1], bg = c._ } },
+  { 'TelescopePromptBorder', { fg = c.fg[3], bg = c._ } },
+  { 'TelescopePromptCounter', { fg = c.pastel.gre, bg = c._ } },
+  { 'TelescopePromptNormal', { fg = c.fg[1], bg = c._ } },
+  { 'TelescopePromptPrefix', { fg = c.pastel.gre, bg = c._ } },
+  { 'TelescopePromptTitle', { fg = c.pastel.gre, bg = c._ } },
 
   -- treesitter
-  { 0, 'TreesitterContext', { fg = c._, bg = c.bg[2] } },
-  { 0, 'TreesitterContextLineNumber', { fg = c.fg[3], bg = c._ } },
+  { 'TreesitterContext', { fg = c._, bg = c.bg[2] } },
+  { 'TreesitterContextLineNumber', { fg = c.fg[3], bg = c._ } },
 }
 
 for i = 1, #highlights do
-  vim.api.nvim_set_hl(highlights[i][1], highlights[i][2], highlights[i][3])
+  vim.api.nvim_set_hl(0, highlights[i][1], highlights[i][2])
 end

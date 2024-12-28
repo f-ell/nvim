@@ -1,6 +1,10 @@
 local toggle_diff = function()
   if not vim.wo.diff then
-    return require('gitsigns').diffthis()
+    require('gitsigns').diffthis()
+    for _, win in pairs(vim.api.nvim_tabpage_list_wins(0)) do
+      vim.wo[win].foldcolumn = '0'
+    end
+    return
   end
 
   -- WARN: will break with simultaneous diffs
@@ -26,32 +30,30 @@ return {
     { 'gs<', '<CMD>diffget gitsigns://*:0\\\\|2:<CR>' },
     { 'gs>', '<CMD>diffget gitsigns://*:3:<CR>' },
   },
-  config = function()
-    require('gitsigns').setup({
-      signs = {
-        add = { text = '│' },
-        change = { text = '│' },
-        delete = { text = '│' },
-        topdelete = { text = '‾' },
-        changedelete = { text = '~' },
-      },
-      signs_staged = {
-        add = { text = '│' },
-        change = { text = '│' },
-        delete = { text = '│' },
-        topdelete = { text = '‾' },
-        changedelete = { text = '~' },
-      },
+  opts = {
+    signs = {
+      add = { text = '│' },
+      change = { text = '│' },
+      delete = { text = '│' },
+      topdelete = { text = '‾' },
+      changedelete = { text = '~' },
+    },
+    signs_staged = {
+      add = { text = '│' },
+      change = { text = '│' },
+      delete = { text = '│' },
+      topdelete = { text = '‾' },
+      changedelete = { text = '~' },
+    },
 
-      signcolumn = true,
-      numhl = false,
-      linehl = false,
-      word_diff = false,
+    signcolumn = true,
+    numhl = false,
+    linehl = false,
+    word_diff = false,
 
-      watch_gitdir = {
-        interval = 500,
-        follow_files = true,
-      },
-    })
-  end,
+    watch_gitdir = {
+      interval = 500,
+      follow_files = true,
+    },
+  },
 }

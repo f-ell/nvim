@@ -18,8 +18,7 @@
 ---@field type fun(self:LspUiModule)
 
 ---@class (exact) LspUiModuleDiagnostic:LspUiModule
----@field goto_next fun()
----@field goto_prev fun()
+---@field get_dir fun(dir:'next'|'prev')
 ---@field get_line fun()
 
 ---@class (exact) LspUiModuleRename:LspUiModule

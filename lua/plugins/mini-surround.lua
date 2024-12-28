@@ -6,26 +6,23 @@ return {
     'cs',
     'ds',
     '<leader><leader>s',
-    '<leader>ns'
+    '<leader>ns',
   },
-  config = function()
-    require('mini.surround').setup({
-      custom_surroundings = nil,
-      highlight_duration  = 1000,
-      n_lines       = 20,
-      search_method = 'cover_or_nearest',
-      mappings = {
-        add       = '<leader>s',
-        replace   = 'cs',
-        delete    = 'ds',
-        find      = '',
-        find_left = '',
-        highlight = '<leader><leader>s',
-        update_n_lines = '<leader>ns',
+  opts = {
+    custom_surroundings = nil,
+    n_lines = 20,
+    search_method = 'cover_or_nearest',
+    mappings = {
+      add = '<leader>s',
+      replace = 'cs',
+      delete = 'ds',
+      find = '',
+      find_left = '',
+      highlight = '',
+      update_n_lines = '',
 
-        suffix_last = 'l',
-        suffix_next = 'n'
-      }
-    })
-  end
+      suffix_last = 'l',
+      suffix_next = 'n',
+    },
+  },
 }

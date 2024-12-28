@@ -1,79 +1,68 @@
--- spelling
-vim.opt.spelllang = { 'en_gb', 'de_de' }
-
--- miscellaneous
-vim.o.shell = 'dash'
-vim.o.cdhome = true
-vim.o.confirm = true
-vim.o.showmode = false
+vim.o.number = true
+vim.o.relativenumber = true
 vim.o.showcmd = false
-vim.o.showbreak = '> '
+vim.o.showmode = false
+vim.o.textwidth = 80
+vim.o.wrap = false
+
+vim.o.confirm = true
+vim.o.cursorline = true
+
 vim.o.cmdheight = 1
+vim.o.pumheight = 7
+vim.o.scrolloff = 1
+vim.o.sidescrolloff = 1
+vim.o.smartcase = true
+vim.o.shortmess = 'asWFS'
+vim.o.mousemodel = 'extend'
+
+vim.opt.jumpoptions = { 'stack', 'view' }
+vim.opt.fillchars = {
+  diff = '╱',
+  foldopen = '┌',
+  foldclose = '›',
+  foldsep = '│',
+}
 
 vim.o.list = true
-vim.o.sidescrolloff = 1
+vim.o.showbreak = '> '
 vim.opt.listchars = {
   eol = '¬',
   tab = '| ',
   lead = '.',
   trail = '~',
   nbsp = '+',
-  extends = '',
-  precedes = '',
+  extends = '›',
+  precedes = '‹',
 }
-vim.opt.fillchars = {
-  diff = '╱',
-  foldopen = '',
-  foldclose = '',
-}
-vim.opt.jumpoptions = { 'stack', 'view' }
 
-vim.o.cursorline = true
-vim.o.ignorecase = true
-vim.o.smartcase = true
-vim.o.shortmess = 'asWFS'
-
-vim.o.wrap = false
-vim.o.textwidth = 80
-vim.o.number = true
-vim.o.relativenumber = true
-vim.o.pumheight = 7
-
-vim.o.clipboard = 'unnamed'
+vim.opt.spelllang = { 'en_gb', 'de_de' }
 vim.opt.guicursor = {
   'n-v-c-sm:block',
   'i-ci-ve:hor1-blinkon200-blinkoff150',
   'r-cr-o:hor20',
 }
-vim.o.scrolloff = 1
-vim.o.mouse = 'a'
 
--- tab-settings
+-- tabs
 vim.o.expandtab = true
 vim.o.tabstop = 2
 vim.o.softtabstop = 2
 vim.o.shiftwidth = 2
 
--- timeouts
+-- timeout
 vim.o.timeoutlen = 500
 vim.o.ttimeoutlen = 0
 
--- splits
+-- windows
 vim.o.splitbelow = true
 vim.o.splitright = true
 vim.o.equalalways = false
-vim.o.ruler = false
 
 -- buffers
 vim.o.autochdir = true
-vim.o.updatecount = 0
 vim.o.undofile = true
 
 -- folds
 vim.o.foldtext = ''
-vim.o.foldlevel = 0
-vim.o.foldnestmax = 2
-
--- transparency
-vim.o.pumblend = 0
-vim.o.winblend = 0
+vim.o.foldlevel = 1
+vim.o.foldnestmax = 3

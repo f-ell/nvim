@@ -19,39 +19,40 @@ return {
       },
     },
   },
-  config = function()
-    require('nvim-treesitter.configs').setup({
-      auto_install = false,
-      sync_install = false,
-      ensure_installed = {},
-      ignore_install = {},
-      modules = {},
+  opts = {
+    auto_install = false,
+    sync_install = false,
+    ensure_installed = {},
+    ignore_install = {},
+    modules = {},
 
-      highlight = {
+    highlight = {
+      enable = true,
+      additional_vim_regex_highlighting = false,
+    },
+
+    textobjects = {
+      select = {
         enable = true,
-        additional_vim_regex_highlighting = false,
-      },
-
-      textobjects = {
-        select = {
-          enable = true,
-          lookahead = true,
-          include_surrounding_whitespace = true,
-          keymaps = { -- queries located in textobjects.scm
-            ['aa'] = '@parameter.outer',
-            ['ia'] = '@parameter.inner',
-            ['ac'] = '@conditional.outer',
-            ['ic'] = '@conditional.inner',
-            ['al'] = '@loop.outer',
-            ['il'] = '@loop.inner',
-            ['af'] = '@function.outer',
-            ['if'] = '@function.inner',
-            ['aC'] = '@class.outer',
-            ['iC'] = '@class.inner',
-          },
+        lookahead = true,
+        include_surrounding_whitespace = true,
+        keymaps = {
+          ['aa'] = '@parameter.outer',
+          ['ia'] = '@parameter.inner',
+          ['ac'] = '@conditional.outer',
+          ['ic'] = '@conditional.inner',
+          ['al'] = '@loop.outer',
+          ['il'] = '@loop.inner',
+          ['af'] = '@function.outer',
+          ['if'] = '@function.inner',
+          ['aC'] = '@class.outer',
+          ['iC'] = '@class.inner',
         },
       },
-    })
+    },
+  },
+  config = function(spec)
+    require('nvim-treesitter.configs').setup(spec.opts)
 
     vim.o.foldmethod = 'expr'
     vim.o.foldexpr = 'nvim_treesitter#foldexpr()'

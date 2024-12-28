@@ -1,19 +1,18 @@
 return {
   'numToStr/Comment.nvim',
-  lazy  = true,
+  lazy = true,
   keys = {
     'm',
-    { '<leader>m', mode = { 'n', 'v' } }
+    { '<leader>m', mode = { 'n', 'v' } },
   },
-  config = function()
-    require('Comment').setup({
-      sticky    = true,
-      padding   = true,
-      mappings  = { basic = true, extra = false },
-      toggler   = { line = 'm' },
-      opleader  = { line = '<leader>m' },
-      pre_hook  = require('ts_context_commentstring.integrations.comment_nvim')
-        .create_pre_hook()
-    })
-  end
+  opts = {
+    sticky = true,
+    padding = true,
+    mappings = { basic = true, extra = false },
+    toggler = { line = 'm' },
+    opleader = { line = '<leader>m' },
+    pre_hook = function()
+      require('ts_context_commentstring.integrations.comment_nvim').create_pre_hook()
+    end,
+  },
 }
