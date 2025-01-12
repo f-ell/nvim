@@ -1,3 +1,3 @@
 vim.filetype.add({
-  extension = { class = 'java' },
+  extension = { class = 'java', curl = 'http', http = 'http' },
 })
