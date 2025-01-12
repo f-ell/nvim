@@ -19,6 +19,7 @@ return {
 
     fuzzy = {
       use_frecency = false,
+      use_typo_resistance = false,
       sorts = { 'label', 'score', 'kind' },
     },
 
@@ -43,15 +44,6 @@ return {
         draw = {
           columns = { { 'kind_icon' }, { 'label', 'source', gap = 1 } },
           components = {
-            kind_icon = {
-              text = function(ctx)
-                return ctx.kind_icon .. ctx.icon_gap
-              end,
-              highlight = function(ctx)
-                return 'BlinkCmpKind' .. ctx.kind
-              end,
-            },
-
             label = {
               width = { fill = true, max = 48 },
               ellipsis = true,
@@ -66,7 +58,7 @@ return {
 
             source = {
               text = function(ctx)
-                return ctx.item.source_name:sub(0, 1)
+                return ctx.item.source_name:sub(0, 1):upper()
               end,
               highlight = function()
                 return 'NeutralFloat'
@@ -95,6 +87,13 @@ return {
           name = 'buffer',
           module = 'blink.cmp.sources.buffer',
           score_offset = -2,
+        },
+        cmdline = {
+          name = 'cmdline',
+          module = 'blink.cmp.sources.cmdline',
+          transform_items = function(ctx, items)
+            return ctx.mode == 'cmdline' and items or {}
+          end,
         },
         lazydev = {
           name = 'LazyDev',

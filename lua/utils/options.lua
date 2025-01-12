@@ -12,6 +12,7 @@ vim.o.cmdheight = 1
 vim.o.pumheight = 7
 vim.o.scrolloff = 1
 vim.o.sidescrolloff = 1
+vim.o.ignorecase = true
 vim.o.smartcase = true
 vim.o.shortmess = 'asWFS'
 vim.o.mousemodel = 'extend'

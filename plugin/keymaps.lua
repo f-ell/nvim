@@ -39,6 +39,7 @@ key.nnmap('N', 'Nzz')
 key.nnmap('<C-u>', '<C-u>zz')
 key.nnmap('<C-d>', '<C-d>zz')
 key.modemap({ 'n', 'v' }, '<leader>y', '"+y')
+key.modemap({ 'n', 'v' }, '<leader>p', '"+p')
 key.modemap({ 'n', 'v' }, '<leader>d', '"_d')
 
 -- qf / loc

@@ -530,14 +530,7 @@ local search = {
 }
 
 ---@type Component
-local location = {
-  get = function()
-    return table.concat({
-      '%#StatuslineLocation#%#Statusline#',
-      '%l:%v',
-    }, ' ')
-  end,
-}
+local location = { get = '%#StatuslineLocation#%#Statusline# %l:%v' }
 
 M:init()
 
