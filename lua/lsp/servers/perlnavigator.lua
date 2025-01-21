@@ -4,7 +4,7 @@ return {
     perlnavigator = {
       perlPath = 'perl',
       enableWarnings = true,
-      perltidyProfile = '',
+      perltidyProfile = '$workspaceFolder/.perltidyrc',
       perlcriticProfile = '$workspaceFolder/.perlcriticrc',
       perlcriticEnabled = true,
     },
