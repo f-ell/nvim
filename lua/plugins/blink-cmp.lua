@@ -20,7 +20,6 @@ return {
     fuzzy = {
       use_frecency = false,
       use_typo_resistance = false,
-      sorts = { 'label', 'score', 'kind' },
     },
 
     completion = {
