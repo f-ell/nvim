@@ -34,6 +34,14 @@ return {
         },
       },
 
+      list = {
+        selection = {
+          auto_insert = function(ctx)
+            return ctx.mode == 'cmdline'
+          end,
+        },
+      },
+
       menu = {
         max_height = 8,
         border = 'none',
