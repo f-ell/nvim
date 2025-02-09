@@ -1,4 +1,12 @@
 return {
+  single_file_support = false,
+  root_dir = function()
+    return not vim.fs.root(0, { 'deno.json', 'deno.jsonc' })
+      and vim.fs.root(
+        0,
+        { 'jsconfig.json', 'tsconfig.json', 'package.json', '.git', '.' }
+      )
+  end,
   init_options = {
     hostInfo = 'neovim',
     preferences = {
