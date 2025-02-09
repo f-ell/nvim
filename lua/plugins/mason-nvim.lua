@@ -42,8 +42,7 @@ return {
       key.nnmap('<leader>fb', function()
         require('conform').format({ timeout_ms = 500, lsp_format = 'fallback' })
       end, { buffer = true })
-      key.nnmap('<leader>rf', vim.lsp.buf.references, { buffer = true })
-
+      key.nnmap('gr', vim.lsp.buf.references, { buffer = true })
       key.nnmap('gd', ui.def.peek, { buffer = true })
       key.nnmap('<leader>gd', ui.def.open, { buffer = true })
       key.nnmap('<leader>gt', ui.def.type, { buffer = true })
@@ -51,7 +50,7 @@ return {
       key.nnmap('<leader>ca', ui.cda.codeaction, { buffer = true })
       key.nnmap('<leader>rn', ui.ren.rename, { buffer = true })
       key.modemap({ 'i', 'n' }, '<C-s>', ui.sig.active)
-      key.modemap({ 'i', 'n' }, '<C-A-s>', ui.sig.available)
+      key.modemap({ 'i', 'n' }, '<C-S-s>', ui.sig.available)
 
       key.nnmap('<leader>h', ui.dgn.get_line, { buffer = true })
       key.nnmap('<leader>j', function()
