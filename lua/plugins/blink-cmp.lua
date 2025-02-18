@@ -19,7 +19,9 @@ return {
 
     fuzzy = {
       use_frecency = false,
-      use_typo_resistance = false,
+      max_typos = function()
+        return 0
+      end,
     },
 
     completion = {
