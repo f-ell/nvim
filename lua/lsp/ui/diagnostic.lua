@@ -76,8 +76,7 @@ function M:_preprocess(raw)
     -- WARN: unstable use of character class
     table.insert(tbl.diag[i].msg, diag[i].message:match('[\r\n]*([^\r\n]*)$'))
 
-    tbl.diag[i].msg[1] = self._util.signs[tbl.diag[i].sev].text
-      .. tbl.diag[i].msg[1]
+    tbl.diag[i].msg[1] = tbl.diag[i].msg[1]
   end
 
   for i = 1, #tbl.diag do
@@ -140,13 +139,26 @@ function M:_set_highlights(bufnr, proc)
   local offset = -1
 
   for i = 1, #proc.diag do
+    if #proc.diag[i].msg > 1 then
+      for j = 1, #proc.diag[i].msg do
+        vim.api.nvim_buf_add_highlight(
+          bufnr,
+          -1,
+          self._util.signs[proc.diag[i].sev].texthl,
+          offset + i + j - 1,
+          0,
+          -1
+        )
+      end
+    end
+
     vim.api.nvim_buf_add_highlight(
       bufnr,
       -1,
       self._util.signs[proc.diag[i].sev].texthl,
-      offset + i,
+      offset + i + #proc.diag[i].msg - 1,
       0,
-      vim.fn.byteidx(proc.diag[i].msg[1], 1)
+      proc.diag[i].msg[#proc.diag[i].msg]:len()
     )
     vim.api.nvim_buf_add_highlight(
       bufnr,
