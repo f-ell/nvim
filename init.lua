@@ -34,7 +34,6 @@ require('lazy').setup('plugins', {
 
 L.key.nnmap('<leader>*', '<CMD>Lazy<CR>')
 vim.o.termguicolors = true
-vim.api.nvim_command('colorscheme everforest')
 vim.api.nvim_command('filetype plugin indent on')
 
 require('utils')
