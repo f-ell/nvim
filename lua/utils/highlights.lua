@@ -149,6 +149,7 @@ local highlights = {
   { 'Visual', { fg = c.bg[6], bg = c.pastel.yel } },
 
   -- misc
+  { 'CursorLine', { bg = c.bg[2] } },
   { 'CursorLineNr', { fg = c.pastel.gre } },
   { 'SpellBad', { sp = c.vivid.blu, underline = true } },
   { 'QuickFixLine', { fg = c.bg[6], bg = c.pastel.gre } },
@@ -204,7 +205,7 @@ local highlights = {
   { 'TelescopePromptTitle', { link = 'Fg' } },
 
   -- treesitter
-  { 'TreesitterContext', { fg = c._, bg = c.bg[3] } },
+  { 'TreesitterContext', { bg = c.bg[2] } },
 }
 
 for i = 1, #highlights do
