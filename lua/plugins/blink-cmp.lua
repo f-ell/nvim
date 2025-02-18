@@ -6,6 +6,8 @@ return {
   dependencies = 'folke/lazydev.nvim',
   opts = {
     keymap = {
+      preset = 'none',
+
       ['<C-Space>'] = { 'show' },
       ['<C-e>'] = { 'hide' },
       ['<C-l>'] = { 'accept' },
