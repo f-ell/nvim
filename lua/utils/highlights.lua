@@ -138,7 +138,7 @@ local highlights = {
   -- float
   { 'NormalFloat', { link = 'Fg' } },
   { 'FloatTitle', { link = 'Fg' } },
-  { 'FloatBorder', { fg = c.bg[1] } },
+  { 'FloatBorder', { fg = c.gr[3] } },
   { 'NeutralFloat', { fg = c.gr[3] } },
 
   -- search
@@ -155,6 +155,8 @@ local highlights = {
   { 'QuickFixLine', { fg = c.bg[6], bg = c.pastel.gre } },
   { 'Pmenu', { fg = c.fg[4], bg = c.bg[2] } },
   { 'PmenuSel', { fg = c.fg[2], bg = c.bg[1] } },
+  { 'PmenuSbar', { bg = c.bg[1] } },
+  { 'PmenuThumb', { bg = c.gr[1] } },
 
   ---- custom ----
   -- statusline
