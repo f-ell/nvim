@@ -115,7 +115,7 @@ local highlights = {
   { 'HintText', { sp = c.vivid.blu, underline = true } },
 
   { 'DiagnosticOk', { fg = c.pastel.pur } },
-  { 'DiagnosticUnnecessary', { fg = c.pastel.yel } },
+  { 'DiagnosticUnnecessary', { fg = c.gr[4] } },
   { 'DiagnosticError', { fg = c.pastel.red } },
   { 'DiagnosticWarn', { fg = c.pastel.yel } },
   { 'DiagnosticInfo', { fg = c.pastel.gre } },
