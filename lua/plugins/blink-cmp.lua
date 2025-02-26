@@ -133,7 +133,7 @@ return {
     },
 
     appearance = {
-      use_nvim_cmp_as_default = true,
+      -- use_nvim_cmp_as_default = true,
       -- stylua: ignore
       kind_icons = {
         Text     = '', Method = '󰡱', Function  = '', Constructor = '', Field         = '∊',

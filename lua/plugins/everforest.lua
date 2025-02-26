@@ -9,7 +9,7 @@ return {
     vim.g.everforest_spell_foreground = 'colored'
     vim.g.everforest_better_performance = '1'
   end,
-  init = function()
-    vim.cmd.colorscheme('everforest')
-  end,
+  -- init = function()
+  --   vim.cmd.colorscheme('everforest')
+  -- end,
 }

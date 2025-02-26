@@ -36,4 +36,5 @@ L.key.nnmap('<leader>*', '<CMD>Lazy<CR>')
 vim.o.termguicolors = true
 vim.api.nvim_command('filetype plugin indent on')
 
-require('utils')
+vim.cmd.colorscheme('leafless')
+require('options')
