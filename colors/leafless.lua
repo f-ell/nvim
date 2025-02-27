@@ -4,9 +4,9 @@ vim.cmd.highlight('clear')
 if vim.fn.exists('syntax_on') then
   vim.cmd.syntax('reset')
 end
-vim.g.colors_name = 'bleak'
+vim.g.colors_name = 'leafless'
 
-local colors = {
+LEAFLESS = {
   fg = {
     '#e0dbd0',
     '#d5cfc1',
@@ -58,76 +58,78 @@ local colors = {
     red = '#8b4c4e',
     yel = '#85724d',
   },
-  git = '#fca326',
 }
 
 ---@type table<string, vim.api.keyset.highlight>
 local groups = {
   ---- generic ----
-  Fg = { fg = colors.fg[3] },
-  Normal = { fg = colors.fg[3] },
+  Fg = { fg = LEAFLESS.fg[3] },
+  Normal = { fg = LEAFLESS.fg[3] },
   NormalNC = { link = 'Normal' },
-  NonText = { fg = colors.gr[4] },
-  Directory = { fg = colors.bright.gre },
-  Comment = { fg = colors.gr[4], bold = true },
+  NonText = { fg = LEAFLESS.gr[4] },
+  Directory = { fg = LEAFLESS.bright.gre },
+  Comment = { fg = LEAFLESS.gr[4], bold = true },
   Conceal = { link = 'Comment' },
 
-  MatchParen = { fg = colors.bright.gre },
+  MatchParen = { fg = LEAFLESS.bright.gre },
   SpecialKey = { link = 'NonText' },
-  Underlined = { fg = colors.bright.blu, underline = true },
+  Underlined = { fg = LEAFLESS.bright.blu, underline = true },
 
   -- search
-  Search = { fg = colors.bg[6], bg = colors.bright.blu },
-  IncSearch = { fg = colors.bg[6], bg = colors.bright.yel },
-  CurSearch = { fg = colors.bg[6], bg = colors.bright.pur },
+  Search = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.blu },
+  IncSearch = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.yel },
+  CurSearch = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.pur },
   Substitute = { link = 'Search' },
-  Visual = { fg = colors.bg[6], bg = colors.bright.yel },
+  Visual = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.yel },
 
   -- diff
-  DiffAdd = { fg = colors.bg[6], bg = colors.bright.gre },
-  DiffChange = { fg = colors.bg[6], bg = colors.bright.blu },
-  DiffText = { fg = colors.fg[1], bg = colors.bright.blu },
-  DiffDelete = { fg = colors.bg[6], bg = colors.bright.red },
+  DiffAdd = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.gre },
+  DiffChange = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.blu },
+  DiffText = { fg = LEAFLESS.fg[1], bg = LEAFLESS.bright.blu },
+  DiffDelete = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.red },
 
   -- ui
   NormalFloat = { link = 'Fg' },
-  NeutralFloat = { fg = colors.gr[3] },
+  NeutralFloat = { fg = LEAFLESS.gr[3] },
   FloatTitle = { link = 'Fg' },
-  FloatBorder = { fg = colors.gr[3] },
-  WinSeparator = { fg = colors.bg[1] },
+  FloatBorder = { fg = LEAFLESS.gr[3] },
+  WinSeparator = { fg = LEAFLESS.bg[1] },
 
-  Pmenu = { fg = colors.fg[3], bg = colors.bg[2] },
-  PmenuSel = { fg = colors.fg[2], bg = colors.bg[1] },
-  PmenuSbar = { bg = colors.bg[1] },
-  PmenuThumb = { bg = colors.gr[2] },
+  StatusLine = { link = 'Fg' },
 
-  CursorLine = { bg = colors.bg[2] },
-  CursorLineNr = { fg = colors.bright.gre },
+  Pmenu = { fg = LEAFLESS.fg[3], bg = LEAFLESS.bg[2] },
+  PmenuSel = { fg = LEAFLESS.fg[2], bg = LEAFLESS.bg[1] },
+  PmenuSbar = { bg = LEAFLESS.bg[1] },
+  PmenuThumb = { bg = LEAFLESS.gr[2] },
+
+  CursorLine = { bg = LEAFLESS.bg[2] },
+  CursorLineNr = { fg = LEAFLESS.bright.gre },
   Folded = { link = 'CursorLine' },
-  QuickFixLine = { fg = colors.bg[6], bg = colors.bright.gre },
+  QuickFixLine = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.gre },
 
   MsgArea = { link = 'Fg' },
   MoreMsg = { link = 'NonText' },
-  MsgSeparator = { fg = colors.gr[3] },
-  WarningMsg = { fg = colors.bright.yel },
-  ErrorMsg = { fg = colors.bright.red },
+  MsgSeparator = { fg = LEAFLESS.gr[3] },
+  ModeMsg = { fg = LEAFLESS.bright.cya },
+  WarningMsg = { fg = LEAFLESS.bright.yel },
+  ErrorMsg = { fg = LEAFLESS.bright.red },
   Question = { link = 'NonText' },
 
   -- spell
-  SpellBad = { sp = colors.bright.blu, underline = true },
-  SpellCap = { sp = colors.bright.gre, underline = true },
-  SpellRare = { sp = colors.bright.pur, underline = true },
-  SpellLocal = { sp = colors.bright.cya, underline = true },
+  SpellBad = { sp = LEAFLESS.bright.blu, underline = true },
+  SpellCap = { sp = LEAFLESS.bright.gre, underline = true },
+  SpellRare = { sp = LEAFLESS.bright.pur, underline = true },
+  SpellLocal = { sp = LEAFLESS.bright.cya, underline = true },
 
   ---- syntax ----
-  Constant = { fg = colors.fg[2] },
+  Constant = { fg = LEAFLESS.fg[2] },
   String = { link = 'Constant' },
   Character = { link = 'Constant' },
   Number = { link = 'Constant' },
   Boolean = { link = 'Constant' },
   Float = { link = 'Constant' },
 
-  Identifier = { fg = colors.fg[2] },
+  Identifier = { fg = LEAFLESS.fg[2] },
   Function = { link = 'Identifier' },
 
   Statement = { link = 'Fg' },
@@ -138,7 +140,7 @@ local groups = {
   Keyword = { link = 'Statement' },
   Exception = { link = 'Statement' },
 
-  PreProc = { fg = colors.gr[4] },
+  PreProc = { fg = LEAFLESS.gr[4] },
   Include = { link = 'PreProc' },
   Define = { link = 'PreProc' },
   Macro = { link = 'PreProc' },
@@ -156,7 +158,11 @@ local groups = {
   SpecialComment = { link = 'Special' },
   Debug = { link = 'Special' },
 
-  Error = { fg = colors.bright.red, sp = colors.bright.red, underline = true },
+  Error = {
+    fg = LEAFLESS.bright.red,
+    sp = LEAFLESS.bright.red,
+    underline = true,
+  },
 
   ---- treesitter ----
   ['@annotation'] = { link = 'NonText' },
@@ -240,15 +246,15 @@ local groups = {
   ['@typeParameter'] = { link = '@type' },
 
   ---- diagnostics ----
-  ErrorText = { sp = colors.bright.red, underline = true },
-  WarningText = { sp = colors.bright.yel, underline = true },
-  InfoText = { sp = colors.bright.gre, underline = true },
-  HintText = { sp = colors.bright.blu, underline = true },
+  ErrorText = { sp = LEAFLESS.bright.red, underline = true },
+  WarningText = { sp = LEAFLESS.bright.yel, underline = true },
+  InfoText = { sp = LEAFLESS.bright.gre, underline = true },
+  HintText = { sp = LEAFLESS.bright.blu, underline = true },
 
-  DiagnosticError = { fg = colors.bright.red },
-  DiagnosticWarn = { fg = colors.bright.yel },
-  DiagnosticInfo = { fg = colors.bright.gre },
-  DiagnosticHint = { fg = colors.bright.blu },
+  DiagnosticError = { fg = LEAFLESS.bright.red },
+  DiagnosticWarn = { fg = LEAFLESS.bright.yel },
+  DiagnosticInfo = { fg = LEAFLESS.bright.gre },
+  DiagnosticHint = { fg = LEAFLESS.bright.blu },
   DiagnosticUnderlineError = { link = 'ErrorText' },
   DiagnosticUnderlineWarn = { link = 'WarningText' },
   DiagnosticUnderlineInfo = { link = 'InfoText' },
@@ -258,60 +264,35 @@ local groups = {
   DiagnosticSignInfo = { link = 'DiagnosticInfo' },
   DiagnosticSignHint = { link = 'DiagnosticHint' },
 
-  DiagnosticOk = { fg = colors.bright.pur },
-  DiagnosticUnnecessary = { fg = colors.gr[4] },
+  DiagnosticOk = { fg = LEAFLESS.bright.pur },
+  DiagnosticUnnecessary = { fg = LEAFLESS.gr[4] },
   DiagnosticDeprecated = { strikethrough = true },
 
   ---- plugins ----
   -- gitsigns
-  GitSignsAdd = { fg = colors.bright.gre },
-  GitSignsChange = { fg = colors.bright.blu },
-  GitSignsDelete = { fg = colors.bright.red },
-  GitSignsStagedAdd = { fg = colors.dim.gre },
-  GitSignsStagedChange = { fg = colors.dim.blu },
-  GitSignsStagedDelete = { fg = colors.dim.red },
-  GitSignsStagedTopdelete = { fg = colors.dim.red },
-  GitSignsStagedChangeDelete = { fg = colors.dim.blu },
+  GitSignsAdd = { fg = LEAFLESS.bright.gre },
+  GitSignsChange = { fg = LEAFLESS.bright.blu },
+  GitSignsDelete = { fg = LEAFLESS.bright.red },
+  GitSignsStagedAdd = { fg = LEAFLESS.dim.gre },
+  GitSignsStagedChange = { fg = LEAFLESS.dim.blu },
+  GitSignsStagedDelete = { fg = LEAFLESS.dim.red },
+  GitSignsStagedTopdelete = { fg = LEAFLESS.dim.red },
+  GitSignsStagedChangeDelete = { fg = LEAFLESS.dim.blu },
 
   -- telescope
   TelescopeBorder = { link = 'WinSeparator' },
-  TelescopeMatching = { fg = colors.bright.red },
+  TelescopeMatching = { fg = LEAFLESS.bright.red },
   TelescopeSelection = { link = 'CursorLine' },
-  TelescopeSelectionCaret = { fg = colors.bright.gre, bg = colors.bg[2] },
+  TelescopeSelectionCaret = { fg = LEAFLESS.bright.gre, bg = LEAFLESS.bg[2] },
   TelescopeTitle = { link = 'Fg' },
   TelescopePreviewTitle = { link = 'Fg' },
   TelescopePromptBorder = { link = 'TelescopeBorder' },
   TelescopePromptCounter = { link = 'NonText' },
-  TelescopePromptPrefix = { fg = colors.bright.gre },
+  TelescopePromptPrefix = { fg = LEAFLESS.bright.gre },
   TelescopePromptTitle = { link = 'Fg' },
 
   -- treesitter
   TreesitterContext = { link = 'CursorLine' },
-
-  ---- custom ----
-  -- statusline
-  StatusLine = { link = 'Fg' },
-  StatusLineReadonly = { fg = colors.bright.red },
-  StatusLineLspinfo = { link = 'NonText' },
-  StatusLineSearch = { fg = colors.bright.blu },
-  StatusLineLocation = { fg = colors.bright.cya },
-
-  modeC = { fg = colors.bright.pur },
-  modeI = { fg = colors.bright.blu },
-  modeN = { fg = colors.bright.gre },
-  modeR = { fg = colors.bright.red },
-  modeT = { fg = colors.bright.ora },
-  modeV = { fg = colors.bright.yel },
-
-  Git = { fg = colors.git },
-  GitZero = { fg = colors.gr[4] },
-  GitAdd = { fg = colors.bright.gre },
-  GitCha = { fg = colors.bright.blu },
-  GitDel = { fg = colors.bright.red },
-
-  -- tabline
-  TabActive = { fg = colors.fg[2], bg = colors.bg[2], bold = true },
-  TabInactive = { fg = colors.fg[3], bg = colors.bg[3] },
 }
 
 for name, spec in pairs(groups) do
