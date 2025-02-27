@@ -1,8 +1,28 @@
+local winopts = {
+  foldcolumn = nil,
+  statuscolumn = nil,
+  signcolumn = nil,
+  number = nil,
+  relativenumber = nil,
+}
+
 local toggle_diff = function()
   if not vim.wo.diff then
+    winopts = {
+      foldcolumn = vim.wo.foldcolumn,
+      statuscolumn = vim.wo.statuscolumn,
+      signcolumn = vim.wo.signcolumn,
+      number = vim.wo.number,
+      relativenumber = vim.wo.relativenumber,
+    }
+
     require('gitsigns').diffthis()
     for _, win in pairs(vim.api.nvim_tabpage_list_wins(0)) do
       vim.wo[win].foldcolumn = '0'
+      vim.wo[win].statuscolumn = ''
+      vim.wo[win].signcolumn = 'no'
+      vim.wo[win].number = false
+      vim.wo[win].relativenumber = false
     end
     return
   end
@@ -13,6 +33,12 @@ local toggle_diff = function()
       vim.api.nvim_win_close(win, true)
     end
   end
+
+  vim.wo.foldcolumn = winopts.foldcolumn
+  vim.wo.statuscolumn = winopts.statuscolumn
+  vim.wo.signcolumn = winopts.signcolumn
+  vim.wo.number = winopts.number
+  vim.wo.relativenumber = winopts.relativenumber
 end
 
 return {
