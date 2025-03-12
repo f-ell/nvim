@@ -71,7 +71,7 @@ local groups = {
   Comment = { fg = LEAFLESS.gr[4], bold = true },
   Conceal = { link = 'Comment' },
 
-  MatchParen = { fg = LEAFLESS.bright.gre },
+  MatchParen = { fg = LEAFLESS.bright.gre, underline = true },
   SpecialKey = { link = 'NonText' },
   Underlined = { fg = LEAFLESS.bright.blu, underline = true },
 
