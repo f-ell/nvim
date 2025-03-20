@@ -1,5 +1,13 @@
 local function organizeImports()
-  local client = vim.lsp.get_clients({ name = 'vtsls' })[1]
+  local client = vim
+    .iter(vim.lsp.get_clients())
+    :filter(function(
+      c --[[@cast c vim.lsp.Client]]
+    )
+      return c.name == 'vtsls' or c.name == 'denols'
+    end)
+    :nth(1)
+
   local diagnostics = vim
     .iter(vim.diagnostic.get(0, {
       namespace = vim.lsp.diagnostic.get_namespace(client.id),
@@ -49,7 +57,7 @@ local function organizeImports()
     params,
     0
   )
-  if err then
+  if err or L.tbl.is_empty(res) then
     return
   end
 

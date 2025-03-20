@@ -1,6 +1,5 @@
 local builtins = {
   'man',
-  'matchparen',
   'netrwPlugin',
   'remote_plugins',
   'shada_plugin',

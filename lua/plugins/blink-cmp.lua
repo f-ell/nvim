@@ -6,6 +6,8 @@ return {
   dependencies = 'folke/lazydev.nvim',
   opts = {
     keymap = {
+      preset = 'none',
+
       ['<C-Space>'] = { 'show' },
       ['<C-e>'] = { 'hide' },
       ['<C-l>'] = { 'accept' },
@@ -19,7 +21,9 @@ return {
 
     fuzzy = {
       use_frecency = false,
-      use_typo_resistance = false,
+      max_typos = function()
+        return 0
+      end,
     },
 
     completion = {
@@ -129,7 +133,7 @@ return {
     },
 
     appearance = {
-      use_nvim_cmp_as_default = true,
+      -- use_nvim_cmp_as_default = true,
       -- stylua: ignore
       kind_icons = {
         Text     = '', Method = '󰡱', Function  = '', Constructor = '', Field         = '∊',

@@ -120,7 +120,7 @@ local mode = {
     return table.concat({
       ('%%#mode%s#'):format(self.meta.mode),
       self.meta.mode,
-      '%#Statusline#',
+      '%#StatusLine#',
     })
   end,
 }
@@ -157,13 +157,13 @@ local buffer = {
   },
   get = function(self)
     return table.concat({
-      '%#Statusline#',
+      '%#StatusLine#',
       vim.bo.modified and '+ ' or '- ',
       self.meta.name,
       ' ',
-      vim.bo.readonly and '%#StatuslineReadonly#' or '',
+      vim.bo.readonly and '%#StatusLineReadonly#' or '',
       '(%n)',
-      '%#Statusline#',
+      '%#StatusLine#',
     })
   end,
 }
@@ -270,7 +270,7 @@ local git = {
       '%#Git# ' .. self.meta.head,
       ' ',
       diff,
-      '%#Statusline#',
+      '%#StatusLine#',
     })
   end,
   _root = function(self)
@@ -465,10 +465,9 @@ local lsp = {
         local part = {}
         for i = 1, #self.meta.diagnostics.count do
           if self.meta.diagnostics.count[i] ~= 0 then
-            part[#part + 1] = ('%%#%s#%s%s'):format(
+            part[#part + 1] = ('%%#%s#%s'):format(
               self.meta.signs[i].texthl,
-              self.meta.signs[i].text,
-              self.meta.diagnostics.count[i]
+              self.meta.signs[i].text
             )
           end
         end
@@ -485,13 +484,13 @@ local lsp = {
 
     return table.concat({
       #self.meta.diagnostics.string == 0 and '' or self.meta.diagnostics.string,
-      '%#StatuslineLspinfo#',
+      '%#StatusLineLspinfo#',
       vim.o.columns < 100 and ''
         or (' %%@v:lua.user_sl_lsp@[%s client%s]%%X'):format(
           #self.meta.clients,
           #self.meta.clients > 1 and 's' or ''
         ),
-      '%#Statusline#',
+      '%#StatusLine#',
     })
   end,
 }
@@ -523,14 +522,14 @@ local search = {
     end
 
     return table.concat({
-      '%#StatuslineSearch#%#Statusline#',
+      '%#StatusLineSearch#%#StatusLine#',
       search.current .. '/' .. search.total,
     }, ' ')
   end,
 }
 
 ---@type Component
-local location = { get = '%#StatuslineLocation#%#Statusline# %l:%v' }
+local location = { get = '%#StatusLineLocation#%#StatusLine# %l:%v' }
 
 M:init()
 

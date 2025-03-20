@@ -1,5 +1,3 @@
-vim.o.number = true
-vim.o.relativenumber = true
 vim.o.showcmd = false
 vim.o.showmode = false
 vim.o.textwidth = 80
