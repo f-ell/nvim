@@ -15,6 +15,11 @@ return {
   opts = {
     preview = { border = 'single' },
     use_default_keymaps = false,
+    view_options = {
+      highlight_filename = function()
+        return 'Normal'
+      end,
+    },
     keymaps = {
       ['g?'] = 'actions.show_help',
       ['g.'] = 'actions.toggle_hidden',

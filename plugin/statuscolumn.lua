@@ -8,11 +8,21 @@ ffi.cdef([[ // via luukvbaal/statuscol.nvim
 ]])
 
 local lnum = function()
-  if vim.v.virtnum ~= 0 then
+  if not (vim.o.number or vim.o.relativenumber) then
     return ''
   end
-  return vim.v.relnum == 0 and '%#CursorLineNr#' .. vim.v.lnum
-    or '%#LineNr#' .. vim.v.relnum
+
+  if vim.v.virtnum ~= 0 then
+    return ' '
+  end
+
+  if vim.v.relnum == 0 then
+    return '%#CursorLineNr#' .. vim.v.lnum .. ' '
+  end
+
+  return '%#LineNr#'
+    .. (vim.o.relativenumber and vim.v.relnum or vim.v.lnum)
+    .. ' '
 end
 
 local fold = function()
@@ -50,7 +60,7 @@ local fold = function()
 end
 
 _G.user_sc = function()
-  return (vim.wo.diff and '' or fold() .. ' ') .. '%=' .. lnum() .. ' %s'
+  return (vim.wo.diff and '' or fold() .. ' ') .. '%=' .. lnum() .. '%s'
 end
 
 vim.o.numberwidth = 2
