@@ -214,7 +214,7 @@ function M.lsp.clients_by_method(method, filter)
     end,
 
     vim.lsp.get_clients({
-      buffer = vim.api.nvim_get_current_buf(),
+      bufnr = vim.api.nvim_get_current_buf(),
     })
   )
 
