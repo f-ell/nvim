@@ -91,6 +91,10 @@ return {
       },
     },
 
+    cmdline = {
+      keymap = { preset = 'inherit' },
+    },
+
     sources = {
       default = { 'buffer', 'cmdline', 'lazydev', 'lsp', 'path' },
       providers = {
