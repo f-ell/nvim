@@ -27,6 +27,7 @@ local function dec2hex()
 end
 
 key.nnmap('<leader>dh', dec2hex)
+key.modemap({ 'n', 'i' }, '<C-.>', require('emmet').expand_word)
 
 key.nnmap('--', '<CMD>w<CR>')
 key.nnmap('<leader>w', '<CMD>w !doas tee %<CR>')

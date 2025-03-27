@@ -365,6 +365,33 @@ function M.str.last_index(str, pattern)
   return str:len() - index
 end
 
+---Return the word to the left of the cursor.
+---
+---Falls back to `vim.fn.expand` when called from normal mode. As a result, when
+---called this way, this will also return any characters to the cursor's right.
+---In this case, `pos` is ignored.
+---
+---@param match_any boolean|nil match WORD instead of word
+---@param pos [integer, integer]|nil (0,0)-based row-column tuple
+function M.str.word(match_any, pos)
+  if vim.api.nvim_get_mode().mode == 'n' then
+    return vim.fn.expand(match_any and '<cWORD>' or '<cword>')
+  end
+
+  if not pos then
+    pos = vim.api.nvim_win_get_cursor(0)
+    pos[1] = pos[1] - 1
+  end
+
+  -- local col = vim.api.nvim_win_get_cursor(0)[2]
+  local ln = vim.api.nvim_buf_get_lines(0, pos[1], pos[1] + 1, false)[1]
+  ln = string.sub(ln, 1, pos[2]):reverse()
+
+  -- FIX: does %W include `_`?
+  local index = ln:find(match_any and '%s' or '%W')
+  return ln:sub(1, index and (index - 1) or -1):reverse()
+end
+
 ---------------------------------------------------------------------------- tbl
 
 ---Perform recursive concatenation of two nested array-like tables.
