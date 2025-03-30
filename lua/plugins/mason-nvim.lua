@@ -10,29 +10,26 @@ return {
     end
   end,
   config = function()
-    local signs = {
-      { 'DiagnosticSignError', '•' },
-      { 'DiagnosticSignWarn', '•' },
-      { 'DiagnosticSignInfo', '•' },
-      { 'DiagnosticSignHint', '•' },
-    }
-    for i = 1, #signs do
-      vim.fn.sign_define(
-        signs[i][1],
-        { texthl = signs[i][1], text = signs[i][2] }
-      )
-    end
-
     vim.diagnostic.config({
       update_in_insert = true,
       underline = true,
       virtual_text = false,
       severity_sort = true,
-      sign = { active = signs },
+      signs = {
+        text = {
+          [vim.diagnostic.severity.ERROR] = '•',
+          [vim.diagnostic.severity.WARN] = '•',
+          [vim.diagnostic.severity.INFO] = '•',
+          [vim.diagnostic.severity.HINT] = '•',
+        },
+        numhl = {
+          [vim.diagnostic.severity.ERROR] = 'DiagnosticSignError',
+          [vim.diagnostic.severity.WARN] = 'DiagnosticSignWarn',
+          [vim.diagnostic.severity.INFO] = 'DiagnosticSignInfo',
+          [vim.diagnostic.severity.HINT] = 'DiagnosticSignHint',
+        },
+      },
     })
-
-    vim.lsp.handlers[vim.lsp.protocol.Methods.textDocument_hover] =
-      vim.lsp.with(vim.lsp.handlers.hover, { border = 'single' })
 
     require('mason').setup({ ui = { border = 'single' } })
 

@@ -9,7 +9,7 @@ M._util = {
 }
 
 M.rename = function()
-  local params = vim.lsp.util.make_position_params(0)
+  local params = vim.lsp.util.make_position_params(0, 'utf-8') --[[@as table]]
   params.context = { includeDeclaration = true }
 
   local err, res = L.lsp.request(
@@ -80,13 +80,12 @@ function M:_set_highlights(bufnr, proc)
   for i = 1, #local_refs do
     local r = local_refs[i].result.range
     if r then
-      vim.api.nvim_buf_add_highlight(
+      vim.hl.range(
         bufnr,
         ns_id,
         'Search',
-        r.start.line,
-        r.start.character,
-        r['end'].character
+        { r.start.line, r.start.character },
+        { r['end'].line, r['end'].character }
       )
     end
   end

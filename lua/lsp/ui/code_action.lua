@@ -9,8 +9,9 @@ M._util = {
 }
 
 function M.codeaction()
-  local params = vim.lsp.util.make_range_params()
-  params.context = { diagnostics = vim.lsp.diagnostic.get_line_diagnostics(0) }
+  local params = vim.lsp.util.make_range_params(0, 'utf-8') --[[@as table]]
+  params.context =
+    { diagnostics = vim.lsp.diagnostic.get(0, { lnum = vim.fn.line('.') }) }
 
   local err, res = L.lsp.request(
     L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_codeAction),
@@ -84,22 +85,17 @@ function M:_set_highlights(bufnr, proc)
   for i = 1, #proc do
     local len = string.len(i)
 
-    vim.api.nvim_buf_add_highlight(
+    vim.hl.range(
       bufnr,
       -1,
       self._util.signs[i % #self._util.signs ~= 0 and i % #self._util.signs or #self._util.signs].texthl,
-      offset + i,
-      0,
-      len
+      { offset + i, 0 },
+      { offset + i, len }
     )
-    vim.api.nvim_buf_add_highlight(
-      bufnr,
-      -1,
-      'NeutralFloat',
+    vim.hl.range(bufnr, -1, 'NeutralFloat', {
       offset + (#proc[i].msg > 1 and #proc[i].msg - 1 or 0) + i,
       (#proc[i].msg > 1 and 0 or len + 1) + proc[i].msg[#proc[i].msg]:len(),
-      -1
-    )
+    }, { offset + (#proc[i].msg > 1 and #proc[i].msg - 1 or 0) + i, -1 })
 
     if #proc[i].msg > 1 then
       offset = offset + #proc[i].msg - 1
@@ -124,7 +120,7 @@ function M:_register_float_actions(data)
 
       assert(
         client
-          and client.supports_method(
+          and client:supports_method(
             vim.lsp.protocol.Methods.workspace_executeCommand
           ),
         'Missing `executeCommand provider`'
@@ -132,6 +128,8 @@ function M:_register_float_actions(data)
 
       if
         client.config.init_options.extendedClientCapabilities
+        ---required for some code actions with jdtls
+        ---@diagnostic disable-next-line
         and client.config.init_options.extendedClientCapabilities.executeClientCommandSupport
         and vim.lsp.commands[cmd.command]
       then
@@ -139,7 +137,7 @@ function M:_register_float_actions(data)
           method = vim.lsp.protocol.Methods.textDocument_codeAction,
           bufnr = data.obuf,
           client_id = act.id,
-          params = vim.lsp.util.make_range_params(),
+          params = vim.lsp.util.make_range_params(0, client.offset_encoding),
         })
       elseif
         vim.list_contains(

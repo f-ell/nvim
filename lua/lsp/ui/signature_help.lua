@@ -3,13 +3,11 @@
 local M = {}
 
 M._util = {
-  signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
-    return vim.startswith(s.name, 'DiagnosticSign')
-  end),
+  signs = vim.diagnostic.config().signs,
 }
 
 M.active = function()
-  local params = vim.lsp.util.make_position_params()
+  local params = vim.lsp.util.make_position_params(0, 'utf-8')
   local err, res = L.lsp.request(
     L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_signatureHelp),
     vim.lsp.protocol.Methods.textDocument_signatureHelp,
@@ -34,7 +32,7 @@ M.active = function()
 end
 
 M.available = function()
-  local params = vim.lsp.util.make_position_params()
+  local params = vim.lsp.util.make_position_params(0, 'utf-8')
   local err, res = L.lsp.request(
     L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_signatureHelp),
     vim.lsp.protocol.Methods.textDocument_signatureHelp,
@@ -146,13 +144,12 @@ function M:_set_highlights(bufnr, proc)
         :len()
 
     if proc.parameter <= #proc[proc.signature].labels then
-      vim.api.nvim_buf_add_highlight(
+      vim.hl.range(
         bufnr,
         -1,
         'Search',
-        0,
-        proc[proc.signature].labels[proc.parameter][1] - offset,
-        proc[proc.signature].labels[proc.parameter][2] - offset
+        { 0, proc[proc.signature].labels[proc.parameter][1] - offset },
+        { 0, proc[proc.signature].labels[proc.parameter][2] - offset }
       )
     end
 
@@ -160,13 +157,12 @@ function M:_set_highlights(bufnr, proc)
   end
 
   for i = 1, #proc do
-    vim.api.nvim_buf_add_highlight(
+    vim.hl.range(
       bufnr,
       -1,
-      self._util.signs[i % #self._util.signs ~= 0 and i % #self._util.signs or #self._util.signs].texthl,
-      i - 1,
-      0,
-      string.len(i)
+      self._util.signs.numhl[i % #self._util.signs ~= 0 and i % #self._util.signs or #self._util.signs],
+      { i - 1, 0 },
+      { i - 1, string.len(i) }
     )
   end
 end
@@ -177,7 +173,7 @@ function M:_open(raw)
 
   local data = L.win.open_cursor(content, false, {
     title = {
-      { ' ' .. self._util.signs[3].text, self._util.signs[3].texthl },
+      { ' ' .. self._util.signs.text[3], self._util.signs.numhl[3] },
       { 'Signature ', 'FloatTitle' },
       { proc.title, 'NeutralFloat' },
     },

@@ -53,6 +53,7 @@ vim.o.timeoutlen = 500
 vim.o.ttimeoutlen = 0
 
 -- windows
+vim.o.winborder = 'single'
 vim.o.splitbelow = true
 vim.o.splitright = true
 vim.o.equalalways = false

@@ -1,7 +1,8 @@
 vim.bo.expandtab = false
 
 local function organizeImports()
-  local params = vim.lsp.util.make_range_params()
+  local client = vim.lsp.get_clients({ name = 'gopls' })[1]
+  local params = vim.lsp.util.make_range_params(0, client.offset_encoding)
   params.context = { diagnostics = vim.lsp.diagnostic.get_line_diagnostics(0) }
 
   local err, res = L.lsp.request(

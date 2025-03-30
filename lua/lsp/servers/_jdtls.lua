@@ -209,6 +209,7 @@ local function generateToStringPrompt(_, ctx)
   err, res = L.lsp.request(
     { client },
     'java/generateToString',
+    ---@diagnostic disable-next-line
     { context = ctx.params, fields = items },
     ctx.bufnr
   )
@@ -269,6 +270,7 @@ local function hashCodeEqualsPrompt(_, ctx)
   err, res = L.lsp.request(
     { client },
     'java/generateHashCodeEquals',
+    ---@diagnostic disable-next-line
     { context = ctx.params, fields = items },
     ctx.bufnr
   )
@@ -306,13 +308,12 @@ local function organizeImportsChooseImports(result)
     vim.api.nvim_win_set_buf(0, vim.uri_to_bufnr(uri))
     vim.api.nvim_win_set_cursor(0, { r.start.line + 1, r.start.character })
     vim.api.nvim_command('normal zz')
-    vim.api.nvim_buf_add_highlight(
+    vim.hl.range(
       0,
       ns_id,
       'Search',
-      r.start.line,
-      r.start.character,
-      r['end'].character
+      { r.start.line, r.start.character },
+      { r['end'].line, r['end'].character }
     )
     vim.api.nvim_command('redraw')
 
@@ -394,6 +395,7 @@ local function overrideMethodsPrompt(_, ctx)
   err, res = L.lsp.request(
     { client },
     'java/addOverridableMethods',
+    ---@diagnostic disable-next-line
     { context = ctx.params, overridableMethods = items },
     ctx.bufnr
   )

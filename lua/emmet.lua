@@ -9,7 +9,7 @@ function M.expand_word()
     )
       return client.name == 'emmet_language_server'
     end)
-    :next()
+    :next() --[[@as vim.lsp.Client]]
 
   if emmetls == nil then
     vim.notify('emmet-language-server is not running', vim.log.levels.ERROR)
@@ -18,7 +18,7 @@ function M.expand_word()
 
   local params = {
     textDocument = vim.lsp.util.make_text_document_params(),
-    position = vim.lsp.util.make_position_params(),
+    position = vim.lsp.util.make_position_params(0, emmetls.offset_encoding),
     abbreviation = L.str.word(true),
   }
   local err, res = L.lsp.request(emmetls, 'emmet/expandAbbreviation', params, 0)

@@ -201,11 +201,11 @@ function M.lsp.clients_by_method(method, filter)
   local clients = vim.tbl_filter(
     function(client)
       if type(method) == 'string' then
-        return client.supports_method(method)
+        return client:supports_method(method)
       end
 
       for i = 1, #method do
-        if not client.supports_method(method[i]) then
+        if not client:supports_method(method[i]) then
           return false
         end
       end
@@ -231,7 +231,7 @@ end
 ---Format and print RequestError via `vim.notify()`
 ---
 ---@param errors RequestError|RequestError[]
----@param level LogLevel? defaults to `vim.log.levels.ERROR`
+---@param level vim.log.levels? defaults to `vim.log.levels.ERROR`
 function M.lsp.notify_error(errors, level)
   errors = type(errors[1]) == 'table' and errors or { errors }
   for i = 1, #errors do
@@ -252,7 +252,7 @@ end
 ---
 ---@param clients vim.lsp.Client|vim.lsp.Client[]
 ---@param method string
----@param params TextDocumentPositionParams
+---@param params table
 ---@param bufnr number
 ---@param timeout number? passeed as `timeout` parameter to `wait()`, defaults to 1000
 ---@return RequestError[]?,EnrichedLspResponse[]
@@ -285,7 +285,7 @@ function M.lsp.request(clients, method, params, bufnr, timeout)
 
         -- FIX: poor implementation, should not be nested in async-request
         if not ok then
-          res = clients[i].request_sync(method, params, 800, bufnr)
+          res = clients[i]:request_sync(method, params, 800, bufnr)
         end
       else
         res = { err = err, result = result }
@@ -311,7 +311,7 @@ function M.lsp.request(clients, method, params, bufnr, timeout)
       ::continue::
     end
 
-    local status, request = clients[i].request(method, params, handler, bufnr)
+    local status, request = clients[i]:request(method, params, handler, bufnr)
     if status == false then
       return {
         name = clients[i].name,
@@ -500,13 +500,12 @@ function M.ui.pick(items, multi, format, config)
     }
 
     for i = 1, #vim.api.nvim_buf_get_lines(bufnr, 0, -1, true) do
-      vim.api.nvim_buf_add_highlight(
+      vim.hl.range(
         bufnr,
         -1,
         texthl[i % #texthl ~= 0 and i % #texthl or #texthl],
-        i - 1,
-        0,
-        string.len(i)
+        { i - 1, 0 },
+        { i - 1, string.len(i) }
       )
     end
   end
@@ -576,7 +575,10 @@ function M.ui.pick(items, multi, format, config)
 
   while true do
     vim.api.nvim__redraw({ flush = true, win = data.nwin, cursor = true })
-    local c, num = vim.fn.getchar(), nil
+    -- stylua: ignore
+    local c, num =
+      vim.fn.getchar() --[[@as integer]],
+      nil
 
     if
       c == 3 --[[ <c-c> ]]
@@ -690,6 +692,9 @@ function M.win._height(data)
     return M.win._max_height()
   end
 
+  -- FIX: should account for cursor offset (getpos('.')[3]-1)
+  -- issue: we don't know if the window will be offset to the left because of
+  -- its width
   local maxw = vim.o.columns - 2
   if M.tbl.max_len(data) < maxw then
     return math.min(#data > 0 and #data or 1, M.win._max_height())
