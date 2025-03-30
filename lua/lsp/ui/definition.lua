@@ -270,19 +270,21 @@ function M:_format(proc)
 end
 
 function M:_set_highlights(bufnr, proc)
+  local ns_id = vim.api.nvim_create_namespace('lsp-ui')
+
   for i = 1, #proc.def do
     local len = string.len(i)
 
     vim.hl.range(
       bufnr,
-      -1,
+      ns_id,
       self._util.signs[i % #self._util.signs ~= 0 and i % #self._util.signs or #self._util.signs].texthl,
       { i - 1, 0 },
       { i - 1, len }
     )
     vim.hl.range(
       bufnr,
-      -1,
+      ns_id,
       'NeutralFloat',
       { i - 1, len + proc.def[i].file:len() + 2 },
       { i - 1, -1 }

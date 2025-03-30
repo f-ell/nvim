@@ -80,6 +80,7 @@ function M:_format(proc)
 end
 
 function M:_set_highlights(bufnr, proc)
+  local ns_id = vim.api.nvim_create_namespace('lsp-ui')
   local offset = -1
 
   for i = 1, #proc do
@@ -87,12 +88,12 @@ function M:_set_highlights(bufnr, proc)
 
     vim.hl.range(
       bufnr,
-      -1,
+      ns_id,
       self._util.signs[i % #self._util.signs ~= 0 and i % #self._util.signs or #self._util.signs].texthl,
       { offset + i, 0 },
       { offset + i, len }
     )
-    vim.hl.range(bufnr, -1, 'NeutralFloat', {
+    vim.hl.range(bufnr, ns_id, 'NeutralFloat', {
       offset + (#proc[i].msg > 1 and #proc[i].msg - 1 or 0) + i,
       (#proc[i].msg > 1 and 0 or len + 1) + proc[i].msg[#proc[i].msg]:len(),
     }, { offset + (#proc[i].msg > 1 and #proc[i].msg - 1 or 0) + i, -1 })

@@ -502,7 +502,7 @@ function M.ui.pick(items, multi, format, config)
     for i = 1, #vim.api.nvim_buf_get_lines(bufnr, 0, -1, true) do
       vim.hl.range(
         bufnr,
-        -1,
+        vim.api.nvim_create_namespace('lib_ui'),
         texthl[i % #texthl ~= 0 and i % #texthl or #texthl],
         { i - 1, 0 },
         { i - 1, string.len(i) }

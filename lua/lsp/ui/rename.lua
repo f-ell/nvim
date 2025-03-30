@@ -72,7 +72,7 @@ function M:_preprocess(raw)
 end
 
 function M:_set_highlights(bufnr, proc)
-  local ns_id = vim.api.nvim_create_namespace('LspUi')
+  local ns_id = vim.api.nvim_create_namespace('lsp-ui')
   local local_refs = vim.tbl_filter(function(r)
     return r.result.uri == proc.path
   end, proc.refs)

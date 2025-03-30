@@ -137,6 +137,8 @@ function M:_format(proc)
 end
 
 function M:_set_highlights(bufnr, proc)
+  local ns_id = vim.api.nvim_create_namespace('lsp-ui')
+
   if proc.active then
     local offset = proc[proc.signature].sig:len()
       - proc[proc.signature].sig
@@ -146,7 +148,7 @@ function M:_set_highlights(bufnr, proc)
     if proc.parameter <= #proc[proc.signature].labels then
       vim.hl.range(
         bufnr,
-        -1,
+        ns_id,
         'Search',
         { 0, proc[proc.signature].labels[proc.parameter][1] - offset },
         { 0, proc[proc.signature].labels[proc.parameter][2] - offset }
@@ -159,7 +161,7 @@ function M:_set_highlights(bufnr, proc)
   for i = 1, #proc do
     vim.hl.range(
       bufnr,
-      -1,
+      ns_id,
       self._util.signs.numhl[i % #self._util.signs ~= 0 and i % #self._util.signs or #self._util.signs],
       { i - 1, 0 },
       { i - 1, string.len(i) }

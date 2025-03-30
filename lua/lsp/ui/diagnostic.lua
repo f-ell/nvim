@@ -132,6 +132,7 @@ function M:_format(proc)
 end
 
 function M:_set_highlights(bufnr, proc)
+  local ns_id = vim.api.nvim_create_namespace('lsp-ui')
   local offset = -1
 
   for i = 1, #proc.diag do
@@ -139,7 +140,7 @@ function M:_set_highlights(bufnr, proc)
       for j = 1, #proc.diag[i].msg do
         vim.hl.range(
           bufnr,
-          -1,
+          ns_id,
           self._util.signs.numhl[proc.diag[i].sev],
           { offset + i + j - 1, 0 },
           { offset + i + j - 1, -1 }
@@ -149,7 +150,7 @@ function M:_set_highlights(bufnr, proc)
 
     vim.hl.range(
       bufnr,
-      -1,
+      ns_id,
       self._util.signs.numhl[proc.diag[i].sev],
       { offset + i + #proc.diag[i].msg - 1, 0 },
       {
@@ -157,19 +158,13 @@ function M:_set_highlights(bufnr, proc)
         proc.diag[i].msg[#proc.diag[i].msg]:len(),
       }
     )
-    vim.hl.range(
-      bufnr,
+    vim.hl.range(bufnr, ns_id, 'NeutralFloat', {
+      offset + (#proc.diag[i].msg > 1 and #proc.diag[i].msg - 1 or 0) + i,
+      proc.diag[i].msg[#proc.diag[i].msg]:len(),
+    }, {
+      offset + (#proc.diag[i].msg > 1 and #proc.diag[i].msg - 1 or 0) + i,
       -1,
-      'NeutralFloat',
-      {
-        offset + (#proc.diag[i].msg > 1 and #proc.diag[i].msg - 1 or 0) + i,
-        proc.diag[i].msg[#proc.diag[i].msg]:len(),
-      },
-      {
-        offset + (#proc.diag[i].msg > 1 and #proc.diag[i].msg - 1 or 0) + i,
-        -1,
-      }
-    )
+    })
 
     if #proc.diag[i].msg > 1 then
       offset = offset + #proc.diag[i].msg - 1
