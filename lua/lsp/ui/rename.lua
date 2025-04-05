@@ -91,7 +91,7 @@ end
 
 function M:_register_float_actions(data)
   local close_win = function()
-    local ns_id = vim.api.nvim_create_namespace('LspUi')
+    local ns_id = vim.api.nvim_create_namespace('lsp-ui')
 
     if vim.api.nvim_win_is_valid(data.nwin) then
       vim.cmd('stopinsert')

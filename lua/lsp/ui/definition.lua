@@ -91,7 +91,7 @@ function M.type()
 end
 
 function M._util.definition.set_highlights(bufnr, def)
-  local nsid = vim.api.nvim_create_namespace('LspUi')
+  local nsid = vim.api.nvim_create_namespace('lsp-ui')
   vim.api.nvim_buf_clear_namespace(bufnr, nsid, 0, -1)
 
   vim.hl.range(
@@ -109,7 +109,7 @@ function M._util.definition.set_highlights(bufnr, def)
 end
 
 function M._util.definition.register_float_actions(bufnr, winnr)
-  local nsid = vim.api.nvim_create_namespace('LspUi')
+  local nsid = vim.api.nvim_create_namespace('lsp-ui')
   if winnr == nil then
     return
   end
