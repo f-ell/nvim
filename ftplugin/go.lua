@@ -2,8 +2,9 @@ vim.bo.expandtab = false
 
 local function organizeImports()
   local client = vim.lsp.get_clients({ name = 'gopls' })[1]
-  local params = vim.lsp.util.make_range_params(0, client.offset_encoding)
-  params.context = { diagnostics = vim.lsp.diagnostic.get_line_diagnostics(0) }
+  local params = vim.lsp.util.make_range_params(0, client.offset_encoding) --[[@as table]]
+  params.context =
+    { diagnostics = vim.diagnostic.get(0, { lnum = vim.fn.line('.') - 1 }) }
 
   local err, res = L.lsp.request(
     L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_codeAction),
