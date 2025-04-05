@@ -3,9 +3,7 @@
 local M = {}
 
 M._util = {
-  signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
-    return vim.startswith(s.name, 'DiagnosticSign')
-  end),
+  signs = vim.diagnostic.config().signs,
 }
 
 M.rename = function()
@@ -149,7 +147,10 @@ function M:_open(raw)
   vim.api.nvim_win_set_cursor(0, { raw.pos[1] + 1, raw.pos[2] })
   local data = L.win.open_cursor({ raw.cword }, true, {
     title = {
-      { ' ' .. self._util.signs[3].text, self._util.signs[3].texthl },
+      {
+        (' %s '):format(self._util.signs.text[vim.diagnostic.severity.INFO]),
+        self._util.signs.numhl[vim.diagnostic.severity.INFO],
+      },
       { 'Rename ', 'FloatTitle' },
     },
     zindex = 2,

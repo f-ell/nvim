@@ -162,7 +162,7 @@ function M:_set_highlights(bufnr, proc)
     vim.hl.range(
       bufnr,
       ns_id,
-      self._util.signs.numhl[i % #self._util.signs ~= 0 and i % #self._util.signs or #self._util.signs],
+      self._util.signs.numhl[i % #self._util.signs.text ~= 0 and i % #self._util.signs.text or #self._util.signs.text],
       { i - 1, 0 },
       { i - 1, string.len(i) }
     )
@@ -175,7 +175,12 @@ function M:_open(raw)
 
   local data = L.win.open_cursor(content, false, {
     title = {
-      { ' ' .. self._util.signs.text[3], self._util.signs.numhl[3] },
+      {
+        (' %s '):format(
+          self._util.signs.text[vim.diagnostic.severity.INFO],
+          self._util.signs.numhl[vim.diagnostic.severity.INFO]
+        ),
+      },
       { 'Signature ', 'FloatTitle' },
       { proc.title, 'NeutralFloat' },
     },

@@ -3,15 +3,13 @@
 local M = {}
 
 M._util = {
-  signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
-    return vim.startswith(s.name, 'DiagnosticSign')
-  end),
+  signs = vim.diagnostic.config().signs,
 }
 
 function M.codeaction()
   local params = vim.lsp.util.make_range_params(0, 'utf-8') --[[@as table]]
   params.context =
-    { diagnostics = vim.lsp.diagnostic.get(0, { lnum = vim.fn.line('.') }) }
+    { diagnostics = vim.diagnostic.get(0, { lnum = vim.fn.line('.') - 1 }) }
 
   local err, res = L.lsp.request(
     L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_codeAction),
@@ -89,7 +87,7 @@ function M:_set_highlights(bufnr, proc)
     vim.hl.range(
       bufnr,
       ns_id,
-      self._util.signs[i % #self._util.signs ~= 0 and i % #self._util.signs or #self._util.signs].texthl,
+      self._util.signs.numhl[i % #self._util.signs.text ~= 0 and i % #self._util.signs.text or #self._util.signs.text],
       { offset + i, 0 },
       { offset + i, len }
     )
@@ -226,7 +224,10 @@ function M:_open(raw)
 
   local data = L.win.open_cursor(content, true, {
     title = {
-      { ' ' .. self._util.signs[3].text, self._util.signs[3].texthl },
+      {
+        (' %s '):format(self._util.signs.text[vim.diagnostic.severity.INFO]),
+        self._util.signs.numhl[vim.diagnostic.severity.INFO],
+      },
       { 'Code Actions ', 'FloatTitle' },
     },
     zindex = 2,

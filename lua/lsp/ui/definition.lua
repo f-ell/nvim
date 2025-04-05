@@ -278,7 +278,7 @@ function M:_set_highlights(bufnr, proc)
     vim.hl.range(
       bufnr,
       ns_id,
-      self._util.signs[i % #self._util.signs ~= 0 and i % #self._util.signs or #self._util.signs].texthl,
+      self._util.signs.numhl[i % #self._util.signs.text ~= 0 and i % #self._util.signs.text or #self._util.signs.text],
       { i - 1, 0 },
       { i - 1, len }
     )
@@ -327,7 +327,12 @@ function M:_open(raw)
 
   local data = L.win.open_cursor(content, true, {
     title = {
-      { ' ' .. self._util.signs[3].text, self._util.signs[3].texthl },
+      {
+        (' %s '):format(
+          self._util.signs.text[vim.diagnostic.severity.INFO],
+          self._util.signs.numhl[vim.diagnostic.severity.INFO]
+        ),
+      },
       { 'Definition ', 'FloatTitle' },
     },
     zindex = 2,
