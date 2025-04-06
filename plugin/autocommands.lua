@@ -18,11 +18,12 @@ vim.api.nvim_create_autocmd('ColorScheme', {
 vim.api.nvim_create_autocmd('User', {
   pattern = 'TelescopeFindPre',
   callback = function()
+    local border = vim.o.winborder
     vim.opt_local.winborder = 'none'
     vim.api.nvim_create_autocmd('WinLeave', {
       once = true,
       callback = function()
-        vim.opt_local.winborder = vim.o.winborder
+        vim.opt_local.winborder = border
       end,
     })
   end,
