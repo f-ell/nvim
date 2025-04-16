@@ -53,6 +53,7 @@ return {
     { 'gsK', '<CMD>silent Gitsigns nav_hunk prev target=staged<CR>zz' },
     { 'gsl', '<CMD>Gitsigns toggle_deleted<CR>' },
     { 'gsc', '<CMD>Gitsigns toggle_linehl<CR>' },
+    { 'gsv', '<CMD>Gitsigns select_hunk<CR>' },
     { 'gs<', '<CMD>diffget gitsigns://*:0\\\\|2:<CR>' },
     { 'gs>', '<CMD>diffget gitsigns://*:3:<CR>' },
   },
