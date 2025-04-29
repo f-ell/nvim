@@ -36,4 +36,3 @@ vim.o.termguicolors = true
 vim.api.nvim_command('filetype plugin indent on')
 
 vim.cmd.colorscheme('leafless')
-require('options')
