@@ -493,10 +493,10 @@ function M.ui.pick(items, multi, format, config)
 
   local function set_highlights(bufnr)
     local texthl = {
-      'ErrorFloat',
-      'WarningFloat',
-      'InfoFloat',
-      'HintFloat',
+      'DiagnosticError',
+      'DiagnosticWarn',
+      'DiagnosticInfo',
+      'DiagnosticHint',
     }
 
     for i = 1, #vim.api.nvim_buf_get_lines(bufnr, 0, -1, true) do
