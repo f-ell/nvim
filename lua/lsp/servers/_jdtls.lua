@@ -1,9 +1,7 @@
 local M = {}
 
 M._util = {
-  signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
-    return vim.startswith(s.name, 'DiagnosticSign')
-  end),
+  signs = vim.diagnostic.config().signs,
 }
 
 local function generateConstructorsPrompt(_, ctx)
@@ -46,7 +44,10 @@ local function generateConstructorsPrompt(_, ctx)
 
   local constructors = L.ui.pick(res.result.constructors, true, format, {
     title = {
-      { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
+      {
+        (' %s '):format(M._util.signs.text[vim.diagnostic.severity.INFO]),
+        M._util.signs.numhl[vim.diagnostic.severity.INFO],
+      },
       { 'generateConstructors:constructors ', 'FloatTitle' },
       { '<ESC> to confirm ', 'NeutralFloat' },
     },
@@ -65,7 +66,10 @@ local function generateConstructorsPrompt(_, ctx)
 
     fields = L.ui.pick(fields, { -1 }, format, {
       title = {
-        { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
+        {
+          (' %s '):format(M._util.signs.text[vim.diagnostic.severity.INFO]),
+          M._util.signs.numhl[vim.diagnostic.severity.INFO],
+        },
         { 'generateConstructors:fields ', 'FloatTitle' },
         { '<ESC> to confirm ', 'NeutralFloat' },
       },
@@ -118,7 +122,10 @@ local function generateDelegateMethodsPrompt(_, ctx)
   local field = #res.result.delegateFields == 1 and res.result.delegateFields[1]
     or L.ui.pick(res.result.delegateFields, false, format, {
       title = {
-        { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
+        {
+          (' %s '):format(M._util.signs.text[vim.diagnostic.severity.INFO]),
+          M._util.signs.numhl[vim.diagnostic.severity.INFO],
+        },
         { 'generateDelegateMethods:target ', 'FloatTitle' },
         { '<ESC> to confirm ', 'NeutralFloat' },
       },
@@ -143,7 +150,10 @@ local function generateDelegateMethodsPrompt(_, ctx)
 
   local methods = L.ui.pick(field.delegateMethods, true, format, {
     title = {
-      { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
+      {
+        (' %s '):format(M._util.signs.text[vim.diagnostic.severity.INFO]),
+        M._util.signs.numhl[vim.diagnostic.severity.INFO],
+      },
       { 'generateDelegateMethods:method ', 'FloatTitle' },
       { '<ESC> to confirm ', 'NeutralFloat' },
     },
@@ -200,7 +210,10 @@ local function generateToStringPrompt(_, ctx)
 
   local items = L.ui.pick(res.result.fields, { -1 }, format, {
     title = {
-      { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
+      {
+        (' %s '):format(M._util.signs.text[vim.diagnostic.severity.INFO]),
+        M._util.signs.numhl[vim.diagnostic.severity.INFO],
+      },
       { 'toString ', 'FloatTitle' },
       { '<ESC> to confirm ', 'NeutralFloat' },
     },
@@ -261,7 +274,10 @@ local function hashCodeEqualsPrompt(_, ctx)
 
   local items = L.ui.pick(res.result.fields, { -1 }, format, {
     title = {
-      { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
+      {
+        (' %s '):format(M._util.signs.text[vim.diagnostic.severity.INFO]),
+        M._util.signs.numhl[vim.diagnostic.severity.INFO],
+      },
       { 'hashCodeEquals ', 'FloatTitle' },
       { '<ESC> to confirm ', 'NeutralFloat' },
     },
@@ -332,7 +348,10 @@ local function organizeImportsChooseImports(result)
 
       local items = L.ui.pick(candidates, false, format, {
         title = {
-          { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
+          {
+            (' %s '):format(M._util.signs.text[vim.diagnostic.severity.INFO]),
+            M._util.signs.numhl[vim.diagnostic.severity.INFO],
+          },
           { 'chooseImports:' .. type .. ' ', 'FloatTitle' },
           { '<ESC> to confirm ', 'NeutralFloat' },
         },
@@ -386,7 +405,10 @@ local function overrideMethodsPrompt(_, ctx)
 
   local items = L.ui.pick(res.result.methods, multi, format, {
     title = {
-      { ' ' .. M._util.signs[3].text, M._util.signs[3].texthl },
+      {
+        (' %s '):format(M._util.signs.text[vim.diagnostic.severity.INFO]),
+        M._util.signs.numhl[vim.diagnostic.severity.INFO],
+      },
       { '@Override ', 'FloatTitle' },
       { '<ESC> to confirm ', 'NeutralFloat' },
     },
@@ -402,6 +424,9 @@ local function overrideMethodsPrompt(_, ctx)
 
   if err then
     L.lsp.notify_error(err)
+    return
+  end
+  if L.tbl.is_empty(res) then
     return
   end
 
