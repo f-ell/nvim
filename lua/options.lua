@@ -5,6 +5,7 @@ vim.o.wrap = false
 
 vim.o.confirm = true
 vim.o.cursorline = true
+vim.o.inccommand = 'split'
 
 vim.o.cmdheight = 1
 vim.o.pumheight = 7
