@@ -69,19 +69,18 @@ return {
       :totable()
 
     for i = 1, #servers do
-      local opts = {
-        on_attach = on_attach,
-        capabilities = require('blink.cmp').get_lsp_capabilities(
-          servers[i].capabilities
-        ),
-      }
       local server = servers[i]:gsub('%.lua$', '')
+      local cfg = {
+        on_attach = on_attach,
+        capabilities = require('blink.cmp').get_lsp_capabilities(),
+      }
 
-      local req, tbl = pcall(require, 'lsp.servers.' .. server)
-      if req then
-        opts = vim.tbl_deep_extend('force', opts, tbl)
+      local ok, tbl = pcall(require, 'lsp.servers.' .. server)
+      if ok then
+        cfg = vim.tbl_deep_extend('force', cfg, tbl)
       end
-      require('lspconfig')[server].setup(opts)
+
+      require('lspconfig')[server].setup(cfg)
     end
   end,
 }
