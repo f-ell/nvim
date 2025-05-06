@@ -8,8 +8,15 @@ M._util = {
 
 function M.codeaction()
   local params = vim.lsp.util.make_range_params(0, 'utf-8') --[[@as table]]
-  params.context =
-    { diagnostics = vim.diagnostic.get(0, { lnum = vim.fn.line('.') - 1 }) }
+  params.context = {
+    diagnostics = vim
+      .iter(vim.diagnostic.get(0, { lnum = vim.fn.line('.') - 1 }))
+      :map(function(d)
+        return vim.fn.values(d.user_data)
+      end)
+      :flatten()
+      :totable() or {},
+  }
 
   local err, res = L.lsp.request(
     L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_codeAction),
