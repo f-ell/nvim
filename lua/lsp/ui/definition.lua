@@ -4,9 +4,7 @@ local M = {}
 
 M._util = {
   definition = {},
-  signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
-    return vim.startswith(s.name, 'DiagnosticSign')
-  end),
+  signs = vim.diagnostic.config().signs,
 }
 
 function M.peek()
@@ -328,10 +326,8 @@ function M:_open(raw)
   local data = L.win.open_cursor(content, true, {
     title = {
       {
-        (' %s '):format(
-          self._util.signs.text[vim.diagnostic.severity.INFO],
-          self._util.signs.numhl[vim.diagnostic.severity.INFO]
-        ),
+        (' %s '):format(self._util.signs.text[vim.diagnostic.severity.INFO]),
+        self._util.signs.numhl[vim.diagnostic.severity.INFO],
       },
       { 'Definition ', 'FloatTitle' },
     },
