@@ -32,10 +32,7 @@ return {
 
       accept = {
         create_undo_point = true,
-        auto_brackets = {
-          enabled = true,
-          default_brackets = { '(', '' },
-        },
+        auto_brackets = { enabled = false },
       },
 
       list = {
