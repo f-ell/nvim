@@ -410,6 +410,7 @@ local git = {
 ---@type Component
 local lsp = {
   meta = {
+    ---@type vim.diagnostic.Opts.Signs
     signs = nil,
     clients = {},
     diagnostics = {
@@ -431,12 +432,7 @@ local lsp = {
       function(self)
         -- updated on first LspAttach - signs may not be defined beforehand
         if L.tbl.is_empty(self.meta.signs) then
-          self.meta.signs = vim.fn.filter(
-            vim.fn.sign_getdefined(),
-            function(_, s)
-              return vim.startswith(s.name, 'DiagnosticSign')
-            end
-          )
+          self.meta.signs = vim.diagnostic.config().signs --[[@as vim.diagnostic.Opts.Signs]]
         end
 
         self.meta.clients = vim.tbl_map(function(v)
@@ -466,8 +462,8 @@ local lsp = {
         for i = 1, #self.meta.diagnostics.count do
           if self.meta.diagnostics.count[i] ~= 0 then
             part[#part + 1] = ('%%#%s#%s'):format(
-              self.meta.signs[i].texthl,
-              self.meta.signs[i].text
+              self.meta.signs.numhl[i],
+              self.meta.signs.text[i]
             )
           end
         end
@@ -490,7 +486,7 @@ local lsp = {
           #self.meta.clients,
           #self.meta.clients > 1 and 's' or ''
         ),
-      '%#StatusLine#',
+      ' %#StatusLine#',
     })
   end,
 }
