@@ -2,7 +2,7 @@ if vim.fn.executable('silicon') ~= 1 then
   return
 end
 
-local dir = os.getenv('HOME') .. '/Media/Pictures/Screenshots/Code/'
+local dir = os.getenv('HOME') .. '/Pictures/Screenshots/Code/'
 local colours = { 'e67e80', 'a7c080', 'dbbc7f', '7fbbb3', 'd699b6', '83c092' }
 
 L.key.vnmap('<leader>*', function()
@@ -18,7 +18,6 @@ L.key.vnmap('<leader>*', function()
     '--shadow-blur-radius 6',
     "--shadow-color '#374247'",
     '--no-window-controls',
-    '--theme everforest_dark',
   }
 
   -- get selection contents
