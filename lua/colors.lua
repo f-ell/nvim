@@ -3,9 +3,6 @@ local M = {
   groups = {
     -- statusline
     StatusLineReadonly = { fg = LEAFLESS.bright.red },
-    StatusLineLspinfo = { link = 'NonText' },
-    StatusLineSearch = { fg = LEAFLESS.bright.blu },
-    StatusLineLocation = { fg = LEAFLESS.bright.cya },
 
     modeC = { fg = LEAFLESS.bright.pur },
     modeI = { fg = LEAFLESS.bright.blu },

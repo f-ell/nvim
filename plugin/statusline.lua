@@ -157,11 +157,12 @@ local buffer = {
   },
   get = function(self)
     return table.concat({
-      '%#StatusLine#',
+      '%#NonText#',
       vim.bo.modified and '+ ' or '- ',
+      '%#StatusLine#',
       self.meta.name,
       ' ',
-      vim.bo.readonly and '%#StatusLineReadonly#' or '',
+      vim.bo.readonly and '%#StatusLineReadonly#' or '%#NonText#',
       '(%n)',
       '%#StatusLine#',
     })
@@ -480,7 +481,7 @@ local lsp = {
 
     return table.concat({
       #self.meta.diagnostics.string == 0 and '' or self.meta.diagnostics.string,
-      '%#StatusLineLspinfo#',
+      '%#NonText#',
       vim.o.columns < 100 and ''
         or (' %%@v:lua.user_sl_lsp@[%s client%s]%%X'):format(
           #self.meta.clients,
@@ -518,14 +519,14 @@ local search = {
     end
 
     return table.concat({
-      '%#StatusLineSearch#%#StatusLine#',
+      '%#NonText#%#StatusLine#',
       search.current .. '/' .. search.total,
     }, ' ')
   end,
 }
 
 ---@type Component
-local location = { get = '%#StatusLineLocation#%#StatusLine# %l:%v' }
+local location = { get = '%#NonText#%#StatusLine# %l:%v' }
 
 M:init()
 
