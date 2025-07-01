@@ -37,11 +37,6 @@ vim.opt.listchars = {
 }
 
 vim.opt.spelllang = { 'en_gb', 'de_de' }
-vim.opt.guicursor = {
-  'n-v-c-sm:block',
-  'i-ci-ve:hor1-blinkon200-blinkoff150',
-  'r-cr-o:hor20',
-}
 
 -- tabs
 vim.o.expandtab = true

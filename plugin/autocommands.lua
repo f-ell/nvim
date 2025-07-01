@@ -1,3 +1,19 @@
+vim.api.nvim_create_autocmd({ 'VimEnter', 'VimResume' }, {
+  callback = function()
+    vim.opt.guicursor = {
+      'n-v-c-sm:block',
+      'i-ci-ve:hor1-blinkon200-blinkoff150',
+      'r-cr-o:hor20',
+    }
+  end,
+})
+vim.api.nvim_create_autocmd({ 'VimLeave', 'VimSuspend' }, {
+  callback = function()
+    vim.opt.guicursor = { 'a:hor20-blinkwait700-blinkon700-blinkoff300' }
+    vim.cmd('sleep 1ms')
+  end,
+})
+
 vim.api.nvim_create_autocmd('TextYankPost', {
   callback = function()
     vim.highlight.on_yank({
