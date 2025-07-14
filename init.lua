@@ -36,3 +36,6 @@ vim.o.termguicolors = true
 vim.api.nvim_command('filetype plugin indent on')
 
 vim.cmd.colorscheme('leafless')
+
+-- FIX: deprecate once https://github.com/neovim/neovim/pull/33145 is merged
+vim.g._ts_force_sync_parsing = true -- see 32660
