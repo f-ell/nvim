@@ -1,10 +1,11 @@
-local M = {}
+-- capabilities and extendedClientCapabilities via https://github.com/mfussenegger/nvim-jdtls
 
-M._util = {
-  signs = vim.diagnostic.config().signs,
-}
+local signs = vim.diagnostic.config().signs
+---@cast signs -nil
 
-local function generateConstructorsPrompt(_, ctx)
+local commands = {}
+
+commands['java.action.generateConstructorsPrompt'] = function(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   local err, res
 
@@ -45,8 +46,8 @@ local function generateConstructorsPrompt(_, ctx)
   local constructors = L.ui.pick(res.result.constructors, true, format, {
     title = {
       {
-        (' %s '):format(M._util.signs.text[vim.diagnostic.severity.INFO]),
-        M._util.signs.numhl[vim.diagnostic.severity.INFO],
+        (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
+        signs.numhl[vim.diagnostic.severity.INFO],
       },
       { 'generateConstructors:constructors ', 'FloatTitle' },
       { '<ESC> to confirm ', 'NeutralFloat' },
@@ -67,8 +68,8 @@ local function generateConstructorsPrompt(_, ctx)
     fields = L.ui.pick(fields, { -1 }, format, {
       title = {
         {
-          (' %s '):format(M._util.signs.text[vim.diagnostic.severity.INFO]),
-          M._util.signs.numhl[vim.diagnostic.severity.INFO],
+          (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
+          signs.numhl[vim.diagnostic.severity.INFO],
         },
         { 'generateConstructors:fields ', 'FloatTitle' },
         { '<ESC> to confirm ', 'NeutralFloat' },
@@ -89,7 +90,7 @@ local function generateConstructorsPrompt(_, ctx)
   L.lsp.apply_edit(res[1])
 end
 
-local function generateDelegateMethodsPrompt(_, ctx)
+commands['java.action.generateDelegateMethodsPrompt'] = function(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   local err, res
 
@@ -123,8 +124,8 @@ local function generateDelegateMethodsPrompt(_, ctx)
     or L.ui.pick(res.result.delegateFields, false, format, {
       title = {
         {
-          (' %s '):format(M._util.signs.text[vim.diagnostic.severity.INFO]),
-          M._util.signs.numhl[vim.diagnostic.severity.INFO],
+          (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
+          signs.numhl[vim.diagnostic.severity.INFO],
         },
         { 'generateDelegateMethods:target ', 'FloatTitle' },
         { '<ESC> to confirm ', 'NeutralFloat' },
@@ -151,8 +152,8 @@ local function generateDelegateMethodsPrompt(_, ctx)
   local methods = L.ui.pick(field.delegateMethods, true, format, {
     title = {
       {
-        (' %s '):format(M._util.signs.text[vim.diagnostic.severity.INFO]),
-        M._util.signs.numhl[vim.diagnostic.severity.INFO],
+        (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
+        signs.numhl[vim.diagnostic.severity.INFO],
       },
       { 'generateDelegateMethods:method ', 'FloatTitle' },
       { '<ESC> to confirm ', 'NeutralFloat' },
@@ -184,7 +185,7 @@ local function generateDelegateMethodsPrompt(_, ctx)
   L.lsp.apply_edit(res[1])
 end
 
-local function generateToStringPrompt(_, ctx)
+commands['java.action.generateToStringPrompt'] = function(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
 
   local err, res =
@@ -211,8 +212,8 @@ local function generateToStringPrompt(_, ctx)
   local items = L.ui.pick(res.result.fields, { -1 }, format, {
     title = {
       {
-        (' %s '):format(M._util.signs.text[vim.diagnostic.severity.INFO]),
-        M._util.signs.numhl[vim.diagnostic.severity.INFO],
+        (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
+        signs.numhl[vim.diagnostic.severity.INFO],
       },
       { 'toString ', 'FloatTitle' },
       { '<ESC> to confirm ', 'NeutralFloat' },
@@ -235,7 +236,7 @@ local function generateToStringPrompt(_, ctx)
   L.lsp.apply_edit(res[1])
 end
 
-local function hashCodeEqualsPrompt(_, ctx)
+commands['java.action.hashCodeEqualsPrompt'] = function(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
 
   local err, res = L.lsp.request(
@@ -275,8 +276,8 @@ local function hashCodeEqualsPrompt(_, ctx)
   local items = L.ui.pick(res.result.fields, { -1 }, format, {
     title = {
       {
-        (' %s '):format(M._util.signs.text[vim.diagnostic.severity.INFO]),
-        M._util.signs.numhl[vim.diagnostic.severity.INFO],
+        (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
+        signs.numhl[vim.diagnostic.severity.INFO],
       },
       { 'hashCodeEquals ', 'FloatTitle' },
       { '<ESC> to confirm ', 'NeutralFloat' },
@@ -313,7 +314,7 @@ local function hashCodeEqualsPrompt(_, ctx)
   L.lsp.apply_edit(res[1])
 end
 
-local function organizeImportsChooseImports(result)
+commands['java.action.organizeImports.chooseImports'] = function(result)
   local ns_id = vim.api.nvim_create_namespace('jdtls')
   local uri, missing = result[1], result[2]
 
@@ -349,8 +350,8 @@ local function organizeImportsChooseImports(result)
       local items = L.ui.pick(candidates, false, format, {
         title = {
           {
-            (' %s '):format(M._util.signs.text[vim.diagnostic.severity.INFO]),
-            M._util.signs.numhl[vim.diagnostic.severity.INFO],
+            (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
+            signs.numhl[vim.diagnostic.severity.INFO],
           },
           { 'chooseImports:' .. type .. ' ', 'FloatTitle' },
           { '<ESC> to confirm ', 'NeutralFloat' },
@@ -365,7 +366,7 @@ local function organizeImportsChooseImports(result)
   return chosen
 end
 
-local function overrideMethodsPrompt(_, ctx)
+commands['java.action.overrideMethodsPrompt'] = function(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   local err, res
 
@@ -406,8 +407,8 @@ local function overrideMethodsPrompt(_, ctx)
   local items = L.ui.pick(res.result.methods, multi, format, {
     title = {
       {
-        (' %s '):format(M._util.signs.text[vim.diagnostic.severity.INFO]),
-        M._util.signs.numhl[vim.diagnostic.severity.INFO],
+        (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
+        signs.numhl[vim.diagnostic.severity.INFO],
       },
       { '@Override ', 'FloatTitle' },
       { '<ESC> to confirm ', 'NeutralFloat' },
@@ -433,38 +434,149 @@ local function overrideMethodsPrompt(_, ctx)
   L.lsp.apply_edit(res[1])
 end
 
-M.commands = {
-  ['java.action.generateConstructorsPrompt'] = generateConstructorsPrompt,
-  ['java.action.generateDelegateMethodsPrompt'] = generateDelegateMethodsPrompt,
-  ['java.action.generateToStringPrompt'] = generateToStringPrompt,
-  ['java.action.hashCodeEqualsPrompt'] = hashCodeEqualsPrompt,
-  ['java.action.organizeImports.chooseImports'] = organizeImportsChooseImports,
-  ['java.action.overrideMethodsPrompt'] = overrideMethodsPrompt,
-}
+--------------------------------------------------------------------------------
 
-if not vim.lsp.handlers['workspace/executeClientCommand'] then
-  vim.lsp.handlers['workspace/executeClientCommand'] = function(_, params, ctx)
-    local cmd = (vim.lsp.get_client_by_id(ctx.client_id) or {}).commands or {}
-    local _cmd = vim.tbl_extend('force', vim.lsp.commands, M.commands)
-    local fn = cmd[params.command] or _cmd[params.command]
+local handlers = {}
 
-    if not fn then
-      return vim.lsp.rpc_response_error(
-        vim.lsp.protocol.ErrorCodes.MethodNotFound,
-        ('`%s` not supported by client'):format(params.command)
+function handlers.definition(err, result, ctx, _)
+  local uri, range =
+    result.uri or result[1].uri, result.range or result[1].range
+  if not vim.endswith(uri, '.class') then
+    return { err = err, result = result }
+  end
+
+  if vim.startswith(uri, 'file://') then
+    uri = vim.uri_from_fname(uri)
+  end
+
+  local params = { command = 'java.decompile', arguments = { uri } }
+  err, result = L.lsp.request(
+    vim.lsp.get_client_by_id(ctx.client_id) --[[@as vim.lsp.Client]],
+    vim.lsp.protocol.Methods.workspace_executeCommand,
+    params,
+    ctx.bufnr
+  )
+
+  if err == nil then
+    uri = uri:sub(0, ({ uri:find('^%w-://.-%.class%?') })[2] - 1)
+    local bufnr = vim.uri_to_bufnr(uri)
+
+    if vim.fn.bufloaded(bufnr) == 0 then
+      vim.bo[bufnr].buftype = 'nowrite'
+      vim.bo[bufnr].bufhidden = 'hide'
+      vim.api.nvim_buf_set_name(bufnr, uri)
+      vim.api.nvim_buf_set_lines(
+        bufnr,
+        0,
+        -1,
+        true,
+        vim.split(result[1].result:gsub('\r\n', '\n'), '\n')
       )
     end
 
-    local ok, res = pcall(fn, params.arguments, ctx)
-    if ok then
-      return res
-    else
-      return vim.lsp.rpc_response_error(
-        vim.lsp.protocol.ErrorCodes.InternalError,
-        res
-      )
-    end
+    result = { targetUri = uri, range = range }
+  end
+
+  return { err = err, result = result }
+end
+
+function handlers.execute_client_command(_, params, ctx)
+  local cmd = (vim.lsp.get_client_by_id(ctx.client_id) or {}).commands or {}
+  local _cmd = vim.tbl_extend('force', vim.lsp.commands, commands)
+  local fn = cmd[params.command] or _cmd[params.command]
+
+  if not fn then
+    return vim.lsp.rpc_response_error(
+      vim.lsp.protocol.ErrorCodes.MethodNotFound,
+      ('`%s` not supported by client'):format(params.command)
+    )
+  end
+
+  local ok, res = pcall(fn, params.arguments, ctx)
+  if ok then
+    return res
+  else
+    return vim.lsp.rpc_response_error(
+      vim.lsp.protocol.ErrorCodes.InternalError,
+      res
+    )
   end
 end
 
-return M
+--------------------------------------------------------------------------------
+
+for k, v in pairs(commands) do
+  vim.lsp.commands[k] = v
+end
+
+local mpack = vim.fn.stdpath('data') .. '/mason/packages'
+return {
+  cmd = {
+    'jdtls',
+    '-Declipse.application=org.eclipse.jdt.ls.core.id1',
+    '-Dosgi.bundles.defaultStartLevel=4',
+    '-Declipse.product=org.eclipse.jdt.ls.core.product',
+    '-Dlog.protocol=true',
+    '-Dlog.level=ALL',
+    '-Xms1g',
+    '--add-modules=ALL-SYSTEM',
+    '--add-opens',
+    'java.base/java.util=ALL-UNNAMED',
+    '--add-opens',
+    'java.base/java.lang=ALL-UNNAMED',
+    '--jvm-arg=-javaagent:' .. mpack .. '/jdtls/lombok.jar',
+    '-jar',
+    vim.fn.glob(mpack .. '/jdtls/plugins/org.eclipse.equinox.launcher_*.jar'),
+    '-configuration',
+    mpack .. '/jdtls/config_linux',
+    '-data',
+    vim.fn.stdpath('data')
+      .. '/jdtls-workspace/'
+      .. vim.fn.fnamemodify(vim.fn.getcwd(), ':p:t'),
+  },
+
+  handlers = {
+    ['language/status'] = function() end, -- disable status logging
+    ['$/progress'] = function() end, -- disable progress logging
+    ['textDocument/definition'] = handlers.definition,
+    ['textDocument/typeDefinition'] = handlers.definition,
+    ['workspace/executeClientCommand'] = (
+      vim.lsp.handlers['workspace/executeClientCommand']
+      or handlers.execute_client_command
+    ),
+  },
+
+  -- https://github.com/eclipse/eclipse.jdt.ls/wiki/Running-the-JAVA-LS-server-from-the-command-line#initialize-request
+  settings = { java = {} },
+
+  init_options = {
+    bundles = { vim.fn.glob(mpack .. '/java-test/extension/server/*.jar') },
+
+    extendedClientCapabilities = {
+      advancedOrganizeImportsSupport = true,
+      classFileContentsSupport = true,
+      executeClientCommandSupport = true,
+      generateConstructorsPromptSupport = true,
+      generateDelegateMethodsPromptSupport = true,
+      generateToStringPromptSupport = true,
+      hashCodeEqualsPromptSupport = true,
+      overrideMethodsPromptSupport = true,
+    },
+  },
+
+  capabilities = {
+    textDocument = {
+      codeAction = {
+        codeActionLiteralSupport = {
+          codeActionKind = {
+            valueSet = {
+              'source.generate.toString',
+              'source.generate.hashCodeEquals',
+              'source.organizeImports',
+            },
+          },
+        },
+      },
+    },
+  },
+}
