@@ -38,6 +38,14 @@ vim.opt.listchars = {
 
 vim.opt.spelllang = { 'en_gb', 'de_de' }
 vim.opt.nrformats = { 'bin', 'hex', 'blank' }
+vim.opt.diffopt = {
+  'internal',
+  'algorithm:histogram',
+  'filler',
+  'closeoff',
+  'linematch:60',
+  'foldcolumn:0',
+}
 
 -- tabs
 vim.o.expandtab = true
