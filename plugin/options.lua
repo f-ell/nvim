@@ -37,6 +37,7 @@ vim.opt.listchars = {
 }
 
 vim.opt.spelllang = { 'en_gb', 'de_de' }
+vim.opt.nrformats = { 'bin', 'hex', 'blank' }
 
 -- tabs
 vim.o.expandtab = true
