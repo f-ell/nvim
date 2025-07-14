@@ -36,16 +36,16 @@ return {
     local key = require('lib').key
     local ui = require('lsp.ui')
     local on_attach = function()
-      key.nnmap('<leader>fb', function()
+      key.nnmap('grf', function()
         require('conform').format({ timeout_ms = 500, lsp_format = 'fallback' })
       end, { buffer = true })
-      key.nnmap('gr', vim.lsp.buf.references, { buffer = true })
       key.nnmap('gd', ui.def.peek, { buffer = true })
-      key.nnmap('<leader>gd', ui.def.open, { buffer = true })
-      key.nnmap('<leader>gt', ui.def.type, { buffer = true })
+      key.nnmap('grd', ui.def.open, { buffer = true })
+      key.nnmap('grt', ui.def.type, { buffer = true })
 
-      key.nnmap('<leader>ca', ui.cda.codeaction, { buffer = true })
-      key.nnmap('<leader>rn', ui.ren.rename, { buffer = true })
+      key.nnmap('gra', ui.cda.codeaction, { buffer = true })
+      key.nnmap('grn', ui.ren.rename, { buffer = true })
+      key.nnmap('grr', vim.lsp.buf.references, { buffer = true })
       key.modemap({ 'i', 'n' }, '<C-s>', ui.sig.active)
       key.modemap({ 'i', 'n' }, '<C-S-s>', ui.sig.available)
 
