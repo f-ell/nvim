@@ -1,5 +1,4 @@
----@type LspUiModuleSignatureHelp
----@diagnostic disable-next-line: missing-fields
+---@class lsp.ui.SignatureHelp : lsp.ui
 local M = {}
 
 M._util = {

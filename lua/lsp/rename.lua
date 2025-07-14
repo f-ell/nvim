@@ -1,4 +1,4 @@
----@type LspUiModuleRename
+---@class lsp.ui.Rename : lsp.ui
 ---@diagnostic disable-next-line: missing-fields
 local M = {}
 

@@ -1,5 +1,4 @@
----@type LspUiModuleCodeAction
----@diagnostic disable-next-line: missing-fields
+---@class lsp.ui.CodeAction : lsp.ui
 local M = {}
 
 M._util = {

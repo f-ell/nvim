@@ -41,7 +41,7 @@ return {
     require('mason').setup({ ui = { border = 'single' } })
 
     local key = require('lib').key
-    local ui = require('lsp.ui')
+    local lsp = require('lsp')
     vim.api.nvim_create_autocmd('LspAttach', {
       group = vim.api.nvim_create_augroup('lsp', {}),
       callback = function(args)
@@ -51,27 +51,32 @@ return {
             lsp_format = 'fallback',
           })
         end, { buffer = args.buf })
-        key.nnmap('gd', ui.def.peek, { buffer = args.buf })
-        key.nnmap('grd', ui.def.open, { buffer = args.buf })
-        key.nnmap('grt', ui.def.type, { buffer = args.buf })
+        key.nnmap('gd', lsp.def.peek, { buffer = args.buf })
+        key.nnmap('grd', lsp.def.open, { buffer = args.buf })
+        key.nnmap('grt', lsp.def.type, { buffer = args.buf })
 
-        key.nnmap('gra', ui.cda.codeaction, { buffer = args.buf })
-        key.nnmap('grn', ui.ren.rename, { buffer = args.buf })
+        key.nnmap('gra', lsp.cda.codeaction, { buffer = args.buf })
+        key.nnmap('grn', lsp.ren.rename, { buffer = args.buf })
         key.nnmap('grr', vim.lsp.buf.references, { buffer = args.buf })
-        key.modemap({ 'i', 'n' }, '<C-s>', ui.sig.active, { buffer = args.buf })
+        key.modemap(
+          { 'i', 'n' },
+          '<C-s>',
+          lsp.sig.active,
+          { buffer = args.buf }
+        )
         key.modemap(
           { 'i', 'n' },
           '<C-S-s>',
-          ui.sig.available,
+          lsp.sig.available,
           { buffer = args.buf }
         )
 
-        key.nnmap('<leader>h', ui.dgn.get_line, { buffer = args.buf })
+        key.nnmap('<leader>h', lsp.dgn.get_line, { buffer = args.buf })
         key.nnmap('<leader>j', function()
-          ui.dgn.get_dir('next')
+          lsp.dgn.get_dir('next')
         end, { buffer = args.buf })
         key.nnmap('<leader>k', function()
-          ui.dgn.get_dir('prev')
+          lsp.dgn.get_dir('prev')
         end, { buffer = args.buf })
         key.nnmap('<leader>l', function()
           require('telescope.builtin').diagnostics({ bufnr = args.buf })

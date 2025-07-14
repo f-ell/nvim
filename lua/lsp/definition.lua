@@ -1,5 +1,4 @@
----@type LspUiModuleDefinition
----@diagnostic disable-next-line: missing-fields
+---@class lsp.ui.Definition : lsp.ui
 local M = {}
 
 M._util = {
