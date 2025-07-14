@@ -110,7 +110,7 @@ return {
         lazydev = {
           name = 'LazyDev',
           module = 'lazydev.integrations.blink',
-          fallbacks = { 'lsp' },
+          score_offset = 100,
         },
         lsp = {
           name = 'lsp',
@@ -128,7 +128,7 @@ return {
         path = {
           name = 'path',
           module = 'blink.cmp.sources.path',
-          score_offset = -1,
+          score_offset = -100,
         },
       },
     },
