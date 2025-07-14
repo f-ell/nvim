@@ -1,15 +1,12 @@
----@type LspUiModuleSignatureHelp
----@diagnostic disable-next-line: missing-fields
+---@class lsp.ui.SignatureHelp : lsp.ui
 local M = {}
 
 M._util = {
-  signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
-    return vim.startswith(s.name, 'DiagnosticSign')
-  end),
+  signs = vim.diagnostic.config().signs,
 }
 
 M.active = function()
-  local params = vim.lsp.util.make_position_params()
+  local params = vim.lsp.util.make_position_params(0, 'utf-8')
   local err, res = L.lsp.request(
     L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_signatureHelp),
     vim.lsp.protocol.Methods.textDocument_signatureHelp,
@@ -34,7 +31,7 @@ M.active = function()
 end
 
 M.available = function()
-  local params = vim.lsp.util.make_position_params()
+  local params = vim.lsp.util.make_position_params(0, 'utf-8')
   local err, res = L.lsp.request(
     L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_signatureHelp),
     vim.lsp.protocol.Methods.textDocument_signatureHelp,
@@ -139,6 +136,8 @@ function M:_format(proc)
 end
 
 function M:_set_highlights(bufnr, proc)
+  local ns_id = vim.api.nvim_create_namespace('lsp-ui')
+
   if proc.active then
     local offset = proc[proc.signature].sig:len()
       - proc[proc.signature].sig
@@ -146,13 +145,12 @@ function M:_set_highlights(bufnr, proc)
         :len()
 
     if proc.parameter <= #proc[proc.signature].labels then
-      vim.api.nvim_buf_add_highlight(
+      vim.hl.range(
         bufnr,
-        -1,
+        ns_id,
         'Search',
-        0,
-        proc[proc.signature].labels[proc.parameter][1] - offset,
-        proc[proc.signature].labels[proc.parameter][2] - offset
+        { 0, proc[proc.signature].labels[proc.parameter][1] - offset },
+        { 0, proc[proc.signature].labels[proc.parameter][2] - offset }
       )
     end
 
@@ -160,13 +158,12 @@ function M:_set_highlights(bufnr, proc)
   end
 
   for i = 1, #proc do
-    vim.api.nvim_buf_add_highlight(
+    vim.hl.range(
       bufnr,
-      -1,
-      self._util.signs[i % #self._util.signs ~= 0 and i % #self._util.signs or #self._util.signs].texthl,
-      i - 1,
-      0,
-      string.len(i)
+      ns_id,
+      self._util.signs.numhl[i % #self._util.signs.text ~= 0 and i % #self._util.signs.text or #self._util.signs.text],
+      { i - 1, 0 },
+      { i - 1, string.len(i) }
     )
   end
 end
@@ -177,7 +174,12 @@ function M:_open(raw)
 
   local data = L.win.open_cursor(content, false, {
     title = {
-      { ' ' .. self._util.signs[3].text, self._util.signs[3].texthl },
+      {
+        (' %s '):format(
+          self._util.signs.text[vim.diagnostic.severity.INFO],
+          self._util.signs.numhl[vim.diagnostic.severity.INFO]
+        ),
+      },
       { 'Signature ', 'FloatTitle' },
       { proc.title, 'NeutralFloat' },
     },

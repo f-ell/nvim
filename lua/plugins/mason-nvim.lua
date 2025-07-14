@@ -5,86 +5,103 @@ return {
   event = { 'BufReadPost', 'BufNewFile', 'BufFilePost' },
   dependencies = { 'neovim/nvim-lspconfig', 'saghen/blink.cmp' },
   init = function()
+    -- Loading the user's `lsp/` first prevents making changes to nvim-lspconfig
+    -- default configurations. This swaps the order to allow overwriting
+    -- defaults from `lsp/`, instead of having to rely on `after/lsp/`.
+    vim.opt.runtimepath:prepend(
+      ('%s/lazy/nvim-lspconfig'):format(vim.fn.stdpath('data'))
+    )
+
     if vim.fn.argc() ~= 0 then
       require('mason')
     end
   end,
   config = function()
-    local signs = {
-      { 'DiagnosticSignError', '•' },
-      { 'DiagnosticSignWarn', '•' },
-      { 'DiagnosticSignInfo', '•' },
-      { 'DiagnosticSignHint', '•' },
-    }
-    for i = 1, #signs do
-      vim.fn.sign_define(
-        signs[i][1],
-        { texthl = signs[i][1], text = signs[i][2] }
-      )
-    end
-
     vim.diagnostic.config({
       update_in_insert = true,
       underline = true,
       virtual_text = false,
       severity_sort = true,
-      sign = { active = signs },
+      signs = {
+        text = {
+          [vim.diagnostic.severity.ERROR] = '•',
+          [vim.diagnostic.severity.WARN] = '•',
+          [vim.diagnostic.severity.INFO] = '•',
+          [vim.diagnostic.severity.HINT] = '•',
+        },
+        numhl = {
+          [vim.diagnostic.severity.ERROR] = 'DiagnosticSignError',
+          [vim.diagnostic.severity.WARN] = 'DiagnosticSignWarn',
+          [vim.diagnostic.severity.INFO] = 'DiagnosticSignInfo',
+          [vim.diagnostic.severity.HINT] = 'DiagnosticSignHint',
+        },
+      },
     })
-
-    vim.lsp.handlers[vim.lsp.protocol.Methods.textDocument_hover] =
-      vim.lsp.with(vim.lsp.handlers.hover, { border = 'single' })
 
     require('mason').setup({ ui = { border = 'single' } })
 
     local key = require('lib').key
-    local ui = require('lsp.ui')
-    local on_attach = function()
-      key.nnmap('<leader>fb', function()
-        require('conform').format({ timeout_ms = 500, lsp_format = 'fallback' })
-      end, { buffer = true })
-      key.nnmap('gr', vim.lsp.buf.references, { buffer = true })
-      key.nnmap('gd', ui.def.peek, { buffer = true })
-      key.nnmap('<leader>gd', ui.def.open, { buffer = true })
-      key.nnmap('<leader>gt', ui.def.type, { buffer = true })
+    local lsp = require('lsp')
+    vim.api.nvim_create_autocmd('LspAttach', {
+      group = vim.api.nvim_create_augroup('lsp', {}),
+      callback = function(args)
+        key.nnmap('grf', function()
+          require('conform').format({
+            timeout_ms = 500,
+            lsp_format = 'fallback',
+          })
+        end, { buffer = args.buf })
+        key.nnmap('gd', lsp.def.peek, { buffer = args.buf })
+        key.nnmap('grd', lsp.def.open, { buffer = args.buf })
+        key.nnmap('grt', lsp.def.type, { buffer = args.buf })
 
-      key.nnmap('<leader>ca', ui.cda.codeaction, { buffer = true })
-      key.nnmap('<leader>rn', ui.ren.rename, { buffer = true })
-      key.modemap({ 'i', 'n' }, '<C-s>', ui.sig.active)
-      key.modemap({ 'i', 'n' }, '<C-S-s>', ui.sig.available)
+        key.nnmap('gra', lsp.cda.codeaction, { buffer = args.buf })
+        key.nnmap('grn', lsp.ren.rename, { buffer = args.buf })
+        key.nnmap('grr', vim.lsp.buf.references, { buffer = args.buf })
+        key.modemap(
+          { 'i', 'n' },
+          '<C-s>',
+          lsp.sig.active,
+          { buffer = args.buf }
+        )
+        key.modemap(
+          { 'i', 'n' },
+          '<C-S-s>',
+          lsp.sig.available,
+          { buffer = args.buf }
+        )
 
-      key.nnmap('<leader>h', ui.dgn.get_line, { buffer = true })
-      key.nnmap('<leader>j', function()
-        ui.dgn.get_dir('next')
-      end, { buffer = true })
-      key.nnmap('<leader>k', function()
-        ui.dgn.get_dir('prev')
-      end, { buffer = true })
-      key.nnmap('<leader>l', function()
-        require('telescope.builtin').diagnostics({ bufnr = true })
+        key.nnmap('<leader>h', lsp.dgn.get_line, { buffer = args.buf })
+        key.nnmap('<leader>j', function()
+          lsp.dgn.get_dir('next')
+        end, { buffer = args.buf })
+        key.nnmap('<leader>k', function()
+          lsp.dgn.get_dir('prev')
+        end, { buffer = args.buf })
+        key.nnmap('<leader>l', function()
+          require('telescope.builtin').diagnostics({ bufnr = args.buf })
+        end)
+      end,
+    })
+
+    vim
+      .iter(require('mason-registry').get_installed_packages())
+      :filter(function(p)
+        ---@cast p Package
+        ---@diagnostic disable-next-line: undefined-field
+        return p.spec.neovim ~= nil
       end)
-    end
-
-    local servers = vim
-      .iter(vim.fn.readdir(vim.fn.stdpath('config') .. '/lua/lsp/servers'))
-      :filter(function(s)
-        return not vim.startswith(s, '_')
+      :map(function(p)
+        ---@cast p Package
+        ---@diagnostic disable-next-line: undefined-field
+        return p.spec.neovim.lspconfig
       end)
-      :totable()
-
-    for i = 1, #servers do
-      local opts = {
-        on_attach = on_attach,
-        capabilities = require('blink.cmp').get_lsp_capabilities(
-          servers[i].capabilities
-        ),
-      }
-      local server = servers[i]:gsub('%.lua$', '')
-
-      local req, tbl = pcall(require, 'lsp.servers.' .. server)
-      if req then
-        opts = vim.tbl_deep_extend('force', opts, tbl)
-      end
-      require('lspconfig')[server].setup(opts)
-    end
+      :each(function(s)
+        vim.lsp.config(
+          s,
+          { capabilities = require('blink.cmp').get_lsp_capabilities() }
+        )
+        vim.lsp.enable(s)
+      end)
   end,
 }

@@ -32,10 +32,7 @@ return {
 
       accept = {
         create_undo_point = true,
-        auto_brackets = {
-          enabled = true,
-          default_brackets = { '(', '' },
-        },
+        auto_brackets = { enabled = false },
       },
 
       list = {
@@ -91,6 +88,10 @@ return {
       },
     },
 
+    cmdline = {
+      keymap = { preset = 'inherit' },
+    },
+
     sources = {
       default = { 'buffer', 'cmdline', 'lazydev', 'lsp', 'path' },
       providers = {
@@ -109,7 +110,7 @@ return {
         lazydev = {
           name = 'LazyDev',
           module = 'lazydev.integrations.blink',
-          fallbacks = { 'lsp' },
+          score_offset = 100,
         },
         lsp = {
           name = 'lsp',
@@ -127,7 +128,7 @@ return {
         path = {
           name = 'path',
           module = 'blink.cmp.sources.path',
-          score_offset = -1,
+          score_offset = -100,
         },
       },
     },

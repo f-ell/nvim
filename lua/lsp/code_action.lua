@@ -1,16 +1,21 @@
----@type LspUiModuleCodeAction
----@diagnostic disable-next-line: missing-fields
+---@class lsp.ui.CodeAction : lsp.ui
 local M = {}
 
 M._util = {
-  signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
-    return vim.startswith(s.name, 'DiagnosticSign')
-  end),
+  signs = vim.diagnostic.config().signs,
 }
 
 function M.codeaction()
-  local params = vim.lsp.util.make_range_params()
-  params.context = { diagnostics = vim.lsp.diagnostic.get_line_diagnostics(0) }
+  local params = vim.lsp.util.make_range_params(0, 'utf-8') --[[@as table]]
+  params.context = {
+    diagnostics = vim
+      .iter(vim.diagnostic.get(0, { lnum = vim.fn.line('.') - 1 }))
+      :map(function(d)
+        return vim.fn.values(d.user_data)
+      end)
+      :flatten()
+      :totable() or {},
+  }
 
   local err, res = L.lsp.request(
     L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_codeAction),
@@ -79,27 +84,23 @@ function M:_format(proc)
 end
 
 function M:_set_highlights(bufnr, proc)
+  local ns_id = vim.api.nvim_create_namespace('lsp-ui')
   local offset = -1
 
   for i = 1, #proc do
     local len = string.len(i)
 
-    vim.api.nvim_buf_add_highlight(
+    vim.hl.range(
       bufnr,
-      -1,
-      self._util.signs[i % #self._util.signs ~= 0 and i % #self._util.signs or #self._util.signs].texthl,
-      offset + i,
-      0,
-      len
+      ns_id,
+      self._util.signs.numhl[i % #self._util.signs.text ~= 0 and i % #self._util.signs.text or #self._util.signs.text],
+      { offset + i, 0 },
+      { offset + i, len }
     )
-    vim.api.nvim_buf_add_highlight(
-      bufnr,
-      -1,
-      'NeutralFloat',
+    vim.hl.range(bufnr, ns_id, 'NeutralFloat', {
       offset + (#proc[i].msg > 1 and #proc[i].msg - 1 or 0) + i,
       (#proc[i].msg > 1 and 0 or len + 1) + proc[i].msg[#proc[i].msg]:len(),
-      -1
-    )
+    }, { offset + (#proc[i].msg > 1 and #proc[i].msg - 1 or 0) + i, -1 })
 
     if #proc[i].msg > 1 then
       offset = offset + #proc[i].msg - 1
@@ -124,7 +125,7 @@ function M:_register_float_actions(data)
 
       assert(
         client
-          and client.supports_method(
+          and client:supports_method(
             vim.lsp.protocol.Methods.workspace_executeCommand
           ),
         'Missing `executeCommand provider`'
@@ -132,6 +133,8 @@ function M:_register_float_actions(data)
 
       if
         client.config.init_options.extendedClientCapabilities
+        ---required for some code actions with jdtls
+        ---@diagnostic disable-next-line
         and client.config.init_options.extendedClientCapabilities.executeClientCommandSupport
         and vim.lsp.commands[cmd.command]
       then
@@ -139,7 +142,7 @@ function M:_register_float_actions(data)
           method = vim.lsp.protocol.Methods.textDocument_codeAction,
           bufnr = data.obuf,
           client_id = act.id,
-          params = vim.lsp.util.make_range_params(),
+          params = vim.lsp.util.make_range_params(0, client.offset_encoding),
         })
       elseif
         vim.list_contains(
@@ -227,7 +230,10 @@ function M:_open(raw)
 
   local data = L.win.open_cursor(content, true, {
     title = {
-      { ' ' .. self._util.signs[3].text, self._util.signs[3].texthl },
+      {
+        (' %s '):format(self._util.signs.text[vim.diagnostic.severity.INFO]),
+        self._util.signs.numhl[vim.diagnostic.severity.INFO],
+      },
       { 'Code Actions ', 'FloatTitle' },
     },
     zindex = 2,

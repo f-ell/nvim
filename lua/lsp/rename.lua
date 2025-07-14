@@ -1,15 +1,13 @@
----@type LspUiModuleRename
+---@class lsp.ui.Rename : lsp.ui
 ---@diagnostic disable-next-line: missing-fields
 local M = {}
 
 M._util = {
-  signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
-    return vim.startswith(s.name, 'DiagnosticSign')
-  end),
+  signs = vim.diagnostic.config().signs,
 }
 
 M.rename = function()
-  local params = vim.lsp.util.make_position_params(0)
+  local params = vim.lsp.util.make_position_params(0, 'utf-8') --[[@as table]]
   params.context = { includeDeclaration = true }
 
   local err, res = L.lsp.request(
@@ -72,7 +70,7 @@ function M:_preprocess(raw)
 end
 
 function M:_set_highlights(bufnr, proc)
-  local ns_id = vim.api.nvim_create_namespace('LspUi')
+  local ns_id = vim.api.nvim_create_namespace('lsp-ui')
   local local_refs = vim.tbl_filter(function(r)
     return r.result.uri == proc.path
   end, proc.refs)
@@ -80,13 +78,12 @@ function M:_set_highlights(bufnr, proc)
   for i = 1, #local_refs do
     local r = local_refs[i].result.range
     if r then
-      vim.api.nvim_buf_add_highlight(
+      vim.hl.range(
         bufnr,
         ns_id,
         'Search',
-        r.start.line,
-        r.start.character,
-        r['end'].character
+        { r.start.line, r.start.character },
+        { r['end'].line, r['end'].character }
       )
     end
   end
@@ -94,7 +91,7 @@ end
 
 function M:_register_float_actions(data)
   local close_win = function()
-    local ns_id = vim.api.nvim_create_namespace('LspUi')
+    local ns_id = vim.api.nvim_create_namespace('lsp-ui')
 
     if vim.api.nvim_win_is_valid(data.nwin) then
       vim.cmd('stopinsert')
@@ -150,7 +147,10 @@ function M:_open(raw)
   vim.api.nvim_win_set_cursor(0, { raw.pos[1] + 1, raw.pos[2] })
   local data = L.win.open_cursor({ raw.cword }, true, {
     title = {
-      { ' ' .. self._util.signs[3].text, self._util.signs[3].texthl },
+      {
+        (' %s '):format(self._util.signs.text[vim.diagnostic.severity.INFO]),
+        self._util.signs.numhl[vim.diagnostic.severity.INFO],
+      },
       { 'Rename ', 'FloatTitle' },
     },
     zindex = 2,

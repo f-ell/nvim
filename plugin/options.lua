@@ -5,6 +5,7 @@ vim.o.wrap = false
 
 vim.o.confirm = true
 vim.o.cursorline = true
+vim.o.inccommand = 'split'
 
 vim.o.cmdheight = 1
 vim.o.pumheight = 7
@@ -36,11 +37,6 @@ vim.opt.listchars = {
 }
 
 vim.opt.spelllang = { 'en_gb', 'de_de' }
-vim.opt.guicursor = {
-  'n-v-c-sm:block',
-  'i-ci-ve:hor1-blinkon200-blinkoff150',
-  'r-cr-o:hor20',
-}
 
 -- tabs
 vim.o.expandtab = true
@@ -53,6 +49,7 @@ vim.o.timeoutlen = 500
 vim.o.ttimeoutlen = 0
 
 -- windows
+vim.o.winborder = 'single'
 vim.o.splitbelow = true
 vim.o.splitright = true
 vim.o.equalalways = false

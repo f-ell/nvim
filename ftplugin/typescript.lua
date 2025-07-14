@@ -64,7 +64,7 @@ local function organizeImports()
   err, res = L.lsp.request(
     client,
     vim.lsp.protocol.Methods.codeAction_resolve,
-    res[1].result --[[@as TextDocumentPositionParams]],
+    res[1].result --[[@as lsp.TextDocumentPositionParams]],
     0
   )
   if err then

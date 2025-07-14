@@ -140,7 +140,7 @@ local groups = {
   Keyword = { link = 'Statement' },
   Exception = { link = 'Statement' },
 
-  PreProc = { fg = LEAFLESS.gr[4] },
+  PreProc = { fg = LEAFLESS.gr[3] },
   Include = { link = 'PreProc' },
   Define = { link = 'PreProc' },
   Macro = { link = 'PreProc' },
@@ -165,7 +165,7 @@ local groups = {
   },
 
   ---- treesitter ----
-  ['@annotation'] = { link = 'NonText' },
+  ['@annotation'] = { link = 'PreProc' },
   ['@attribute'] = { link = 'NonText' },
   ['@boolean'] = { link = 'Boolean' },
   ['@character'] = { link = 'Character' },

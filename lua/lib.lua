@@ -201,11 +201,11 @@ function M.lsp.clients_by_method(method, filter)
   local clients = vim.tbl_filter(
     function(client)
       if type(method) == 'string' then
-        return client.supports_method(method)
+        return client:supports_method(method)
       end
 
       for i = 1, #method do
-        if not client.supports_method(method[i]) then
+        if not client:supports_method(method[i]) then
           return false
         end
       end
@@ -214,7 +214,7 @@ function M.lsp.clients_by_method(method, filter)
     end,
 
     vim.lsp.get_clients({
-      buffer = vim.api.nvim_get_current_buf(),
+      bufnr = vim.api.nvim_get_current_buf(),
     })
   )
 
@@ -231,7 +231,7 @@ end
 ---Format and print RequestError via `vim.notify()`
 ---
 ---@param errors RequestError|RequestError[]
----@param level LogLevel? defaults to `vim.log.levels.ERROR`
+---@param level vim.log.levels? defaults to `vim.log.levels.ERROR`
 function M.lsp.notify_error(errors, level)
   errors = type(errors[1]) == 'table' and errors or { errors }
   for i = 1, #errors do
@@ -252,7 +252,7 @@ end
 ---
 ---@param clients vim.lsp.Client|vim.lsp.Client[]
 ---@param method string
----@param params TextDocumentPositionParams
+---@param params table
 ---@param bufnr number
 ---@param timeout number? passeed as `timeout` parameter to `wait()`, defaults to 1000
 ---@return RequestError[]?,EnrichedLspResponse[]
@@ -285,7 +285,7 @@ function M.lsp.request(clients, method, params, bufnr, timeout)
 
         -- FIX: poor implementation, should not be nested in async-request
         if not ok then
-          res = clients[i].request_sync(method, params, 800, bufnr)
+          res = clients[i]:request_sync(method, params, 800, bufnr)
         end
       else
         res = { err = err, result = result }
@@ -311,7 +311,7 @@ function M.lsp.request(clients, method, params, bufnr, timeout)
       ::continue::
     end
 
-    local status, request = clients[i].request(method, params, handler, bufnr)
+    local status, request = clients[i]:request(method, params, handler, bufnr)
     if status == false then
       return {
         name = clients[i].name,
@@ -363,6 +363,33 @@ function M.str.last_index(str, pattern)
   end
 
   return str:len() - index
+end
+
+---Return the word to the left of the cursor.
+---
+---Falls back to `vim.fn.expand` when called from normal mode. As a result, when
+---called this way, this will also return any characters to the cursor's right.
+---In this case, `pos` is ignored.
+---
+---@param match_any boolean|nil match WORD instead of word
+---@param pos [integer, integer]|nil (0,0)-based row-column tuple
+function M.str.word(match_any, pos)
+  if vim.api.nvim_get_mode().mode == 'n' then
+    return vim.fn.expand(match_any and '<cWORD>' or '<cword>')
+  end
+
+  if not pos then
+    pos = vim.api.nvim_win_get_cursor(0)
+    pos[1] = pos[1] - 1
+  end
+
+  -- local col = vim.api.nvim_win_get_cursor(0)[2]
+  local ln = vim.api.nvim_buf_get_lines(0, pos[1], pos[1] + 1, false)[1]
+  ln = string.sub(ln, 1, pos[2]):reverse()
+
+  -- FIX: does %W include `_`?
+  local index = ln:find(match_any and '%s' or '%W')
+  return ln:sub(1, index and (index - 1) or -1):reverse()
 end
 
 ---------------------------------------------------------------------------- tbl
@@ -466,20 +493,19 @@ function M.ui.pick(items, multi, format, config)
 
   local function set_highlights(bufnr)
     local texthl = {
-      'ErrorFloat',
-      'WarningFloat',
-      'InfoFloat',
-      'HintFloat',
+      'DiagnosticError',
+      'DiagnosticWarn',
+      'DiagnosticInfo',
+      'DiagnosticHint',
     }
 
     for i = 1, #vim.api.nvim_buf_get_lines(bufnr, 0, -1, true) do
-      vim.api.nvim_buf_add_highlight(
+      vim.hl.range(
         bufnr,
-        -1,
+        vim.api.nvim_create_namespace('lib_ui'),
         texthl[i % #texthl ~= 0 and i % #texthl or #texthl],
-        i - 1,
-        0,
-        string.len(i)
+        { i - 1, 0 },
+        { i - 1, string.len(i) }
       )
     end
   end
@@ -549,7 +575,10 @@ function M.ui.pick(items, multi, format, config)
 
   while true do
     vim.api.nvim__redraw({ flush = true, win = data.nwin, cursor = true })
-    local c, num = vim.fn.getchar(), nil
+    -- stylua: ignore
+    local c, num =
+      vim.fn.getchar() --[[@as integer]],
+      nil
 
     if
       c == 3 --[[ <c-c> ]]
@@ -663,6 +692,9 @@ function M.win._height(data)
     return M.win._max_height()
   end
 
+  -- FIX: should account for cursor offset (getpos('.')[3]-1)
+  -- issue: we don't know if the window will be offset to the left because of
+  -- its width
   local maxw = vim.o.columns - 2
   if M.tbl.max_len(data) < maxw then
     return math.min(#data > 0 and #data or 1, M.win._max_height())

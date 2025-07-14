@@ -1,7 +1,5 @@
-vim.bo.expandtab = false
-
 local function organizeImports()
-  local client = vim.lsp.get_clients({ name = 'gopls' })[1]
+  local client = vim.lsp.get_clients({ name = 'jdtls' })[1]
   local params = vim.lsp.util.make_range_params(0, client.offset_encoding) --[[@as table]]
   params.context =
     { diagnostics = vim.diagnostic.get(0, { lnum = vim.fn.line('.') - 1 }) }
@@ -16,18 +14,29 @@ local function organizeImports()
     return
   end
 
-  vim
+  local req = vim
     .iter(res)
     :filter(function(
       r --[[@cast r EnrichedLspResponse]]
     )
       return r.result.kind == 'source.organizeImports'
     end)
-    :each(function(
-      r --[[@cast r EnrichedLspResponse]]
-    )
-      L.lsp.apply_edit(r)
-    end)
+    :nth(1) --[[@as EnrichedLspResponse]]
+  if L.tbl.is_empty(req) then
+    return
+  end
+
+  err, res = L.lsp.request(
+    client,
+    vim.lsp.protocol.Methods.codeAction_resolve,
+    req.result,
+    0
+  )
+  if err then
+    return
+  end
+
+  L.lsp.apply_edit(res[1])
 end
 
 vim.api.nvim_create_autocmd('BufWritePre', {

@@ -1,40 +1,35 @@
----@type LspUiModuleDiagnostic
----@diagnostic disable-next-line: missing-fields
+---@class lsp.ui.Diagnostic : lsp.ui
 local M = {}
 
 M._util = {
-  signs = vim
-    .iter(vim.fn.sign_getdefined())
-    :filter(function(s)
-      return vim.startswith(s.name, 'DiagnosticSign')
-    end)
-    :totable(),
+  signs = vim.diagnostic.config().signs,
   active_wins = {},
 }
 
 function M.get_dir(dir)
   assert(dir == 'next' or dir == 'prev', 'invalid direction')
-  local pos = dir == 'next' and vim.diagnostic.get_next_pos()
-    or vim.diagnostic.get_prev_pos()
 
-  if not pos then
+  local diag = dir == 'next' and vim.diagnostic.get_next()
+    or vim.diagnostic.get_prev()
+  if not diag then
     vim.notify('No diagnostics found', vim.log.levels.INFO)
     return
   end
 
-  local diag = vim
+  local pos = { diag.lnum, diag.col }
+  local diagnostics = vim
     .iter(vim.diagnostic.get(0, { lnum = pos[1] }))
     :filter(function(d)
       return d.col == pos[2]
     end)
     :totable()
 
-  if #diag == 0 then
-    vim.notify('No diagnostics at position', vim.log.levels.INFO)
+  if #diagnostics == 0 then
+    vim.notify('No diagnostics found', vim.log.levels.INFO)
     return
   end
 
-  M:_open({ type = 'dir', diag = diag })
+  M:_open({ type = 'dir', diag = diagnostics })
 end
 
 function M.get_line()
@@ -42,7 +37,7 @@ function M.get_line()
   local diag = vim.diagnostic.get(0, { lnum = pos[2] - 1 })
 
   if #diag == 0 then
-    vim.notify('No diagnostics at position', vim.log.levels.INFO)
+    vim.notify('No diagnostics found', vim.log.levels.INFO)
     return
   end
 
@@ -82,15 +77,15 @@ function M:_preprocess(raw)
   for i = 1, #tbl.diag do
     for j = 2, #tbl.diag[i].msg do
       tbl.diag[i].msg[j] = (' '):rep(
-        vim.fn.strdisplaywidth(self._util.signs[tbl.diag[i].sev].text)
+        vim.fn.strdisplaywidth(self._util.signs.text[tbl.diag[i].sev])
       ) .. tbl.diag[i].msg[j]
     end
   end
 
   if raw.type == 'dir' then
     tbl.title.icon = {
-      ' ' .. self._util.signs[tbl.diag[1].sev].text,
-      self._util.signs[tbl.diag[1].sev].texthl,
+      (' %s '):format(self._util.signs.text[tbl.diag[1].sev]),
+      self._util.signs.numhl[tbl.diag[1].sev],
     }
   else
     local max_sev = vim
@@ -106,8 +101,8 @@ function M:_preprocess(raw)
       end)
 
     tbl.title.icon = {
-      ' ' .. self._util.signs[max_sev].text,
-      self._util.signs[max_sev].texthl,
+      (' %s '):format(self._util.signs.text[tbl.diag[1].sev]),
+      self._util.signs.numhl[max_sev],
     }
   end
 
@@ -136,38 +131,39 @@ function M:_format(proc)
 end
 
 function M:_set_highlights(bufnr, proc)
+  local ns_id = vim.api.nvim_create_namespace('lsp-ui')
   local offset = -1
 
   for i = 1, #proc.diag do
     if #proc.diag[i].msg > 1 then
       for j = 1, #proc.diag[i].msg do
-        vim.api.nvim_buf_add_highlight(
+        vim.hl.range(
           bufnr,
-          -1,
-          self._util.signs[proc.diag[i].sev].texthl,
-          offset + i + j - 1,
-          0,
-          -1
+          ns_id,
+          self._util.signs.numhl[proc.diag[i].sev],
+          { offset + i + j - 1, 0 },
+          { offset + i + j - 1, -1 }
         )
       end
     end
 
-    vim.api.nvim_buf_add_highlight(
+    vim.hl.range(
       bufnr,
-      -1,
-      self._util.signs[proc.diag[i].sev].texthl,
-      offset + i + #proc.diag[i].msg - 1,
-      0,
-      proc.diag[i].msg[#proc.diag[i].msg]:len()
+      ns_id,
+      self._util.signs.numhl[proc.diag[i].sev],
+      { offset + i + #proc.diag[i].msg - 1, 0 },
+      {
+        offset + i + #proc.diag[i].msg - 1,
+        proc.diag[i].msg[#proc.diag[i].msg]:len(),
+      }
     )
-    vim.api.nvim_buf_add_highlight(
-      bufnr,
-      -1,
-      'NeutralFloat',
+    vim.hl.range(bufnr, ns_id, 'NeutralFloat', {
       offset + (#proc.diag[i].msg > 1 and #proc.diag[i].msg - 1 or 0) + i,
       proc.diag[i].msg[#proc.diag[i].msg]:len(),
-      -1
-    )
+    }, {
+      offset + (#proc.diag[i].msg > 1 and #proc.diag[i].msg - 1 or 0) + i,
+      -1,
+    })
 
     if #proc.diag[i].msg > 1 then
       offset = offset + #proc.diag[i].msg - 1

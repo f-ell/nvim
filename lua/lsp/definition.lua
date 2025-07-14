@@ -1,12 +1,9 @@
----@type LspUiModuleDefinition
----@diagnostic disable-next-line: missing-fields
+---@class lsp.ui.Definition : lsp.ui
 local M = {}
 
 M._util = {
   definition = {},
-  signs = vim.fn.filter(vim.fn.sign_getdefined(), function(_, s)
-    return vim.startswith(s.name, 'DiagnosticSign')
-  end),
+  signs = vim.diagnostic.config().signs,
 }
 
 function M.peek()
@@ -15,7 +12,7 @@ function M.peek()
   local err, res = L.lsp.request(
     clients,
     vim.lsp.protocol.Methods.textDocument_definition,
-    vim.lsp.util.make_position_params(),
+    vim.lsp.util.make_position_params(0, 'utf-8'),
     0
   )
 
@@ -42,7 +39,7 @@ function M.open()
   local err, res = L.lsp.request(
     clients,
     vim.lsp.protocol.Methods.textDocument_definition,
-    vim.lsp.util.make_position_params(),
+    vim.lsp.util.make_position_params(0, 'utf-8'),
     0
   )
 
@@ -70,7 +67,7 @@ function M.type()
   local err, res = L.lsp.request(
     clients,
     vim.lsp.protocol.Methods.textDocument_typeDefinition,
-    vim.lsp.util.make_position_params(),
+    vim.lsp.util.make_position_params(0, 'utf-8'),
     0
   )
 
@@ -91,30 +88,16 @@ function M.type()
 end
 
 function M._util.definition.set_highlights(bufnr, def)
-  local nsid = vim.api.nvim_create_namespace('LspUi')
+  local nsid = vim.api.nvim_create_namespace('lsp-ui')
   vim.api.nvim_buf_clear_namespace(bufnr, nsid, 0, -1)
 
-  vim.api.nvim_buf_add_highlight(
+  vim.hl.range(
     bufnr,
     nsid,
     'Search',
-    def.start[1] - 1,
-    def.start[2],
-    def._end[2]
+    { def.start[1] - 1, def.start[2] },
+    { def._end[1], def._end[2] }
   )
-
-  -- TODO: revise for multiline highlights
-  if def._end[1] > def.start[1] then
-    local current = def.start[1]
-    local last = def._end[1]
-
-    while current < last do
-      vim.api.nvim_buf_add_highlight(bufnr, nsid, 'Search', current, 0, -1)
-      current = current + 1
-    end
-
-    vim.api.nvim_buf_add_highlight(bufnr, nsid, 'Search', last, 0, def._end[2])
-  end
 
   L.key.nnmap('<C-l>', function()
     vim.api.nvim_buf_clear_namespace(bufnr, nsid, 0, -1)
@@ -123,7 +106,7 @@ function M._util.definition.set_highlights(bufnr, def)
 end
 
 function M._util.definition.register_float_actions(bufnr, winnr)
-  local nsid = vim.api.nvim_create_namespace('LspUi')
+  local nsid = vim.api.nvim_create_namespace('lsp-ui')
   if winnr == nil then
     return
   end
@@ -284,24 +267,24 @@ function M:_format(proc)
 end
 
 function M:_set_highlights(bufnr, proc)
+  local ns_id = vim.api.nvim_create_namespace('lsp-ui')
+
   for i = 1, #proc.def do
     local len = string.len(i)
 
-    vim.api.nvim_buf_add_highlight(
+    vim.hl.range(
       bufnr,
-      -1,
-      self._util.signs[i % #self._util.signs ~= 0 and i % #self._util.signs or #self._util.signs].texthl,
-      i - 1,
-      0,
-      len
+      ns_id,
+      self._util.signs.numhl[i % #self._util.signs.text ~= 0 and i % #self._util.signs.text or #self._util.signs.text],
+      { i - 1, 0 },
+      { i - 1, len }
     )
-    vim.api.nvim_buf_add_highlight(
+    vim.hl.range(
       bufnr,
-      -1,
+      ns_id,
       'NeutralFloat',
-      i - 1,
-      len + proc.def[i].file:len() + 2,
-      -1
+      { i - 1, len + proc.def[i].file:len() + 2 },
+      { i - 1, -1 }
     )
   end
 end
@@ -341,7 +324,10 @@ function M:_open(raw)
 
   local data = L.win.open_cursor(content, true, {
     title = {
-      { ' ' .. self._util.signs[3].text, self._util.signs[3].texthl },
+      {
+        (' %s '):format(self._util.signs.text[vim.diagnostic.severity.INFO]),
+        self._util.signs.numhl[vim.diagnostic.severity.INFO],
+      },
       { 'Definition ', 'FloatTitle' },
     },
     zindex = 2,
