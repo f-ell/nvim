@@ -132,10 +132,10 @@ function M:_register_float_actions(data)
       )
 
       if
-        client.config.init_options.extendedClientCapabilities
+        client.handlers
         ---required for some code actions with jdtls
         ---@diagnostic disable-next-line
-        and client.config.init_options.extendedClientCapabilities.executeClientCommandSupport
+        and client.handlers['workspace/executeClientCommand']
         and vim.lsp.commands[cmd.command]
       then
         vim.lsp.commands[cmd.command](cmd, {
