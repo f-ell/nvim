@@ -71,6 +71,18 @@ return {
           { buffer = args.buf }
         )
 
+        key.nnmap('grh', function()
+          vim.lsp.buf.document_highlight()
+          vim.api.nvim_create_autocmd('CursorMoved', {
+            buffer = 0,
+            callback = function()
+              local ns = vim.api.nvim_get_namespaces()['nvim.lsp.references']
+              vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
+            end,
+            once = true,
+          })
+        end, { buffer = args.buf })
+
         key.nnmap('<leader>h', lsp.dgn.get_line, { buffer = args.buf })
         key.nnmap('<leader>j', function()
           lsp.dgn.get_dir('next')
