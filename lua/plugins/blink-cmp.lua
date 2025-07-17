@@ -52,16 +52,16 @@ return {
         draw = {
           columns = { { 'kind_icon' }, { 'label', 'source', gap = 1 } },
           components = {
+            kind_icon = {
+              highlight = function(ctx)
+                return ctx.deprecated and 'BlinkCmpLabelDeprecated'
+                  or ctx.kind_hl
+              end,
+            },
+
             label = {
               width = { fill = true, max = 48 },
               ellipsis = true,
-              text = function(ctx)
-                return ctx.item.label
-              end,
-              highlight = function(ctx)
-                return ctx.deprecated and 'BlinkCmpLabelDeprecated'
-                  or 'BlinkCmpLabel'
-              end,
             },
 
             source = {
@@ -69,7 +69,7 @@ return {
                 return ctx.item.source_name:sub(0, 1):upper()
               end,
               highlight = function()
-                return 'NeutralFloat'
+                return 'NonText'
               end,
             },
           },
