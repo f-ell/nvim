@@ -5,7 +5,8 @@ local winopts = {
   relativenumber = nil,
 }
 
-local toggle_diff = function()
+---@param head boolean? Diff against HEAD instead of index
+local function toggle_diff(head)
   if not vim.wo.diff then
     winopts = {
       statuscolumn = vim.wo.statuscolumn,
@@ -14,12 +15,12 @@ local toggle_diff = function()
       relativenumber = vim.wo.relativenumber,
     }
 
-    require('gitsigns').diffthis()
+    require('gitsigns').diffthis(head and 'HEAD' or nil)
     for _, win in pairs(vim.api.nvim_tabpage_list_wins(0)) do
       vim.wo[win].statuscolumn = ''
       vim.wo[win].signcolumn = 'no'
-      -- vim.wo[win].number = false
-      -- vim.wo[win].relativenumber = false
+      vim.wo[win].number = false
+      vim.wo[win].relativenumber = false
     end
     return
   end
@@ -42,16 +43,27 @@ return {
   lazy = true,
   event = 'BufReadPost',
   keys = {
-    { 'gsk', '<CMD>silent Gitsigns nav_hunk prev<CR>zz' },
-    { 'gsJ', '<CMD>silent Gitsigns nav_hunk next target=staged<CR>zz' },
-    { 'gsh', toggle_diff },
     { 'gsj', '<CMD>silent Gitsigns nav_hunk next<CR>zz' },
+    { 'gsJ', '<CMD>silent Gitsigns nav_hunk next target=staged<CR>zz' },
+    { 'gsk', '<CMD>silent Gitsigns nav_hunk prev<CR>zz' },
     { 'gsK', '<CMD>silent Gitsigns nav_hunk prev target=staged<CR>zz' },
     { 'gsl', '<CMD>Gitsigns toggle_deleted<CR>' },
     { 'gsc', '<CMD>Gitsigns toggle_linehl<CR>' },
     { 'gsv', '<CMD>Gitsigns select_hunk<CR>' },
-    { 'gs<', '<CMD>diffget gitsigns://*:0\\\\|2:<CR>' },
-    { 'gs>', '<CMD>diffget gitsigns://*:3:<CR>' },
+    {
+      'gsh',
+      function()
+        toggle_diff()
+      end,
+    },
+    {
+      'gsH',
+      function()
+        toggle_diff(true)
+      end,
+    },
+    { 'gs<', '<CMD>diffget \\vgitsigns://*(:0\\|:2\\|HEAD):<CR>' },
+    { 'gs>', '<CMD>diffget \\vgitsigns://*:3:<CR>' },
   },
   opts = {
     signs = {
