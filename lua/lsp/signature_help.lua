@@ -175,10 +175,8 @@ function M:_open(raw)
   local data = L.win.open_cursor(content, false, {
     title = {
       {
-        (' %s '):format(
-          self._util.signs.text[vim.diagnostic.severity.INFO],
-          self._util.signs.numhl[vim.diagnostic.severity.INFO]
-        ),
+        (' %s '):format(self._util.signs.text[vim.diagnostic.severity.INFO]),
+        self._util.signs.numhl[vim.diagnostic.severity.INFO],
       },
       { 'Signature ', 'FloatTitle' },
       { proc.title, 'NeutralFloat' },

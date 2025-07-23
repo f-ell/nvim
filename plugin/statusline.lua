@@ -432,8 +432,9 @@ local lsp = {
       { 'LspAttach', 'LspDetach', 'BufEnter', 'BufFilePost', 'WinClosed' },
       function(self)
         -- updated on first LspAttach - signs may not be defined beforehand
-        if L.tbl.is_empty(self.meta.signs) then
-          self.meta.signs = vim.diagnostic.config().signs --[[@as vim.diagnostic.Opts.Signs]]
+        local signs = vim.diagnostic.config().signs
+        if L.tbl.is_empty(self.meta.signs) and type(signs) == 'table' then
+          self.meta.signs = signs
         end
 
         self.meta.clients = vim.tbl_map(function(v)
