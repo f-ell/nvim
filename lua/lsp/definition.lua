@@ -7,11 +7,11 @@ M._util = {
 }
 
 function M.peek()
-  local clients =
-    L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_definition)
+  local method = vim.lsp.protocol.Methods.textDocument_definition
+  local clients = vim.lsp.get_clients({ bufnr = 0, method = method })
   local err, res = L.lsp.request(
     clients,
-    vim.lsp.protocol.Methods.textDocument_definition,
+    method,
     vim.lsp.util.make_position_params(0, 'utf-8'),
     0
   )
@@ -34,11 +34,11 @@ function M.peek()
 end
 
 function M.open()
-  local clients =
-    L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_definition)
+  local method = vim.lsp.protocol.Methods.textDocument_definition
+  local clients = vim.lsp.get_clients({ bufnr = 0, method = method })
   local err, res = L.lsp.request(
     clients,
-    vim.lsp.protocol.Methods.textDocument_definition,
+    method,
     vim.lsp.util.make_position_params(0, 'utf-8'),
     0
   )
@@ -61,12 +61,11 @@ function M.open()
 end
 
 function M.type()
-  local clients = L.lsp.clients_by_method(
-    vim.lsp.protocol.Methods.textDocument_typeDefinition
-  )
+  local method = vim.lsp.protocol.Methods.textDocument_typeDefinition
+  local clients = vim.lsp.get_clients({ bufnr = 0, method = method })
   local err, res = L.lsp.request(
     clients,
-    vim.lsp.protocol.Methods.textDocument_typeDefinition,
+    method,
     vim.lsp.util.make_position_params(0, 'utf-8'),
     0
   )

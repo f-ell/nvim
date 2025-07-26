@@ -10,9 +10,10 @@ M.rename = function()
   local params = vim.lsp.util.make_position_params(0, 'utf-8') --[[@as table]]
   params.context = { includeDeclaration = true }
 
+  local method = vim.lsp.protocol.Methods.textDocument_references
   local err, res = L.lsp.request(
-    L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_references),
-    vim.lsp.protocol.Methods.textDocument_references,
+    vim.lsp.get_clients({ bufnr = 0, method = method }),
+    method,
     params,
     0
   )

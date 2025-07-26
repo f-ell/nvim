@@ -6,9 +6,10 @@ local function organizeImports()
   params.context =
     { diagnostics = vim.diagnostic.get(0, { lnum = vim.fn.line('.') - 1 }) }
 
+  local method = vim.lsp.protocol.Methods.textDocument_codeAction
   local err, res = L.lsp.request(
-    L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_codeAction),
-    vim.lsp.protocol.Methods.textDocument_codeAction,
+    vim.lsp.get_clients({ bufnr = 0, method = method }),
+    method,
     params,
     0
   )

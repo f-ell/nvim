@@ -6,11 +6,11 @@ M._util = {
 }
 
 M.active = function()
-  local params = vim.lsp.util.make_position_params(0, 'utf-8')
+  local method = vim.lsp.protocol.Methods.textDocument_signatureHelp
   local err, res = L.lsp.request(
-    L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_signatureHelp),
-    vim.lsp.protocol.Methods.textDocument_signatureHelp,
-    params,
+    vim.lsp.get_clients({ bufnr = 0, method = method }),
+    method,
+    vim.lsp.util.make_position_params(0, 'utf-8'),
     0
   )
 
@@ -31,11 +31,11 @@ M.active = function()
 end
 
 M.available = function()
-  local params = vim.lsp.util.make_position_params(0, 'utf-8')
+  local method = vim.lsp.protocol.Methods.textDocument_signatureHelp
   local err, res = L.lsp.request(
-    L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_signatureHelp),
-    vim.lsp.protocol.Methods.textDocument_signatureHelp,
-    params,
+    vim.lsp.get_clients({ bufnr = 0, method = method }),
+    method,
+    vim.lsp.util.make_position_params(0, 'utf-8'),
     0
   )
 
