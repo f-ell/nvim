@@ -215,8 +215,8 @@ end
 ---@param clients vim.lsp.Client|vim.lsp.Client[]
 ---@param method string
 ---@param params table
----@param bufnr number
----@param timeout number? passeed as `timeout` parameter to `wait()`, defaults to 1000
+---@param bufnr number? buffer to use for requests, defaults to `0`
+---@param timeout number? passed as `timeout` parameter to `wait()`, defaults to `2000`
 ---@return RequestError[]?,EnrichedLspResponse[]
 function M.lsp.request(clients, method, params, bufnr, timeout)
   if
@@ -226,6 +226,7 @@ function M.lsp.request(clients, method, params, bufnr, timeout)
     clients = { clients }
   end
 
+  bufnr = bufnr or 0
   local errors, responses = {}, {}
 
   ---@diagnostic disable-next-line: redefined-local
@@ -282,7 +283,7 @@ function M.lsp.request(clients, method, params, bufnr, timeout)
       }, {}
     end
 
-    local wait = vim.fn.wait(timeout or 1000, function()
+    local wait = vim.fn.wait(timeout or 2000, function()
       return clients[i].requests[request] == nil
     end, 50)
 
