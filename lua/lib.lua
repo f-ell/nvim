@@ -221,7 +221,7 @@ end
 function M.lsp.request(clients, method, params, bufnr, timeout)
   if
     type(clients) == 'table'
-    and not (type(clients[1]) == 'table' or M.tbl.is_empty(clients))
+    and not (type(clients[1]) == 'table' or M.tbl.isempty(clients))
   then
     clients = { clients }
   end
@@ -261,7 +261,7 @@ function M.lsp.request(clients, method, params, bufnr, timeout)
         add_err(clients[i].name, method, res.err.message)
         goto continue
       end
-      if M.tbl.is_empty(res.result) then
+      if M.tbl.isempty(res.result) then
         goto continue
       end
 
@@ -389,12 +389,12 @@ function M.tbl.max_len(tbl)
   return max
 end
 
----Check if table is empty, i.e. contains any non-nil values.
+---Returns `true` if table is empty or `nil`.
 ---
 ---@param tbl table?
 ---@return boolean
-function M.tbl.is_empty(tbl)
-  return tbl == nil or (type(tbl) == 'table' and next(tbl) == nil)
+function M.tbl.isempty(tbl)
+  return tbl == nil or vim.tbl_isempty(tbl)
 end
 
 ----------------------------------------------------------------------------- ui
@@ -449,7 +449,7 @@ end
 ---@param config table? config passed to `nvim_open_win()`
 ---@return T[] selected
 function M.ui.pick(items, multi, format, config)
-  if M.tbl.is_empty(items) then
+  if M.tbl.isempty(items) then
     return {}
   end
 

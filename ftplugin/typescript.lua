@@ -57,7 +57,7 @@ local function organizeImports()
     params,
     0
   )
-  if err or L.tbl.is_empty(res) then
+  if err or L.tbl.isempty(res) then
     return
   end
 

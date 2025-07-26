@@ -18,11 +18,11 @@ M.active = function()
     L.lsp.notify_error(err)
     return
   end
-  if L.tbl.is_empty(res[1]) or L.tbl.is_empty(res[1].result.signatures) then
+  if L.tbl.isempty(res[1]) or L.tbl.isempty(res[1].result.signatures) then
     vim.notify('No signature help available', vim.log.levels.INFO)
     return
   end
-  if L.tbl.is_empty(res[1].result.signatures[1].parameters) then
+  if L.tbl.isempty(res[1].result.signatures[1].parameters) then
     vim.notify('Function takes no arguments', vim.log.levels.INFO)
     return
   end
@@ -43,11 +43,11 @@ M.available = function()
     L.lsp.notify_error(err)
     return
   end
-  if L.tbl.is_empty(res[1]) or L.tbl.is_empty(res[1].result.signatures) then
+  if L.tbl.isempty(res[1]) or L.tbl.isempty(res[1].result.signatures) then
     vim.notify('No signature help available', vim.log.levels.INFO)
     return
   end
-  if L.tbl.is_empty(res[1].result.signatures[1].parameters) then
+  if L.tbl.isempty(res[1].result.signatures[1].parameters) then
     vim.notify('Function takes no arguments', vim.log.levels.INFO)
     return
   end

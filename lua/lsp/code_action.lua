@@ -29,7 +29,7 @@ function M.codeaction()
     L.lsp.notify_error(err)
     return
   end
-  if L.tbl.is_empty(res) then
+  if L.tbl.isempty(res) then
     vim.notify('No codeactions available', vim.log.levels.INFO)
     return
   end
@@ -116,7 +116,7 @@ function M:_register_float_actions(data)
     local act = data.res[num]
     local res = act.result
 
-    if not L.tbl.is_empty(res.edit) then
+    if not L.tbl.isempty(res.edit) then
       L.lsp.apply_edit(act)
     elseif res.action and type(res.action) == 'function' then
       res.action()

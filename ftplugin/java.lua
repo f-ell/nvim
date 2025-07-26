@@ -23,7 +23,7 @@ local function organizeImports()
       return r.result.kind == 'source.organizeImports'
     end)
     :nth(1) --[[@as EnrichedLspResponse]]
-  if L.tbl.is_empty(req) then
+  if L.tbl.isempty(req) then
     return
   end
 
