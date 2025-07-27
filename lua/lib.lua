@@ -447,7 +447,7 @@ end
 ---@param items T[]
 ---@param multi boolean|number[]
 ---@param format fun(item:T,selected:boolean,index:number):string transform item to string representation
----@param config table? config passed to `nvim_open_win()`
+---@param config vim.api.keyset.win_config?
 ---@return T[] selected
 function M.ui.pick(items, multi, format, config)
   if M.tbl.isempty(items) then
@@ -603,7 +603,7 @@ M.win._OFFSET = (1 - M.win._MAXSIZE) / 2
 
 ---Extract window title string from `nvim_open_win()`'s `config` table.
 ---
----@param config table?
+---@param config vim.api.keyset.win_config?
 ---@return string
 function M.win._parse_title(config)
   if not (config and config.title) then
@@ -725,7 +725,7 @@ end
 ---
 ---@param lines number|string[] buffer number or line-array
 ---@param enter boolean
----@param config table? config passed to `nvim_open_win()`
+---@param config vim.api.keyset.win_config?
 ---@return WinData
 function M.win.open(lines, enter, config)
   ---@type WinData
@@ -744,8 +744,7 @@ function M.win.open(lines, enter, config)
     height = M.win._height(lines),
   }
 
-  ---@diagnostic disable-next-line: redefined-local
-  local config = vim.tbl_extend('keep', config or {}, {
+  config = vim.tbl_extend('keep', config or {}, {
     relative = type(lines) == 'table' and 'cursor' or 'editor',
     anchor = 'NW',
     row = 1,
@@ -781,7 +780,7 @@ end
 ---
 ---@param lines number|string[] buffer number or line array
 ---@param enter boolean
----@param config table? config passed to `nvim_open_win()`
+---@param config vim.api.keyset.win_config?
 ---@return WinData
 function M.win.open_center(lines, enter, config)
   config = vim.tbl_extend('keep', config or {}, {
@@ -799,7 +798,7 @@ end
 ---
 ---@param lines number|string[] buffer number or line array
 ---@param enter boolean
----@param config table? config passed to `nvim_open_win()`
+---@param config vim.api.keyset.win_config?
 ---@return WinData
 function M.win.open_cursor(lines, enter, config)
   local anchor, row = M.win.anchor_offset()
