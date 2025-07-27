@@ -2,7 +2,6 @@
 ---@field clients vim.lsp.Client[]
 ---@field cword string
 ---@field res LspResponse[]
----@field peek boolean?
 ---
 ---@class (exact) lsp.ui.definition.Def
 ---@field uri string
@@ -12,7 +11,6 @@
 ---
 ---@class (exact) lsp.ui.definition.Proc
 ---@field cword string
----@field peek boolean
 ---@field def lsp.ui.definition.Def[]
 
 ---@class lsp.ui.Definition : lsp.ui
@@ -22,33 +20,6 @@ local M = {
     signs = vim.diagnostic.config().signs,
   },
 }
-
-function M.peek()
-  local method = vim.lsp.protocol.Methods.textDocument_definition
-  local clients = vim.lsp.get_clients({ bufnr = 0, method = method })
-  local err, res = L.lsp.request(
-    clients,
-    method,
-    vim.lsp.util.make_position_params(0, 'utf-8'),
-    0
-  )
-
-  if err then
-    L.lsp.notify_error(err)
-    return
-  end
-  if L.tbl.is_empty(res) then
-    vim.notify('No definition available', vim.log.levels.INFO)
-    return
-  end
-
-  M:_open({
-    cword = vim.fn.expand('<cword>'),
-    clients = clients,
-    res = res,
-    peek = true,
-  })
-end
 
 function M.open()
   local method = vim.lsp.protocol.Methods.textDocument_definition
@@ -63,8 +34,7 @@ function M.open()
   if err then
     L.lsp.notify_error(err)
     return
-  end
-  if L.tbl.isempty(res) then
+  elseif L.tbl.isempty(res) then
     vim.notify('No definition available', vim.log.levels.INFO)
     return
   end
@@ -73,7 +43,6 @@ function M.open()
     cword = vim.fn.expand('<cword>'),
     clients = clients,
     res = res,
-    peek = false,
   })
 end
 
@@ -90,8 +59,7 @@ function M.type()
   if err then
     L.lsp.notify_error(err)
     return
-  end
-  if L.tbl.isempty(res) then
+  elseif L.tbl.isempty(res) then
     vim.notify('No definition available', vim.log.levels.INFO)
     return
   end
@@ -123,28 +91,6 @@ function M._util.definition.set_highlights(bufnr, def)
   end, { buffer = true, remap = false })
 end
 
----@param bufnr number
----@param winnr number
-function M._util.definition.register_float_actions(bufnr, winnr)
-  local nsid = vim.api.nvim_create_namespace('lsp-ui')
-  if winnr == nil then
-    return
-  end
-
-  L.cmd.event('QuitPre', bufnr, function()
-    if L.win.is_cur_valid(winnr) then
-      vim.api.nvim_buf_clear_namespace(bufnr, nsid, 0, -1)
-    end
-  end)
-
-  L.cmd.event('WinLeave', bufnr, function()
-    if L.win.is_cur_valid(winnr) then
-      vim.api.nvim_buf_clear_namespace(bufnr, nsid, 0, -1)
-      vim.api.nvim_win_close(winnr, false)
-    end
-  end)
-end
-
 ---@param data WinData
 ---@param index number
 function M._util.definition.open(data, index)
@@ -153,37 +99,18 @@ function M._util.definition.open(data, index)
   local proc = data.proc --[[@as lsp.ui.definition.Proc]]
   local bufnr = vim.uri_to_bufnr(proc.def[index].uri)
 
-  if not proc.peek or bufnr == vim.api.nvim_get_current_buf() then
-    vim.api.nvim_win_set_buf(data.owin, bufnr)
-    M._util.definition.set_highlights(bufnr, proc.def[index])
-    vim.api.nvim_win_set_cursor(data.owin, proc.def[index].start)
-    vim.cmd('filetype detect')
-    vim.cmd('norm zz')
-    return
-  end
-
-  data = L.win.open_center(bufnr, true, {
-    title = ' ' .. vim.fn.fnamemodify(vim.fn.bufname(bufnr), ':t') .. ' ',
-    zindex = 1,
-    style = '',
-  })
+  vim.api.nvim_win_set_buf(data.owin, bufnr)
+  M._util.definition.set_highlights(bufnr, proc.def[index])
+  vim.api.nvim_win_set_cursor(data.owin, proc.def[index].start)
   vim.cmd('filetype detect')
   vim.cmd('norm zz')
-
-  vim.bo[data.nbuf].bufhidden = 'hide'
-  vim.bo[data.nbuf].modifiable = true
-
-  M._util.definition.set_highlights(data.nbuf, proc.def[index])
-  M._util.definition.register_float_actions(data.nbuf, data.nwin)
-  vim.api.nvim_win_set_cursor(data.nwin, proc.def[index].start)
-  vim.cmd('norm! zt')
 end
 
 ---@param raw lsp.ui.definition.Raw
 ---@return lsp.ui.definition.Proc
 function M:_preprocess(raw)
   ---@type lsp.ui.definition.Proc
-  local tbl = { cword = raw.cword, peek = raw.peek, def = {} }
+  local tbl = { cword = raw.cword, def = {} }
 
   ---@type string[]
   local ws_folders = {}
