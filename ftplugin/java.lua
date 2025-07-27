@@ -17,12 +17,14 @@ local function organizeImports()
 
   local req = vim
     .iter(res)
-    :filter(function(
-      r --[[@cast r EnrichedLspResponse]]
+    :filter(
+      ---@param r LspResponse
+      function(r)
+        local ca = r.result --[[@as lsp.CodeAction]]
+        return ca.kind == 'source.organizeImports'
+      end
     )
-      return r.result.kind == 'source.organizeImports'
-    end)
-    :nth(1) --[[@as EnrichedLspResponse]]
+    :nth(1) --[[@as LspResponse]]
   if L.tbl.isempty(req) then
     return
   end

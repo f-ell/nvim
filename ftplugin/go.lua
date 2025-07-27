@@ -19,16 +19,19 @@ local function organizeImports()
 
   vim
     .iter(res)
-    :filter(function(
-      r --[[@cast r EnrichedLspResponse]]
+    :filter(
+      ---@param r LspResponse
+      function(r)
+        local ca = r.result --[[@as lsp.CodeAction]]
+        return ca.kind == 'source.organizeImports'
+      end
     )
-      return r.result.kind == 'source.organizeImports'
-    end)
-    :each(function(
-      r --[[@cast r EnrichedLspResponse]]
+    :each(
+      ---@param r LspResponse
+      function(r)
+        L.lsp.apply_edit(r)
+      end
     )
-      L.lsp.apply_edit(r)
-    end)
 end
 
 vim.api.nvim_create_autocmd('BufWritePre', {

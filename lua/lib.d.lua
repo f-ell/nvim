@@ -17,7 +17,7 @@
 ---@field err RPCError
 ---@field result RPCResult
 
----@class (exact) EnrichedLspResponse
+---@class (exact) LspResponse
 ---@field id number
 ---@field name string
 ---@field result RPCResult

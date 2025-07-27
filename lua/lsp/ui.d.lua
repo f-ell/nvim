@@ -1,6 +1,6 @@
 ---@meta _
 
----@alias Raw EnrichedLspResponse[]|table<any,any>
+---@alias Raw LspResponse[]|table<any,any>
 ---@alias Proc table<any, any>
 
 ---@class (exact) lsp.ui

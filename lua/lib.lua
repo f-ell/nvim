@@ -176,7 +176,7 @@ end
 
 ---Apply a workspace edit.
 ---
----@param response EnrichedLspResponse
+---@param response LspResponse
 function M.lsp.apply_edit(response)
   local edit = response.result.edit and response.result.edit or response.result
 
@@ -217,7 +217,7 @@ end
 ---@param params table
 ---@param bufnr number? buffer to use for requests, defaults to `0`
 ---@param timeout number? passed as `timeout` parameter to `wait()`, defaults to `2000`
----@return RequestError[]?,EnrichedLspResponse[]
+---@return RequestError[]?,LspResponse[]
 function M.lsp.request(clients, method, params, bufnr, timeout)
   if
     type(clients) == 'table'
