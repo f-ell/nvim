@@ -1,9 +1,26 @@
----@class lsp.ui.Definition : lsp.ui
-local M = {}
+---@class (exact) lsp.ui.definition.Raw
+---@field clients vim.lsp.Client[]
+---@field cword string
+---@field res LspResponse[]
+---@field peek boolean?
+---
+---@class (exact) lsp.ui.definition.Def
+---@field uri string
+---@field file string
+---@field start { [1]: number, [2]: number }
+---@field _end { [1]: number, [2]: number }
+---
+---@class (exact) lsp.ui.definition.Proc
+---@field cword string
+---@field peek boolean
+---@field def lsp.ui.definition.Def[]
 
-M._util = {
-  definition = {},
-  signs = vim.diagnostic.config().signs,
+---@class lsp.ui.Definition : lsp.ui
+local M = {
+  _util = {
+    definition = {},
+    signs = vim.diagnostic.config().signs,
+  },
 }
 
 function M.peek()
@@ -86,6 +103,8 @@ function M.type()
   })
 end
 
+---@param bufnr number
+---@param def lsp.ui.definition.Def
 function M._util.definition.set_highlights(bufnr, def)
   local nsid = vim.api.nvim_create_namespace('lsp-ui')
   vim.api.nvim_buf_clear_namespace(bufnr, nsid, 0, -1)
@@ -104,6 +123,8 @@ function M._util.definition.set_highlights(bufnr, def)
   end, { buffer = true, remap = false })
 end
 
+---@param bufnr number
+---@param winnr number
 function M._util.definition.register_float_actions(bufnr, winnr)
   local nsid = vim.api.nvim_create_namespace('lsp-ui')
   if winnr == nil then
@@ -124,10 +145,12 @@ function M._util.definition.register_float_actions(bufnr, winnr)
   end)
 end
 
+---@param data WinData
+---@param index number
 function M._util.definition.open(data, index)
   L.win.close(data.nwin)
 
-  local proc = data.proc
+  local proc = data.proc --[[@as lsp.ui.definition.Proc]]
   local bufnr = vim.uri_to_bufnr(proc.def[index].uri)
 
   if not proc.peek or bufnr == vim.api.nvim_get_current_buf() then
@@ -156,33 +179,32 @@ function M._util.definition.open(data, index)
   vim.cmd('norm! zt')
 end
 
+---@param raw lsp.ui.definition.Raw
+---@return lsp.ui.definition.Proc
 function M:_preprocess(raw)
+  ---@type lsp.ui.definition.Proc
   local tbl = { cword = raw.cword, peek = raw.peek, def = {} }
 
-  local workspace_folders = {}
-  for i = 1, #raw.clients do
-    local config = raw.clients[i]
-    if config.workspace_folders then
-      for j = 1, #config.workspace_folders do
-        table.insert(workspace_folders, config.workspace_folders[j].uri)
+  ---@type string[]
+  local ws_folders = {}
+  for _, c in pairs(raw.clients) do
+    if c.workspace_folders then
+      for _, w in pairs(c.workspace_folders) do
+        table.insert(ws_folders, w.uri)
       end
-    elseif config.root_dir then
-      table.insert(workspace_folders, 'file://' .. config.root_dir)
+    elseif c.root_dir then
+      table.insert(ws_folders, 'file://' .. c.root_dir)
     end
   end
-  vim.fn.uniq(workspace_folders)
+  vim.fn.uniq(ws_folders)
 
-  local res = raw.res
-  -- TODO: verify this works when lsp returns Location[] or LocationLink[]
-  vim.fn.flatten(res, 1)
   local home = os.getenv('HOME')
-
-  -- potentially significant runtime overhead for increased usability
-  for i = 1, #res do
-    local range = res[i].result.range or res[i].result.targetSelectionRange
+  for _, res in pairs(raw.res) do
+    local range = res.result.range or res.result.targetSelectionRange
+    ---@type lsp.ui.definition.Def
     local def = {
-      uri = res[i].result.uri or res[i].result.targetUri,
-      file = (res[i].result.uri or res[i].result.targetUri)
+      uri = res.result.uri or res.result.targetUri,
+      file = (res.result.uri or res.result.targetUri)
         :gsub('^file://', '')
         :gsub('^' .. home, '~'),
       start = { range.start.line + 1, range.start.character },
@@ -190,17 +212,16 @@ function M:_preprocess(raw)
     }
 
     -- remove duplicate definitions on the same line
-    for j = 1, #tbl.def do
-      if def.start[1] ~= tbl.def[j].start[1] then
+    for i, d in pairs(tbl.def) do
+      if def.start[1] ~= d.start[1] then
         goto continue
       end
 
       if
-        def._end[1] < tbl.def[j]._end[1]
-        or def._end[1] == tbl.def[j]._end[1]
-          and def._end[2] < tbl.def[j]._end[2]
+        def._end[1] < d._end[1]
+        or def._end[1] == d._end[1] and def._end[2] < d._end[2]
       then
-        table.remove(tbl.def, j)
+        table.remove(tbl.def, i)
         break
       end
 
@@ -213,24 +234,25 @@ function M:_preprocess(raw)
   end
 
   -- remove external definitions, if at least one local definition is present
-  local workspace_only = false
-  for i = 1, #tbl.def do
-    for j = 1, #workspace_folders do
-      if vim.startswith(tbl.def[i].uri, workspace_folders[j]) then
-        workspace_only = true
+  local ws_only = false
+  for _, d in pairs(tbl.def) do
+    for _, w in pairs(ws_folders) do
+      if vim.startswith(d.uri, w) then
+        ws_only = true
         break
       end
     end
   end
 
-  if not workspace_only then
+  if not ws_only then
     return tbl
   end
 
+  ---@type boolean[]
   local keep = {}
-  for i = 1, #tbl.def do
-    for j = 1, #workspace_folders do
-      if vim.startswith(tbl.def[i].uri, workspace_folders[j]) then
+  for i, d in pairs(tbl.def) do
+    for _, w in pairs(ws_folders) do
+      if vim.startswith(d.uri, w) then
         keep[i] = true
         goto continue
       end
@@ -247,28 +269,25 @@ function M:_preprocess(raw)
   return tbl
 end
 
+---@param proc lsp.ui.definition.Proc
+---@return string[]
 function M:_format(proc)
+  ---@type string[]
   local tbl = {}
 
-  for i = 1, #proc.def do
-    table.insert(
-      tbl,
-      ('%s %s %s-%s'):format(
-        i,
-        proc.def[i].file,
-        proc.def[i].start[1],
-        proc.def[i]._end[1]
-      )
-    )
+  for i, d in pairs(proc.def) do
+    table.insert(tbl, ('%s %s %s-%s'):format(i, d.file, d.start[1], d._end[1]))
   end
 
   return tbl
 end
 
+---@param bufnr number
+---@param proc lsp.ui.definition.Proc
 function M:_set_highlights(bufnr, proc)
   local ns_id = vim.api.nvim_create_namespace('lsp-ui')
 
-  for i = 1, #proc.def do
+  for i, d in pairs(proc.def) do
     local len = string.len(i)
 
     vim.hl.range(
@@ -282,12 +301,13 @@ function M:_set_highlights(bufnr, proc)
       bufnr,
       ns_id,
       'NeutralFloat',
-      { i - 1, len + proc.def[i].file:len() + 2 },
+      { i - 1, len + d.file:len() + 2 },
       { i - 1, -1 }
     )
   end
 end
 
+---@param data WinData
 function M:_register_float_actions(data)
   L.key.nnmap('<C-c>', function()
     L.win.close(data.nwin)
@@ -312,6 +332,7 @@ function M:_register_float_actions(data)
   end)
 end
 
+---@param raw lsp.ui.definition.Raw
 function M:_open(raw)
   local proc = self:_preprocess(raw)
   local content = self:_format(proc)
