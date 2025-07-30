@@ -7,7 +7,7 @@
 ---@field uri string
 ---@field file string
 ---@field start { [1]: number, [2]: number }
----@field _end { [1]: number, [2]: number }
+---@field end_ { [1]: number, [2]: number }
 
 ---@class lsp.ui.Definition
 local M = {
@@ -18,7 +18,7 @@ local M = {
     format = function(item, _, _)
       return {
         item.file,
-        { ('%s-%s'):format(item.start[1], item._end[1]), 'NonText' },
+        { ('%s-%s'):format(item.start[1], item.end_[1]), 'NonText' },
       }
     end,
   },
@@ -104,7 +104,7 @@ function M:_transform(req)
       uri = r.uri or r.targetUri,
       file = (r.uri or r.targetUri):gsub('^file://', ''):gsub('^' .. home, '~'),
       start = { range.start.line + 1, range.start.character },
-      _end = { range['end'].line + 1, range['end'].character },
+      end_ = { range['end'].line + 1, range['end'].character },
     }
 
     -- Remove definitions that are fully contained in one another. The
@@ -122,8 +122,8 @@ function M:_transform(req)
     local i, _ = it:find(
       ---@param d lsp.ui.def.Definition
       function(_, d)
-        return d._end[1] < def._end[1]
-          or d._end[1] == def._end[1] and d._end[2] < def._end[2]
+        return d.end_[1] < def.end_[1]
+          or d.end_[1] == def.end_[1] and d.end_[2] < def.end_[2]
       end
     )
     if i ~= nil then
@@ -134,8 +134,8 @@ function M:_transform(req)
     local j, _ = it:find(
       ---@param d lsp.ui.def.Definition
       function(_, d)
-        return def._end[1] < d._end[1]
-          or def._end[1] == d._end[1] and def._end[2] < d._end[2]
+        return def.end_[1] < d.end_[1]
+          or def.end_[1] == d.end_[1] and def.end_[2] < d.end_[2]
       end
     )
     if j == nil then
@@ -145,8 +145,7 @@ function M:_transform(req)
 
   -- Remove definitions from external sources, such as dependencies, if at least
   -- one project-local definition exists.
-  local it = vim.iter(definitions)
-  local ws_only = it:find(
+  local ws_only = vim.iter(definitions):find(
     ---@param d lsp.ui.def.Definition
     function(d)
       for _, w in pairs(ws_folders) do
@@ -161,18 +160,21 @@ function M:_transform(req)
     return definitions
   end
 
-  return it:filter(
-    ---@param d lsp.ui.def.Definition
-    function(d)
-      for _, w in pairs(ws_folders) do
-        if vim.startswith(d.uri, w) then
-          return true
-        end
+  return vim
+    .iter(definitions)
+    :filter(
+      ---@param d lsp.ui.def.Definition
+      function(d)
+        for _, w in pairs(ws_folders) do
+          if vim.startswith(d.uri, w) then
+            return true
+          end
 
-        return false
+          return false
+        end
       end
-    end
-  ):totable()
+    )
+    :totable()
 end
 
 ---@package
@@ -187,7 +189,7 @@ function M:_set_highlights(bufnr, def)
     nsid,
     'Search',
     { def.start[1] - 1, def.start[2] },
-    { def._end[1], def._end[2] }
+    { def.end_[1] - 1, def.end_[2] }
   )
 
   L.key.nnmap('<C-l>', function()
@@ -212,13 +214,14 @@ end
 ---@param req lsp.ui.def.Request
 function M:_open(req)
   local definitions = self:_transform(req)
+  vim.print(#definitions)
 
   if #definitions == 1 then
     self:_goto(definitions[1])
     return
   end
 
-  local d = L.ui.pick(definitions, 'instant', M._util.format, {
+  local d = L.ui.pick(definitions, 'instant', self._util.format, {
     title = {
       {
         (' %s '):format(self._util.signs.text[vim.diagnostic.severity.INFO]),
