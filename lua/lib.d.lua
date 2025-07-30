@@ -33,3 +33,17 @@
 ---@field height integer
 ---@field config vim.api.keyset.win_config
 ---@field [any] any
+
+--------------------------------------------------------------------------------
+
+---@alias Mode 'yes'|'no'|'instant'|number[]
+
+---@alias HlTuple {[1]: string, [2]:string}
+---@alias Field string|HlTuple
+
+---@class Chunk
+---@field text string
+---@field line number
+---@field start number
+---@field end_ number
+---@field hl string?

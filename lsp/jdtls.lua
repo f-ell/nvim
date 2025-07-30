@@ -31,11 +31,10 @@ commands['java.action.generateConstructorsPrompt'] = function(_, ctx)
   end
 
   local function format(item, selected)
-    return ('%s%s(%s)'):format(
-      selected and '* ' or '',
-      item.name,
-      table.concat(item.parameters, ',')
-    )
+    return {
+      { selected and '*' or '', 'NonText' },
+      ('%s(%s)'):format(item.name, table.concat(item.parameters, ',')),
+    }
   end
 
   if L.tbl.isempty(res.result.constructors) then
@@ -43,7 +42,7 @@ commands['java.action.generateConstructorsPrompt'] = function(_, ctx)
     return
   end
 
-  local constructors = L.ui.pick(res.result.constructors, true, format, {
+  local constructors = L.ui.pick(res.result.constructors, 'yes', format, {
     title = {
       {
         (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
@@ -62,7 +61,10 @@ commands['java.action.generateConstructorsPrompt'] = function(_, ctx)
   if fields then
     ---@diagnostic disable-next-line: redefined-local
     local function format(item, selected)
-      return ('%s%s %s'):format(selected and '* ' or '', item.type, item.name)
+      return {
+        { selected and '*' or '', 'NonText' },
+        ('%s %s'):format(item.type, item.name),
+      }
     end
 
     fields = L.ui.pick(fields, { -1 }, format, {
@@ -113,15 +115,14 @@ commands['java.action.generateDelegateMethodsPrompt'] = function(_, ctx)
   end
 
   local function format(item, selected)
-    return ('%s%s %s'):format(
-      selected and '* ' or '',
-      item.field.type,
-      item.field.name
-    )
+    return {
+      { selected and '*' or '', 'NonText' },
+      ('%s %s'):format(item.field.type, item.field.name),
+    }
   end
 
   local field = #res.result.delegateFields == 1 and res.result.delegateFields[1]
-    or L.ui.pick(res.result.delegateFields, false, format, {
+    or L.ui.pick(res.result.delegateFields, 'instant', format, {
       title = {
         {
           (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
@@ -142,14 +143,13 @@ commands['java.action.generateDelegateMethodsPrompt'] = function(_, ctx)
 
   ---@diagnostic disable-next-line: redefined-local
   local function format(item, selected)
-    return ('%s%s(%s)'):format(
-      selected and '* ' or '',
-      item.name,
-      table.concat(item.parameters, ',')
-    )
+    return {
+      { selected and '*' or '', 'NonText' },
+      ('%s(%s)'):format(item.name, table.concat(item.parameters, ',')),
+    }
   end
 
-  local methods = L.ui.pick(field.delegateMethods, true, format, {
+  local methods = L.ui.pick(field.delegateMethods, 'yes', format, {
     title = {
       {
         (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
@@ -206,7 +206,10 @@ commands['java.action.generateToStringPrompt'] = function(_, ctx)
   end
 
   local function format(item, selected)
-    return ('%s%s %s'):format(selected and '* ' or '', item.type, item.name)
+    return {
+      { selected and '*' or '', 'NonText' },
+      ('%s %s'):format(item.type, item.name),
+    }
   end
 
   local items = L.ui.pick(res.result.fields, { -1 }, format, {
@@ -270,7 +273,10 @@ commands['java.action.hashCodeEqualsPrompt'] = function(_, ctx)
   local exists = res.result.existingMethods[1]
 
   local function format(item, selected)
-    return ('%s%s %s'):format(selected and '* ' or '', item.type, item.name)
+    return {
+      { selected and '*' or '', 'NonText' },
+      ('%s %s'):format(item.type, item.name),
+    }
   end
 
   local items = L.ui.pick(res.result.fields, { -1 }, format, {
@@ -344,10 +350,13 @@ commands['java.action.organizeImports.chooseImports'] = function(result)
       local type = fqn:sub(L.str.last_index(fqn, '%.') + 2)
 
       local function format(item, selected)
-        return ('%s%s'):format(selected and '* ' or '', item.fullyQualifiedName)
+        return {
+          { selected and '*' or '', 'NonText' },
+          item.fullyQualifiedName,
+        }
       end
 
-      local items = L.ui.pick(candidates, false, format, {
+      local items = L.ui.pick(candidates, 'instant', format, {
         title = {
           {
             (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
@@ -389,12 +398,14 @@ commands['java.action.overrideMethodsPrompt'] = function(_, ctx)
   end
 
   local function format(item, selected)
-    return ('%s%s(%s) via %s'):format(
-      selected and '* ' or '',
-      item.name,
-      table.concat(item.parameters, ', '),
-      item.declaringClass
-    )
+    return {
+      { selected and '*' or '', 'NonText' },
+      ('%s(%s) via %s'):format(
+        item.name,
+        table.concat(item.parameters, ', '),
+        item.declaringClass
+      ),
+    }
   end
 
   local multi = {}
