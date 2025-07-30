@@ -397,7 +397,7 @@ end
 ---@param tbl table?
 ---@return boolean
 function M.tbl.isempty(tbl)
-  return tbl == nil or vim.tbl_isempty(tbl)
+  return tbl == nil or type(tbl) == 'table' and vim.tbl_isempty(tbl)
 end
 
 ----------------------------------------------------------------------------- ui
