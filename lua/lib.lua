@@ -615,10 +615,11 @@ end
 ---@generic T
 ---@param items T[]
 ---@param mode Mode
----@param format fun(item:T,selected:boolean,index:number):string|Field[] transform item to string representation
+---@param format fun(item:T,selected:boolean,index:number):string|Field[] @Transform item to string representation.
 ---@param config vim.api.keyset.win_config?
+---@param render fun(winnr:number,bufnr:number,nsid:number)? @Hook invoked on each draw to perform additional logic.
 ---@return T[] selected
-function M.ui.pick(items, mode, format, config)
+function M.ui.pick(items, mode, format, config, render)
   if M.tbl.isempty(items) then
     return {}
   end
@@ -706,7 +707,11 @@ function M.ui.pick(items, mode, format, config)
   M.ui._register_close_events(data.nbuf, data.nwin)
 
   while true do
-    vim.api.nvim__redraw({ flush = true, win = data.nwin, cursor = true })
+    if render then
+      render(data.nwin, data.nbuf, nsid)
+    end
+
+    vim.api.nvim__redraw({ flush = true, buf = data.nbuf, cursor = true })
     -- stylua: ignore
     local c, num =
       vim.fn.getchar() --[[@as integer]],
