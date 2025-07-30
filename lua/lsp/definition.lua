@@ -1,23 +1,26 @@
----@class (exact) lsp.ui.definition.Raw
+---@class (exact) lsp.ui.def.Request
 ---@field clients vim.lsp.Client[]
 ---@field cword string
----@field res LspResponse[]
+---@field responses LspResponse[]
 ---
----@class (exact) lsp.ui.definition.Def
+---@class (exact) lsp.ui.def.Definition
 ---@field uri string
 ---@field file string
 ---@field start { [1]: number, [2]: number }
 ---@field _end { [1]: number, [2]: number }
----
----@class (exact) lsp.ui.definition.Proc
----@field cword string
----@field def lsp.ui.definition.Def[]
 
----@class lsp.ui.Definition : lsp.ui
+---@class lsp.ui.Definition
 local M = {
+  ---@package
   _util = {
-    definition = {},
     signs = vim.diagnostic.config().signs,
+    ---@param item lsp.ui.def.Definition
+    format = function(item, _, _)
+      return {
+        item.file,
+        { ('%s-%s'):format(item.start[1], item._end[1]), 'NonText' },
+      }
+    end,
   },
 }
 
@@ -42,7 +45,7 @@ function M.open()
   M:_open({
     cword = vim.fn.expand('<cword>'),
     clients = clients,
-    res = res,
+    responses = res,
   })
 end
 
@@ -67,13 +70,115 @@ function M.type()
   M:_open({
     cword = vim.fn.expand('<cword>'),
     clients = clients,
-    res = res,
+    responses = res,
   })
 end
 
+---@package
+---@param req lsp.ui.def.Request
+---@return lsp.ui.def.Definition[]
+function M:_transform(req)
+  ---@type lsp.ui.def.Definition[]
+  local definitions = {}
+
+  ---@type string[]
+  local ws_folders = {}
+  for _, c in pairs(req.clients) do
+    if c.workspace_folders then
+      for _, w in pairs(c.workspace_folders) do
+        table.insert(ws_folders, w.uri)
+      end
+    elseif c.root_dir then
+      table.insert(ws_folders, 'file://' .. c.root_dir)
+    end
+  end
+  vim.fn.uniq(ws_folders)
+
+  local home = os.getenv('HOME')
+  for _, res in pairs(req.responses) do
+    local r = res.result --[[@as lsp.Location|lsp.LocationLink]]
+    local range = r.range or r.targetSelectionRange
+
+    ---@type lsp.ui.def.Definition
+    local def = {
+      uri = r.uri or r.targetUri,
+      file = (r.uri or r.targetUri):gsub('^file://', ''):gsub('^' .. home, '~'),
+      start = { range.start.line + 1, range.start.character },
+      _end = { range['end'].line + 1, range['end'].character },
+    }
+
+    -- Remove definitions that are fully contained in one another. The
+    -- calculation is performed in a two-step process. `i` and `j` (see below)
+    -- will never both be `nil` at the same time.
+    local it = vim.iter(ipairs(definitions)):filter(
+      ---@param d lsp.ui.def.Definition
+      function(_, d)
+        return d.start[1] == def.start[1]
+      end
+    )
+
+    -- A previous definition is fully contained in `def`. Looking only for the
+    -- first match works, since this is computed on every iteration.
+    local i, _ = it:find(
+      ---@param d lsp.ui.def.Definition
+      function(_, d)
+        return d._end[1] < def._end[1]
+          or d._end[1] == def._end[1] and d._end[2] < def._end[2]
+      end
+    )
+    if i ~= nil then
+      table.remove(definitions, i)
+    end
+
+    -- `def` is fully contained in a previous definition.
+    local j, _ = it:find(
+      ---@param d lsp.ui.def.Definition
+      function(_, d)
+        return def._end[1] < d._end[1]
+          or def._end[1] == d._end[1] and def._end[2] < d._end[2]
+      end
+    )
+    if j == nil then
+      table.insert(definitions, def)
+    end
+  end
+
+  -- Remove definitions from external sources, such as dependencies, if at least
+  -- one project-local definition exists.
+  local it = vim.iter(definitions)
+  local ws_only = it:find(
+    ---@param d lsp.ui.def.Definition
+    function(d)
+      for _, w in pairs(ws_folders) do
+        if vim.startswith(d.uri, w) then
+          return true
+        end
+      end
+    end
+  ) ~= nil
+
+  if not ws_only then
+    return definitions
+  end
+
+  return it:filter(
+    ---@param d lsp.ui.def.Definition
+    function(d)
+      for _, w in pairs(ws_folders) do
+        if vim.startswith(d.uri, w) then
+          return true
+        end
+
+        return false
+      end
+    end
+  ):totable()
+end
+
+---@package
 ---@param bufnr number
----@param def lsp.ui.definition.Def
-function M._util.definition.set_highlights(bufnr, def)
+---@param def lsp.ui.def.Definition
+function M:_set_highlights(bufnr, def)
   local nsid = vim.api.nvim_create_namespace('lsp-ui')
   vim.api.nvim_buf_clear_namespace(bufnr, nsid, 0, -1)
 
@@ -91,185 +196,29 @@ function M._util.definition.set_highlights(bufnr, def)
   end, { buffer = true, remap = false })
 end
 
----@param data WinData
----@param index number
-function M._util.definition.open(data, index)
-  L.win.close(data.nwin)
+---@package
+---@param d lsp.ui.def.Definition
+function M:_goto(d)
+  local bufnr = vim.uri_to_bufnr(d.uri)
+  vim.api.nvim_win_set_buf(0, bufnr)
+  self:_set_highlights(bufnr, d)
 
-  local proc = data.proc --[[@as lsp.ui.definition.Proc]]
-  local bufnr = vim.uri_to_bufnr(proc.def[index].uri)
-
-  vim.api.nvim_win_set_buf(data.owin, bufnr)
-  M._util.definition.set_highlights(bufnr, proc.def[index])
-  vim.api.nvim_win_set_cursor(data.owin, proc.def[index].start)
+  vim.api.nvim_win_set_cursor(0, d.start)
   vim.cmd('filetype detect')
   vim.cmd('norm zz')
 end
 
----@param raw lsp.ui.definition.Raw
----@return lsp.ui.definition.Proc
-function M:_preprocess(raw)
-  ---@type lsp.ui.definition.Proc
-  local tbl = { cword = raw.cword, def = {} }
+---@package
+---@param req lsp.ui.def.Request
+function M:_open(req)
+  local definitions = self:_transform(req)
 
-  ---@type string[]
-  local ws_folders = {}
-  for _, c in pairs(raw.clients) do
-    if c.workspace_folders then
-      for _, w in pairs(c.workspace_folders) do
-        table.insert(ws_folders, w.uri)
-      end
-    elseif c.root_dir then
-      table.insert(ws_folders, 'file://' .. c.root_dir)
-    end
-  end
-  vim.fn.uniq(ws_folders)
-
-  local home = os.getenv('HOME')
-  for _, res in pairs(raw.res) do
-    local range = res.result.range or res.result.targetSelectionRange
-    ---@type lsp.ui.definition.Def
-    local def = {
-      uri = res.result.uri or res.result.targetUri,
-      file = (res.result.uri or res.result.targetUri)
-        :gsub('^file://', '')
-        :gsub('^' .. home, '~'),
-      start = { range.start.line + 1, range.start.character },
-      _end = { range['end'].line + 1, range['end'].character },
-    }
-
-    -- remove duplicate definitions on the same line
-    for i, d in pairs(tbl.def) do
-      if def.start[1] ~= d.start[1] then
-        goto continue
-      end
-
-      if
-        def._end[1] < d._end[1]
-        or def._end[1] == d._end[1] and def._end[2] < d._end[2]
-      then
-        table.remove(tbl.def, i)
-        break
-      end
-
-      goto skip
-      ::continue::
-    end
-
-    table.insert(tbl.def, def)
-    ::skip::
-  end
-
-  -- remove external definitions, if at least one local definition is present
-  local ws_only = false
-  for _, d in pairs(tbl.def) do
-    for _, w in pairs(ws_folders) do
-      if vim.startswith(d.uri, w) then
-        ws_only = true
-        break
-      end
-    end
-  end
-
-  if not ws_only then
-    return tbl
-  end
-
-  ---@type boolean[]
-  local keep = {}
-  for i, d in pairs(tbl.def) do
-    for _, w in pairs(ws_folders) do
-      if vim.startswith(d.uri, w) then
-        keep[i] = true
-        goto continue
-      end
-    end
-    ::continue::
-  end
-
-  for i = #tbl.def, 1, -1 do
-    if not keep[i] then
-      table.remove(tbl.def, i)
-    end
-  end
-
-  return tbl
-end
-
----@param proc lsp.ui.definition.Proc
----@return string[]
-function M:_format(proc)
-  ---@type string[]
-  local tbl = {}
-
-  for i, d in pairs(proc.def) do
-    table.insert(tbl, ('%s %s %s-%s'):format(i, d.file, d.start[1], d._end[1]))
-  end
-
-  return tbl
-end
-
----@param bufnr number
----@param proc lsp.ui.definition.Proc
-function M:_set_highlights(bufnr, proc)
-  local ns_id = vim.api.nvim_create_namespace('lsp-ui')
-
-  for i, d in pairs(proc.def) do
-    local len = string.len(i)
-
-    vim.hl.range(
-      bufnr,
-      ns_id,
-      self._util.signs.numhl[i % #self._util.signs.text ~= 0 and i % #self._util.signs.text or #self._util.signs.text],
-      { i - 1, 0 },
-      { i - 1, len }
-    )
-    vim.hl.range(
-      bufnr,
-      ns_id,
-      'NeutralFloat',
-      { i - 1, len + d.file:len() + 2 },
-      { i - 1, -1 }
-    )
-  end
-end
-
----@param data WinData
-function M:_register_float_actions(data)
-  L.key.nnmap('<C-c>', function()
-    L.win.close(data.nwin)
-  end, { buffer = true })
-
-  L.key.nnmap('<CR>', function()
-    M._util.definition.open(data, vim.fn.line('.'))
-  end, { buffer = true })
-
-  for i = 1, #data.proc.def do
-    L.key.nnmap(tostring(i), function()
-      M._util.definition.open(data, i)
-    end, { buffer = true })
-  end
-
-  for _, lhs in pairs({ 'v', 'V', '<C-v>' }) do
-    L.key.nnmap(lhs, '', { buffer = true })
-  end
-
-  L.cmd.event({ 'WinLeave', 'QuitPre' }, data.nbuf, function()
-    L.win.close(data.nwin)
-  end)
-end
-
----@param raw lsp.ui.definition.Raw
-function M:_open(raw)
-  local proc = self:_preprocess(raw)
-  local content = self:_format(proc)
-
-  if #proc.def == 1 then
-    self._util.definition.open({ owin = 0, proc = proc }, 1)
+  if #definitions == 1 then
+    self:_goto(definitions[1])
     return
   end
 
-  local data = L.win.open_cursor(content, true, {
+  local d = L.ui.pick(definitions, 'instant', M._util.format, {
     title = {
       {
         (' %s '):format(self._util.signs.text[vim.diagnostic.severity.INFO]),
@@ -278,11 +227,12 @@ function M:_open(raw)
       { 'Definition ', 'FloatTitle' },
     },
     zindex = 2,
-  })
-  data.proc = proc
+  })[1]
 
-  self:_set_highlights(data.nbuf, proc)
-  self:_register_float_actions(data)
+  if d == nil then
+    return
+  end
+  self:_goto(d)
 end
 
 return M

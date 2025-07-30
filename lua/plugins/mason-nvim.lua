@@ -51,8 +51,7 @@ return {
             lsp_format = 'fallback',
           })
         end, { buffer = args.buf })
-        key.nnmap('gd', lsp.def.peek, { buffer = args.buf })
-        key.nnmap('grd', lsp.def.open, { buffer = args.buf })
+        key.nnmap('gd', lsp.def.open, { buffer = args.buf })
         key.nnmap('grt', lsp.def.type, { buffer = args.buf })
 
         key.nnmap('gra', lsp.cda.codeaction, { buffer = args.buf })
