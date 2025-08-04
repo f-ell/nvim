@@ -214,7 +214,6 @@ end
 ---@param req lsp.ui.def.Request
 function M:_open(req)
   local definitions = self:_transform(req)
-  vim.print(#definitions)
 
   if #definitions == 1 then
     self:_goto(definitions[1])
