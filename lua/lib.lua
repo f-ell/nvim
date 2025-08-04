@@ -599,13 +599,13 @@ end
 ---Open floating window and allow selection of zero or more items, returning all
 ---selected items.
 ---
----The `multi` parameter sets the selection mode. If 'yes', any number of items
----may be selected and returned. This also applies when `multi` is of type
+---The `mode` parameter sets the selection mode. If 'yes', any number of items
+---may be selected and returned. This also applies when `mode` is of type
 ---`number[]`, in which case each element is interpreted as an index to
 ---pre-select. If the first element is '-1', all items are pre-selected and
 ---subsequent elements are ignored.
 ---
----Only one item may be selected if `multi` is either 'no' or 'instant'. In the
+---Only one item may be selected if `mode` is either 'no' or 'instant'. In the
 ---former case, the first item is pre-selected and the selection may be changed
 ---before confirmation. In the latter case the chosen item is returned
 ---immediately upon selection. The function will return `T[]` regardless.

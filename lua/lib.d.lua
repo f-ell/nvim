@@ -38,6 +38,7 @@
 
 ---@alias Mode 'yes'|'no'|'instant'|number[]
 
+---Definition for a `[text, highlight]`-tuple.
 ---@alias HlTuple {[1]: string, [2]:string}
 ---@alias Field string|HlTuple
 
