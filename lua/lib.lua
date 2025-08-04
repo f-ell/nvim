@@ -28,84 +28,6 @@ function M.cmd.event(events, buffer, callback)
   end, 0)
 end
 
------------------------------------------------------------------------------ fs
-
----Temporary user directory for local storage. Contains trailing slash!
-M.fs.user_dir = vim.fn.stdpath('run') .. '/nvim.user/'
-
----@package
----Generate unique version of `name` with postfix numbering.
----
----@param name string
----@return string filename
-function M.fs._unique(name)
-  if not vim.uv.fs_stat(name) then
-    return name
-  end
-
-  local i = 1
-  name = name .. '-' .. i
-  while vim.uv.fs_stat(name) do
-    i = i + 1
-    name = name:sub(0, -2) .. i
-  end
-
-  return name
-end
-
----Current process PID. Linux only - relies on `/proc/self/status`!
-M.fs._PID = (function()
-  for ln in io.lines('/proc/self/status') do
-    local match = ln:match('^Pid:.-(%d+)$')
-    if match then
-      return match
-    end
-  end
-end)()
-
----Create temporary directory for miscellaneous runtime user files.
-function M.fs.mktmpdir()
-  if vim.uv.fs_stat(M.fs.user_dir) then
-    return
-  end
-
-  assert(
-    vim.uv.fs_mkdir(M.fs.user_dir, 448),
-    "couldn't create " .. M.fs.user_dir
-  )
-end
-
----Write to temporary file.
----
----@param buffer number
----@param data string[]
----@param remove boolean register delete autocommand
----@param name string? basename of the file to write or uniquely generated name
----@return string filename
-function M.fs.writetmpfile(buffer, data, remove, name)
-  if not vim.uv.fs_stat(M.fs.user_dir) then
-    M.fs.mktmpdir()
-  end
-
-  local file = M.fs.user_dir .. (name and name or M.fs._PID .. '-' .. buffer)
-  M.io.write(name and file or M.fs._unique(file), data)
-
-  if remove then
-    vim.api.nvim_create_autocmd(
-      { 'BufDelete', 'BufUnload', 'BufWipeout', 'VimLeavePre' },
-      {
-        buffer = buffer,
-        callback = function()
-          os.remove(file)
-        end,
-        once = true,
-      }
-    )
-  end
-
-  return file
-end
-
 ----------------------------------------------------------------------------- io
 
 ---@package
@@ -359,24 +281,6 @@ end
 
 ---------------------------------------------------------------------------- tbl
 
----Perform recursive concatenation of two nested array-like tables.
----
----@param tbl number|string|table<string, number, table<string, number>>
----@param sep string
----@return string
-function M.tbl.deep_concat(tbl, sep)
-  if type(tbl) ~= 'table' then
-    return string.format(tbl)
-  end
-
-  return table.concat(
-    vim.tbl_map(function(t)
-      return type(t) ~= 'table' and t or M.tbl.deep_concat(t, sep)
-    end, tbl),
-    sep
-  )
-end
-
 ---Return the display width of the longest item in `tbl`.
 ---
 ---@param tbl string[]
@@ -415,23 +319,6 @@ function M.ui._register_close_events(bufnr, winnr)
   M.key.nnmap('<C-c>', function()
     M.win.close(winnr)
   end, { buffer = bufnr })
-end
-
----@package
----Register buffer-local keymaps to select items.
----
----@param bufnr number
----@param callback fun(index:number)
-function M.ui._register_select_keymaps(bufnr, callback)
-  M.key.nnmap('<CR>', function()
-    callback(vim.fn.line('.'))
-  end, { buffer = bufnr })
-
-  for i = 1, #vim.api.nvim_buf_get_lines(bufnr, 0, -1, true) do
-    M.key.nnmap(tostring(i), function()
-      callback(i)
-    end, { buffer = bufnr })
-  end
 end
 
 ---@package
@@ -902,18 +789,6 @@ function M.win.close(window, base, pos)
   end
 end
 
----Return whether `window` is a valid window handle and the currently active
----window.
----
----@param window number
----@return boolean
-function M.win.is_cur_valid(window)
-  return (
-    vim.api.nvim_get_current_win() == window
-    and vim.api.nvim_win_is_valid(window)
-  )
-end
-
 ---Open floating window.
 ---
 ---@param lines number|string[] buffer number or line-array
@@ -1008,16 +883,6 @@ function M.win.open_cursor(lines, enter, config)
 end
 
 ---------------------------------------------------------------------------- key
-
----@package
----Disable keymaps to enter visual mode in buffer `bufnr`.
----
----@param bufnr number
-function M.key._disable_visual_keymaps(bufnr)
-  for _, lhs in pairs({ 'v', 'V', '<C-v>' }) do
-    M.key.nnmap(lhs, '', { buffer = bufnr })
-  end
-end
 
 ---@package
 ---Create mapping function for `mode`.
