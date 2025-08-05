@@ -1,3 +1,18 @@
+---Definition for a `[text, highlight]`-tuple.
+---@alias HlTuple [string, string]
+---
+---Selection mode for UI picker.
+---@alias lib.ui.Mode 'yes'|'no'|'instant'|number[]
+---
+---A chunk associates a string of text with a specific highlight group, to be
+---placed at a specific location inside of an arbitrary buffer.
+---@class (exact) lib.ui.Chunk
+---@field text string
+---@field line number
+---@field start number
+---@field end_ number
+---@field hl string?
+
 ---@class lib.UI
 local UI = {
   ---@package
@@ -30,7 +45,7 @@ end
 ---
 ---@param bufnr number
 ---@param nsid number
----@param chunks Chunk[]
+---@param chunks lib.ui.Chunk[]
 function UI._highlight(bufnr, nsid, chunks)
   local texthl = {
     'DiagnosticError',
@@ -65,7 +80,7 @@ end
 ---Update selected indices based on `mode` at the index given by `i`.
 ---
 ---@param winnr number
----@param mode Mode
+---@param mode lib.ui.Mode
 ---@param i number @0-based cursor line index.
 ---@param selected boolean[] @Sparse array for selected item indices. Updated in place!
 ---@return number[] @The indices of all items whose selection has changed.
@@ -110,11 +125,11 @@ end
 ---Convert `fields` to a list of chunks.
 ---
 ---@param i number @Line index to associate with the generated chunk.
----@param fields string|Field[]
+---@param fields string|string[]|HlTuple[]
 ---@param delim string
----@return Chunk[]
+---@return lib.ui.Chunk[]
 function UI._chunk(i, fields, delim)
-  ---@type Chunk[]
+  ---@type lib.ui.Chunk[]
   local chunks = {}
   local col = 0
 
@@ -126,7 +141,7 @@ function UI._chunk(i, fields, delim)
   fields = vim
     .iter(fields)
     :map(
-      ---@param f Field
+      ---@param f string|HlTuple
       function(f)
         if type(f) == 'table' then
           assert(
@@ -165,7 +180,7 @@ function UI._chunk(i, fields, delim)
       start = col,
       end_ = col + f[1]:len(),
       hl = f[2],
-    } --[[@as Chunk]])
+    } --[[@as lib.ui.Chunk]])
     col = col + f[1]:len() + delim:len()
   end
 
@@ -175,14 +190,14 @@ end
 ---@package
 ---Join chunks to string separated by `delim`.
 ---
----@param chunks Chunk[]
+---@param chunks lib.ui.Chunk[]
 ---@param delim string?
 ---@return string
 function UI._chunk_tostring(chunks, delim)
   return vim
     .iter(chunks)
     :map(
-      ---@param c Chunk
+      ---@param c lib.ui.Chunk
       function(c)
         return c.text
       end
@@ -208,8 +223,8 @@ end
 ---
 ---@generic T
 ---@param items T[]
----@param mode Mode
----@param format fun(item:T,selected:boolean,index:number):string|Field[] @Transform item to string representation.
+---@param mode lib.ui.Mode
+---@param format fun(item:T,selected:boolean,index:number):string|string[]|HlTuple[] @Transform item to string representation.
 ---@param config vim.api.keyset.win_config?
 ---@param render fun(winnr:number,bufnr:number,nsid:number)? @Hook invoked on each draw to perform additional logic.
 ---@return T[] selected
@@ -235,7 +250,7 @@ function UI:pick(items, mode, format, config, render)
   ---@type table<number, boolean>
   local selected = {}
   ---List of chunks for each item.
-  ---@type Chunk[][]
+  ---@type lib.ui.Chunk[][]
   local chunks = {}
   ---List of screen lines to render.
   ---@type string[]
@@ -257,7 +272,11 @@ function UI:pick(items, mode, format, config, render)
     vim.bo[bufnr].modifiable = true
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, lines)
     vim.bo[bufnr].modifiable = false
-    self._highlight(bufnr, nsid, vim.fn.flatten(chunks) --[[ @as Chunk[] ]])
+    self._highlight(
+      bufnr,
+      nsid,
+      vim.fn.flatten(chunks) --[[ @as lib.ui.Chunk[] ]]
+    )
 
     vim.api.nvim_win_set_width(
       winnr,
@@ -297,7 +316,11 @@ function UI:pick(items, mode, format, config, render)
   )
 
   local data = self._win:open_cursor(lines, true, config)
-  self._highlight(data.nbuf, nsid, vim.fn.flatten(chunks) --[[ @as Chunk[] ]])
+  self._highlight(
+    data.nbuf,
+    nsid,
+    vim.fn.flatten(chunks) --[[ @as lib.ui.Chunk[] ]]
+  )
   self:_register_close_events(data.nbuf, data.nwin)
 
   while true do

@@ -11,7 +11,7 @@ M.rename = function()
   params.context = { includeDeclaration = true }
 
   local method = vim.lsp.protocol.Methods.textDocument_references
-  local err, res = L.lsp.request(
+  local err, res = L.lsp:request(
     vim.lsp.get_clients({ bufnr = 0, method = method }),
     method,
     params,
@@ -31,7 +31,8 @@ M.rename = function()
 
   local declaration
   for i = 1, #res do
-    local s, e = res[i].result.range.start, res[i].result.range['end']
+    local r = res[i].result --[[@as lsp.Location]]
+    local s, e = r.range.start, r.range['end']
     if s.line == ln and s.character <= col and e.character >= col then
       declaration = res[i]
       break
@@ -159,8 +160,12 @@ function M:_open(raw)
     width = math.min(len < min and min or len + 1, max),
     noautocmd = true,
   })
+  --- TODO: deprecate
+  ---@diagnostic disable-next-line: inject-field
   data.proc = proc
+  ---@diagnostic disable-next-line: inject-field
   data.minwidth = min
+  ---@diagnostic disable-next-line: inject-field
   data.maxwidth = max
 
   vim.bo[data.nbuf].modifiable = true

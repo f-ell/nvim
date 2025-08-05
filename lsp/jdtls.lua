@@ -9,7 +9,7 @@ commands['java.action.generateConstructorsPrompt'] = function(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   local err, res
 
-  err, res = L.lsp.request(
+  err, res = L.lsp:request(
     { client },
     'java/checkConstructorsStatus',
     ctx.params,
@@ -82,7 +82,7 @@ commands['java.action.generateConstructorsPrompt'] = function(_, ctx)
   local params =
     { context = ctx.params, constructors = constructors, fields = fields }
   err, res =
-    L.lsp.request({ client }, 'java/generateConstructors', params, ctx.bufnr)
+    L.lsp:request({ client }, 'java/generateConstructors', params, ctx.bufnr)
 
   if err then
     L.lsp.notify_error(err)
@@ -96,7 +96,7 @@ commands['java.action.generateDelegateMethodsPrompt'] = function(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   local err, res
 
-  err, res = L.lsp.request(
+  err, res = L.lsp:request(
     { client },
     'java/checkDelegateMethodsStatus',
     ctx.params,
@@ -175,7 +175,7 @@ commands['java.action.generateDelegateMethodsPrompt'] = function(_, ctx)
   }
 
   err, res =
-    L.lsp.request({ client }, 'java/generateDelegateMethods', params, ctx.bufnr)
+    L.lsp:request({ client }, 'java/generateDelegateMethods', params, ctx.bufnr)
 
   if err then
     L.lsp.notify_error(err)
@@ -189,7 +189,7 @@ commands['java.action.generateToStringPrompt'] = function(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
 
   local err, res =
-    L.lsp.request({ client }, 'java/checkToStringStatus', ctx.params, ctx.bufnr)
+    L.lsp:request({ client }, 'java/checkToStringStatus', ctx.params, ctx.bufnr)
 
   if err then
     L.lsp.notify_error(err)
@@ -223,7 +223,7 @@ commands['java.action.generateToStringPrompt'] = function(_, ctx)
     },
   })
 
-  err, res = L.lsp.request(
+  err, res = L.lsp:request(
     { client },
     'java/generateToString',
     ---@diagnostic disable-next-line
@@ -242,7 +242,7 @@ end
 commands['java.action.hashCodeEqualsPrompt'] = function(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
 
-  local err, res = L.lsp.request(
+  local err, res = L.lsp:request(
     { client },
     'java/checkHashCodeEqualsStatus',
     ctx.params,
@@ -290,7 +290,7 @@ commands['java.action.hashCodeEqualsPrompt'] = function(_, ctx)
     },
   })
 
-  err, res = L.lsp.request(
+  err, res = L.lsp:request(
     { client },
     'java/generateHashCodeEquals',
     ---@diagnostic disable-next-line
@@ -379,7 +379,7 @@ commands['java.action.overrideMethodsPrompt'] = function(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   local err, res
 
-  err, res = L.lsp.request(
+  err, res = L.lsp:request(
     { client },
     'java/listOverridableMethods',
     ctx.params,
@@ -426,7 +426,7 @@ commands['java.action.overrideMethodsPrompt'] = function(_, ctx)
     },
   })
 
-  err, res = L.lsp.request(
+  err, res = L.lsp:request(
     { client },
     'java/addOverridableMethods',
     ---@diagnostic disable-next-line
@@ -461,7 +461,7 @@ function handlers.definition(err, result, ctx, _)
   end
 
   local params = { command = 'java.decompile', arguments = { uri } }
-  err, result = L.lsp.request(
+  err, result = L.lsp:request(
     vim.lsp.get_client_by_id(ctx.client_id) --[[@as vim.lsp.Client]],
     vim.lsp.protocol.Methods.workspace_executeCommand,
     params,

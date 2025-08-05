@@ -1,3 +1,12 @@
+---@class (exact) lib.win.Data
+---@field obuf number @Buffer number of previously active buffer.
+---@field owin number @Window number of previously active window.
+---@field nbuf number @Buffer number of newly opened buffer.
+---@field nwin number @Window number of newly opened window.
+---@field width integer
+---@field height integer
+---@field config vim.api.keyset.win_config
+
 ---@class lib.Win
 local Win = {
   ---@package
@@ -134,9 +143,9 @@ end
 ---@param lines number|string[] @Buffer number or array over lines to render.
 ---@param enter boolean
 ---@param config vim.api.keyset.win_config?
----@return WinData
+---@return lib.win.Data
 function Win:open(lines, enter, config)
-  ---@type WinData
+  ---@type lib.win.Data
   ---@diagnostic disable-next-line: missing-fields
   local data = {
     obuf = vim.api.nvim_get_current_buf(),
@@ -189,7 +198,7 @@ end
 ---@param lines number|string[] @Buffer number or array over lines to render.
 ---@param enter boolean
 ---@param config vim.api.keyset.win_config?
----@return WinData
+---@return lib.win.Data
 function Win:open_center(lines, enter, config)
   config = vim.tbl_extend('keep', config or {}, {
     relative = 'editor',
@@ -207,7 +216,7 @@ end
 ---@param lines number|string[] @Buffer number or array over lines to render.
 ---@param enter boolean
 ---@param config vim.api.keyset.win_config?
----@return WinData
+---@return lib.win.Data
 function Win:open_cursor(lines, enter, config)
   local anchor, row = self._anchor_offset()
 

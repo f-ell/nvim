@@ -16,11 +16,11 @@ function Tbl.max_len(tbl)
     )
     :fold(
       0,
-      ---@param acc number
+      ---@param max number
       ---@param v string
-      function(acc, _, v)
+      function(max, _, v)
         local len = vim.fn.strcharlen(v)
-        return len > acc and len or acc
+        return len > max and len or max
       end
     )
 
