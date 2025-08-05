@@ -1,4 +1,4 @@
----@meta
+---@meta _
 
 ---@class RequestError
 ---@field name string
@@ -42,6 +42,8 @@
 ---@alias HlTuple {[1]: string, [2]:string}
 ---@alias Field string|HlTuple
 
+---A chunk associates a string of text with a specific highlight group, to be
+---placed at a specific location inside of an arbitrary buffer.
 ---@class Chunk
 ---@field text string
 ---@field line number
