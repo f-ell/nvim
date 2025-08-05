@@ -129,8 +129,11 @@ function UI._chunk(i, fields, delim)
     :map(
       ---@param f Field
       function(f)
-        -- NOTE: this assumes ANY table is a valid tuple
         if type(f) == 'table' then
+          assert(
+            #f == 2 and type(f[1]) == 'string' and type(f[2]) == 'string',
+            'invalid highlight tuple'
+          )
           return f
         end
 
