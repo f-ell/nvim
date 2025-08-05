@@ -42,7 +42,7 @@ commands['java.action.generateConstructorsPrompt'] = function(_, ctx)
     return
   end
 
-  local constructors = L.ui.pick(res.result.constructors, 'yes', format, {
+  local constructors = L.ui:pick(res.result.constructors, 'yes', format, {
     title = {
       {
         (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
@@ -67,7 +67,7 @@ commands['java.action.generateConstructorsPrompt'] = function(_, ctx)
       }
     end
 
-    fields = L.ui.pick(fields, { -1 }, format, {
+    fields = L.ui:pick(fields, { -1 }, format, {
       title = {
         {
           (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
@@ -122,7 +122,7 @@ commands['java.action.generateDelegateMethodsPrompt'] = function(_, ctx)
   end
 
   local field = #res.result.delegateFields == 1 and res.result.delegateFields[1]
-    or L.ui.pick(res.result.delegateFields, 'instant', format, {
+    or L.ui:pick(res.result.delegateFields, 'instant', format, {
       title = {
         {
           (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
@@ -149,7 +149,7 @@ commands['java.action.generateDelegateMethodsPrompt'] = function(_, ctx)
     }
   end
 
-  local methods = L.ui.pick(field.delegateMethods, 'yes', format, {
+  local methods = L.ui:pick(field.delegateMethods, 'yes', format, {
     title = {
       {
         (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
@@ -212,7 +212,7 @@ commands['java.action.generateToStringPrompt'] = function(_, ctx)
     }
   end
 
-  local items = L.ui.pick(res.result.fields, { -1 }, format, {
+  local items = L.ui:pick(res.result.fields, { -1 }, format, {
     title = {
       {
         (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
@@ -279,7 +279,7 @@ commands['java.action.hashCodeEqualsPrompt'] = function(_, ctx)
     }
   end
 
-  local items = L.ui.pick(res.result.fields, { -1 }, format, {
+  local items = L.ui:pick(res.result.fields, { -1 }, format, {
     title = {
       {
         (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
@@ -356,7 +356,7 @@ commands['java.action.organizeImports.chooseImports'] = function(result)
         }
       end
 
-      local items = L.ui.pick(candidates, 'instant', format, {
+      local items = L.ui:pick(candidates, 'instant', format, {
         title = {
           {
             (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
@@ -415,7 +415,7 @@ commands['java.action.overrideMethodsPrompt'] = function(_, ctx)
     end
   end
 
-  local items = L.ui.pick(res.result.methods, multi, format, {
+  local items = L.ui:pick(res.result.methods, multi, format, {
     title = {
       {
         (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),

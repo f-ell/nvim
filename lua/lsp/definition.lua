@@ -220,7 +220,7 @@ function M:_open(req)
     return
   end
 
-  local d = L.ui.pick(definitions, 'instant', self._util.format, {
+  local d = L.ui:pick(definitions, 'instant', self._util.format, {
     title = {
       {
         (' %s '):format(self._util.signs.text[vim.diagnostic.severity.INFO]),

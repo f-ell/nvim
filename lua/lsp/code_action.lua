@@ -210,7 +210,7 @@ end
 function M:_open(req)
   local actions = self:_transform(req)
 
-  local c = L.ui.pick(actions, 'instant', self._util.format, {
+  local c = L.ui:pick(actions, 'instant', self._util.format, {
     title = {
       {
         (' %s '):format(self._util.signs.text[vim.diagnostic.severity.INFO]),
