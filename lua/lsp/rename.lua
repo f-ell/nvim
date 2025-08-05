@@ -11,7 +11,7 @@ M.rename = function()
   params.context = { includeDeclaration = true }
 
   local method = vim.lsp.protocol.Methods.textDocument_references
-  local err, res = L.lsp.request(
+  local err, res = L.lsp:request(
     vim.lsp.get_clients({ bufnr = 0, method = method }),
     method,
     params,
@@ -22,7 +22,7 @@ M.rename = function()
     L.lsp.notify_error(err)
     return
   end
-  if L.tbl.isempty(res) then
+  if table.isempty(res) then
     vim.notify('No rename results found', vim.log.levels.INFO)
     return
   end
@@ -31,7 +31,8 @@ M.rename = function()
 
   local declaration
   for i = 1, #res do
-    local s, e = res[i].result.range.start, res[i].result.range['end']
+    local r = res[i].result --[[@as lsp.Location]]
+    local s, e = r.range.start, r.range['end']
     if s.line == ln and s.character <= col and e.character >= col then
       declaration = res[i]
       break
@@ -122,10 +123,10 @@ function M:_register_float_actions(data)
     )
   end, { buffer = true })
 
-  L.cmd.event({ 'WinLeave', 'QuitPre' }, data.nbuf, function()
+  L.cmd.register({ 'WinLeave', 'QuitPre' }, data.nbuf, function()
     close_win()
   end)
-  L.cmd.event({ 'TextChanged', 'TextChangedI' }, data.nbuf, function()
+  L.cmd.register({ 'TextChanged', 'TextChangedI' }, data.nbuf, function()
     local lines = vim.api.nvim_buf_get_lines(data.nbuf, 0, -1, true)
     local len = L.tbl.max_len(lines)
 
@@ -146,7 +147,7 @@ function M:_open(raw)
     raw.cword:len(), math.min(vim.o.columns, 18), math.min(vim.o.columns, 60)
 
   vim.api.nvim_win_set_cursor(0, { raw.pos[1] + 1, raw.pos[2] })
-  local data = L.win.open_cursor({ raw.cword }, true, {
+  local data = L.win:open_cursor({ raw.cword }, true, {
     title = {
       {
         (' %s '):format(self._util.signs.text[vim.diagnostic.severity.INFO]),
@@ -159,8 +160,12 @@ function M:_open(raw)
     width = math.min(len < min and min or len + 1, max),
     noautocmd = true,
   })
+  --- TODO: deprecate
+  ---@diagnostic disable-next-line: inject-field
   data.proc = proc
+  ---@diagnostic disable-next-line: inject-field
   data.minwidth = min
+  ---@diagnostic disable-next-line: inject-field
   data.maxwidth = max
 
   vim.bo[data.nbuf].modifiable = true

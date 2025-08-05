@@ -51,17 +51,17 @@ local function organizeImports()
     },
   }
 
-  local err, res = L.lsp.request(
+  local err, res = L.lsp:request(
     client,
     vim.lsp.protocol.Methods.textDocument_codeAction,
     params,
     0
   )
-  if err or L.tbl.isempty(res) then
+  if err or table.isempty(res) then
     return
   end
 
-  err, res = L.lsp.request(
+  err, res = L.lsp:request(
     client,
     vim.lsp.protocol.Methods.codeAction_resolve,
     res[1].result --[[@as lsp.TextDocumentPositionParams]],

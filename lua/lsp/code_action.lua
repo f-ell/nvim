@@ -36,7 +36,7 @@ function M.codeaction()
   }
 
   local method = vim.lsp.protocol.Methods.textDocument_codeAction
-  local err, res = L.lsp.request(
+  local err, res = L.lsp:request(
     vim.lsp.get_clients({ bufnr = 0, method = method }),
     method,
     params,
@@ -46,22 +46,23 @@ function M.codeaction()
   if err then
     L.lsp.notify_error(err)
     return
-  elseif L.tbl.isempty(res) then
+  elseif table.isempty(res) then
     vim.notify('No codeactions available', vim.log.levels.INFO)
     return
   end
 
   -- Ignore code action kind for deduplication. Primarily relevant for
   -- 'identical' code actions returned from both an LSP and a Linter.
-  for i = 1, #res do
-    res[i].result.kind = nil
+  for _, r in pairs(res) do
+    local result = r.result --[[@as lsp.CodeAction]]
+    result.kind = nil
   end
 
-  M:_open(vim.fn.uniq(res) --[[ @as LspResponse[] ]])
+  M:_open(vim.fn.uniq(res) --[[ @as lib.lsp.Response[] ]])
 end
 
 ---@package
----@param req LspResponse[]
+---@param req lib.lsp.Response[]
 ---@return lsp.ui.cda.CodeAction[]
 function M:_transform(req)
   local actions = {}
@@ -128,7 +129,7 @@ function M:_do_action(c)
     L.lsp.apply_edit({
       id = c.client_id,
       name = c.client_name,
-      result = ca --[[@as RPCResult]],
+      result = ca --[[@as lsp.ResponseMessage]],
     })
   elseif
     ca.action --[[@as fun()?]]
@@ -174,7 +175,7 @@ function M:_do_action(c)
         cmd.command
       )
     then
-      L.lsp.request(client, vim.lsp.protocol.Methods.workspace_executeCommand, {
+      L.lsp:request(client, vim.lsp.protocol.Methods.workspace_executeCommand, {
         command = cmd.command,
         arguments = cmd.arguments,
         --- FIX: field does not exist - does this work as intended?
@@ -188,7 +189,7 @@ function M:_do_action(c)
       )
     end
   else
-    local err, resolved = L.lsp.request(
+    local err, resolved = L.lsp:request(
       { vim.lsp.get_client_by_id(c.client_id) },
       vim.lsp.protocol.Methods.codeAction_resolve,
       ca,
@@ -206,11 +207,11 @@ function M:_do_action(c)
 end
 
 ---@package
----@param req LspResponse[]
+---@param req lib.lsp.Response[]
 function M:_open(req)
   local actions = self:_transform(req)
 
-  local c = L.ui.pick(actions, 'instant', self._util.format, {
+  local c = L.ui:pick(actions, 'instant', self._util.format, {
     title = {
       {
         (' %s '):format(self._util.signs.text[vim.diagnostic.severity.INFO]),

@@ -9,7 +9,7 @@ commands['java.action.generateConstructorsPrompt'] = function(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   local err, res
 
-  err, res = L.lsp.request(
+  err, res = L.lsp:request(
     { client },
     'java/checkConstructorsStatus',
     ctx.params,
@@ -37,12 +37,12 @@ commands['java.action.generateConstructorsPrompt'] = function(_, ctx)
     }
   end
 
-  if L.tbl.isempty(res.result.constructors) then
+  if table.isempty(res.result.constructors) then
     vim.notify('No constructors found', vim.log.levels.INFO)
     return
   end
 
-  local constructors = L.ui.pick(res.result.constructors, 'yes', format, {
+  local constructors = L.ui:pick(res.result.constructors, 'yes', format, {
     title = {
       {
         (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
@@ -53,7 +53,7 @@ commands['java.action.generateConstructorsPrompt'] = function(_, ctx)
     },
   })
 
-  if L.tbl.isempty(constructors) then
+  if table.isempty(constructors) then
     return
   end
 
@@ -67,7 +67,7 @@ commands['java.action.generateConstructorsPrompt'] = function(_, ctx)
       }
     end
 
-    fields = L.ui.pick(fields, { -1 }, format, {
+    fields = L.ui:pick(fields, { -1 }, format, {
       title = {
         {
           (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
@@ -82,7 +82,7 @@ commands['java.action.generateConstructorsPrompt'] = function(_, ctx)
   local params =
     { context = ctx.params, constructors = constructors, fields = fields }
   err, res =
-    L.lsp.request({ client }, 'java/generateConstructors', params, ctx.bufnr)
+    L.lsp:request({ client }, 'java/generateConstructors', params, ctx.bufnr)
 
   if err then
     L.lsp.notify_error(err)
@@ -96,7 +96,7 @@ commands['java.action.generateDelegateMethodsPrompt'] = function(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   local err, res
 
-  err, res = L.lsp.request(
+  err, res = L.lsp:request(
     { client },
     'java/checkDelegateMethodsStatus',
     ctx.params,
@@ -109,7 +109,7 @@ commands['java.action.generateDelegateMethodsPrompt'] = function(_, ctx)
   end
 
   res = res[1]
-  if not res or L.tbl.isempty(res.result.delegateFields) then
+  if not res or table.isempty(res.result.delegateFields) then
     vim.notify('Delegate methods already exist', vim.log.levels.INFO)
     return
   end
@@ -122,7 +122,7 @@ commands['java.action.generateDelegateMethodsPrompt'] = function(_, ctx)
   end
 
   local field = #res.result.delegateFields == 1 and res.result.delegateFields[1]
-    or L.ui.pick(res.result.delegateFields, 'instant', format, {
+    or L.ui:pick(res.result.delegateFields, 'instant', format, {
       title = {
         {
           (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
@@ -149,7 +149,7 @@ commands['java.action.generateDelegateMethodsPrompt'] = function(_, ctx)
     }
   end
 
-  local methods = L.ui.pick(field.delegateMethods, 'yes', format, {
+  local methods = L.ui:pick(field.delegateMethods, 'yes', format, {
     title = {
       {
         (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
@@ -160,7 +160,7 @@ commands['java.action.generateDelegateMethodsPrompt'] = function(_, ctx)
     },
   })
 
-  if L.tbl.isempty(methods) then
+  if table.isempty(methods) then
     return
   end
 
@@ -175,7 +175,7 @@ commands['java.action.generateDelegateMethodsPrompt'] = function(_, ctx)
   }
 
   err, res =
-    L.lsp.request({ client }, 'java/generateDelegateMethods', params, ctx.bufnr)
+    L.lsp:request({ client }, 'java/generateDelegateMethods', params, ctx.bufnr)
 
   if err then
     L.lsp.notify_error(err)
@@ -189,7 +189,7 @@ commands['java.action.generateToStringPrompt'] = function(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
 
   local err, res =
-    L.lsp.request({ client }, 'java/checkToStringStatus', ctx.params, ctx.bufnr)
+    L.lsp:request({ client }, 'java/checkToStringStatus', ctx.params, ctx.bufnr)
 
   if err then
     L.lsp.notify_error(err)
@@ -212,7 +212,7 @@ commands['java.action.generateToStringPrompt'] = function(_, ctx)
     }
   end
 
-  local items = L.ui.pick(res.result.fields, { -1 }, format, {
+  local items = L.ui:pick(res.result.fields, { -1 }, format, {
     title = {
       {
         (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
@@ -223,7 +223,7 @@ commands['java.action.generateToStringPrompt'] = function(_, ctx)
     },
   })
 
-  err, res = L.lsp.request(
+  err, res = L.lsp:request(
     { client },
     'java/generateToString',
     ---@diagnostic disable-next-line
@@ -242,7 +242,7 @@ end
 commands['java.action.hashCodeEqualsPrompt'] = function(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
 
-  local err, res = L.lsp.request(
+  local err, res = L.lsp:request(
     { client },
     'java/checkHashCodeEqualsStatus',
     ctx.params,
@@ -255,7 +255,7 @@ commands['java.action.hashCodeEqualsPrompt'] = function(_, ctx)
   end
 
   res = res[1]
-  if not res or L.tbl.isempty(res.result.fields) then
+  if not res or table.isempty(res.result.fields) then
     vim.notify(
       ('`hashCodeEquals` not applicable for type `%s`'):format(res.result.type),
       vim.log.levels.INFO
@@ -279,7 +279,7 @@ commands['java.action.hashCodeEqualsPrompt'] = function(_, ctx)
     }
   end
 
-  local items = L.ui.pick(res.result.fields, { -1 }, format, {
+  local items = L.ui:pick(res.result.fields, { -1 }, format, {
     title = {
       {
         (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
@@ -290,7 +290,7 @@ commands['java.action.hashCodeEqualsPrompt'] = function(_, ctx)
     },
   })
 
-  err, res = L.lsp.request(
+  err, res = L.lsp:request(
     { client },
     'java/generateHashCodeEquals',
     ---@diagnostic disable-next-line
@@ -347,7 +347,7 @@ commands['java.action.organizeImports.chooseImports'] = function(result)
       table.insert(chosen, candidates[1])
     else
       local fqn = candidates[1].fullyQualifiedName
-      local type = fqn:sub(L.str.last_index(fqn, '%.') + 2)
+      local type = fqn:sub(L.str.rindex(fqn, '%.') + 2)
 
       local function format(item, selected)
         return {
@@ -356,7 +356,7 @@ commands['java.action.organizeImports.chooseImports'] = function(result)
         }
       end
 
-      local items = L.ui.pick(candidates, 'instant', format, {
+      local items = L.ui:pick(candidates, 'instant', format, {
         title = {
           {
             (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
@@ -379,7 +379,7 @@ commands['java.action.overrideMethodsPrompt'] = function(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   local err, res
 
-  err, res = L.lsp.request(
+  err, res = L.lsp:request(
     { client },
     'java/listOverridableMethods',
     ctx.params,
@@ -392,7 +392,7 @@ commands['java.action.overrideMethodsPrompt'] = function(_, ctx)
   end
 
   res = res[1]
-  if not res or L.tbl.isempty(res.result.methods) then
+  if not res or table.isempty(res.result.methods) then
     vim.notify('No overridable methods found', vim.log.levels.INFO)
     return
   end
@@ -415,7 +415,7 @@ commands['java.action.overrideMethodsPrompt'] = function(_, ctx)
     end
   end
 
-  local items = L.ui.pick(res.result.methods, multi, format, {
+  local items = L.ui:pick(res.result.methods, multi, format, {
     title = {
       {
         (' %s '):format(signs.text[vim.diagnostic.severity.INFO]),
@@ -426,7 +426,7 @@ commands['java.action.overrideMethodsPrompt'] = function(_, ctx)
     },
   })
 
-  err, res = L.lsp.request(
+  err, res = L.lsp:request(
     { client },
     'java/addOverridableMethods',
     ---@diagnostic disable-next-line
@@ -438,7 +438,7 @@ commands['java.action.overrideMethodsPrompt'] = function(_, ctx)
     L.lsp.notify_error(err)
     return
   end
-  if L.tbl.isempty(res) then
+  if table.isempty(res) then
     return
   end
 
@@ -461,7 +461,7 @@ function handlers.definition(err, result, ctx, _)
   end
 
   local params = { command = 'java.decompile', arguments = { uri } }
-  err, result = L.lsp.request(
+  err, result = L.lsp:request(
     vim.lsp.get_client_by_id(ctx.client_id) --[[@as vim.lsp.Client]],
     vim.lsp.protocol.Methods.workspace_executeCommand,
     params,

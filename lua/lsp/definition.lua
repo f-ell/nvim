@@ -1,13 +1,13 @@
 ---@class (exact) lsp.ui.def.Request
 ---@field clients vim.lsp.Client[]
 ---@field cword string
----@field responses LspResponse[]
+---@field responses lib.lsp.Response[]
 ---
 ---@class (exact) lsp.ui.def.Definition
 ---@field uri string
 ---@field file string
----@field start { [1]: number, [2]: number }
----@field end_ { [1]: number, [2]: number }
+---@field start [number, number]
+---@field end_ [number, number]
 
 ---@class lsp.ui.Definition
 local M = {
@@ -27,7 +27,7 @@ local M = {
 function M.open()
   local method = vim.lsp.protocol.Methods.textDocument_definition
   local clients = vim.lsp.get_clients({ bufnr = 0, method = method })
-  local err, res = L.lsp.request(
+  local err, res = L.lsp:request(
     clients,
     method,
     vim.lsp.util.make_position_params(0, 'utf-8'),
@@ -37,7 +37,7 @@ function M.open()
   if err then
     L.lsp.notify_error(err)
     return
-  elseif L.tbl.isempty(res) then
+  elseif table.isempty(res) then
     vim.notify('No definition available', vim.log.levels.INFO)
     return
   end
@@ -52,7 +52,7 @@ end
 function M.type()
   local method = vim.lsp.protocol.Methods.textDocument_typeDefinition
   local clients = vim.lsp.get_clients({ bufnr = 0, method = method })
-  local err, res = L.lsp.request(
+  local err, res = L.lsp:request(
     clients,
     method,
     vim.lsp.util.make_position_params(0, 'utf-8'),
@@ -62,7 +62,7 @@ function M.type()
   if err then
     L.lsp.notify_error(err)
     return
-  elseif L.tbl.isempty(res) then
+  elseif table.isempty(res) then
     vim.notify('No definition available', vim.log.levels.INFO)
     return
   end
@@ -220,7 +220,7 @@ function M:_open(req)
     return
   end
 
-  local d = L.ui.pick(definitions, 'instant', self._util.format, {
+  local d = L.ui:pick(definitions, 'instant', self._util.format, {
     title = {
       {
         (' %s '):format(self._util.signs.text[vim.diagnostic.severity.INFO]),
