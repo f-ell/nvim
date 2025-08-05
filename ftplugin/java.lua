@@ -25,7 +25,7 @@ local function organizeImports()
       end
     )
     :nth(1) --[[@as LspResponse]]
-  if L.tbl.isempty(req) then
+  if table.isempty(req) then
     return
   end
 

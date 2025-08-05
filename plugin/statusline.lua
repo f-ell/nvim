@@ -433,7 +433,7 @@ local lsp = {
       function(self)
         -- updated on first LspAttach - signs may not be defined beforehand
         local signs = vim.diagnostic.config().signs
-        if L.tbl.isempty(self.meta.signs) and type(signs) == 'table' then
+        if table.isempty(self.meta.signs) and type(signs) == 'table' then
           self.meta.signs = signs
         end
 
@@ -445,7 +445,7 @@ local lsp = {
     {
       { 'BufEnter', 'DiagnosticChanged' },
       function(self)
-        if L.tbl.isempty(self.meta.signs) then
+        if table.isempty(self.meta.signs) then
           return
         end
 

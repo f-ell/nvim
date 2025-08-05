@@ -145,7 +145,7 @@ end
 function M.lsp.request(clients, method, params, bufnr, timeout)
   if
     type(clients) == 'table'
-    and not (type(clients[1]) == 'table' or M.tbl.isempty(clients))
+    and not (type(clients[1]) == 'table' or table.isempty(clients))
   then
     clients = { clients }
   end
@@ -186,7 +186,7 @@ function M.lsp.request(clients, method, params, bufnr, timeout)
         add_err(clients[i].name, method, res.err.message)
         goto continue
       end
-      if M.tbl.isempty(res.result) then
+      if table.isempty(res.result) then
         goto continue
       end
 
@@ -294,14 +294,6 @@ function M.tbl.max_len(tbl)
     end
   end
   return max
-end
-
----Returns `true` if table is empty or `nil`.
----
----@param tbl table?
----@return boolean
-function M.tbl.isempty(tbl)
-  return tbl == nil or type(tbl) == 'table' and vim.tbl_isempty(tbl)
 end
 
 ----------------------------------------------------------------------------- ui
@@ -507,7 +499,7 @@ end
 ---@param render fun(winnr:number,bufnr:number,nsid:number)? @Hook invoked on each draw to perform additional logic.
 ---@return T[] selected
 function M.ui.pick(items, mode, format, config, render)
-  if M.tbl.isempty(items) then
+  if table.isempty(items) then
     return {}
   end
 

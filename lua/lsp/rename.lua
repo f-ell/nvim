@@ -22,7 +22,7 @@ M.rename = function()
     L.lsp.notify_error(err)
     return
   end
-  if L.tbl.isempty(res) then
+  if table.isempty(res) then
     vim.notify('No rename results found', vim.log.levels.INFO)
     return
   end

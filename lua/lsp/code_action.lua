@@ -46,7 +46,7 @@ function M.codeaction()
   if err then
     L.lsp.notify_error(err)
     return
-  elseif L.tbl.isempty(res) then
+  elseif table.isempty(res) then
     vim.notify('No codeactions available', vim.log.levels.INFO)
     return
   end

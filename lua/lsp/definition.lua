@@ -37,7 +37,7 @@ function M.open()
   if err then
     L.lsp.notify_error(err)
     return
-  elseif L.tbl.isempty(res) then
+  elseif table.isempty(res) then
     vim.notify('No definition available', vim.log.levels.INFO)
     return
   end
@@ -62,7 +62,7 @@ function M.type()
   if err then
     L.lsp.notify_error(err)
     return
-  elseif L.tbl.isempty(res) then
+  elseif table.isempty(res) then
     vim.notify('No definition available', vim.log.levels.INFO)
     return
   end

@@ -37,7 +37,7 @@ commands['java.action.generateConstructorsPrompt'] = function(_, ctx)
     }
   end
 
-  if L.tbl.isempty(res.result.constructors) then
+  if table.isempty(res.result.constructors) then
     vim.notify('No constructors found', vim.log.levels.INFO)
     return
   end
@@ -53,7 +53,7 @@ commands['java.action.generateConstructorsPrompt'] = function(_, ctx)
     },
   })
 
-  if L.tbl.isempty(constructors) then
+  if table.isempty(constructors) then
     return
   end
 
@@ -109,7 +109,7 @@ commands['java.action.generateDelegateMethodsPrompt'] = function(_, ctx)
   end
 
   res = res[1]
-  if not res or L.tbl.isempty(res.result.delegateFields) then
+  if not res or table.isempty(res.result.delegateFields) then
     vim.notify('Delegate methods already exist', vim.log.levels.INFO)
     return
   end
@@ -160,7 +160,7 @@ commands['java.action.generateDelegateMethodsPrompt'] = function(_, ctx)
     },
   })
 
-  if L.tbl.isempty(methods) then
+  if table.isempty(methods) then
     return
   end
 
@@ -255,7 +255,7 @@ commands['java.action.hashCodeEqualsPrompt'] = function(_, ctx)
   end
 
   res = res[1]
-  if not res or L.tbl.isempty(res.result.fields) then
+  if not res or table.isempty(res.result.fields) then
     vim.notify(
       ('`hashCodeEquals` not applicable for type `%s`'):format(res.result.type),
       vim.log.levels.INFO
@@ -392,7 +392,7 @@ commands['java.action.overrideMethodsPrompt'] = function(_, ctx)
   end
 
   res = res[1]
-  if not res or L.tbl.isempty(res.result.methods) then
+  if not res or table.isempty(res.result.methods) then
     vim.notify('No overridable methods found', vim.log.levels.INFO)
     return
   end
@@ -438,7 +438,7 @@ commands['java.action.overrideMethodsPrompt'] = function(_, ctx)
     L.lsp.notify_error(err)
     return
   end
-  if L.tbl.isempty(res) then
+  if table.isempty(res) then
     return
   end
 
