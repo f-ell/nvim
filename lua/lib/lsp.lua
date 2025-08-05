@@ -162,6 +162,10 @@ function LSP:_do_request(client, method, params, bufnr, timeout)
       nil
   end
 
+  if msg.result == nil then
+    return nil, {}
+  end
+
   local res = type(msg.result[1]) == 'table' and msg.result or { msg.result } --[[ @as lsp.LSPAny[] ]]
   responses = vim
     .iter(res)
