@@ -122,10 +122,10 @@ function M:_register_float_actions(data)
     )
   end, { buffer = true })
 
-  L.cmd.event({ 'WinLeave', 'QuitPre' }, data.nbuf, function()
+  L.cmd.register({ 'WinLeave', 'QuitPre' }, data.nbuf, function()
     close_win()
   end)
-  L.cmd.event({ 'TextChanged', 'TextChangedI' }, data.nbuf, function()
+  L.cmd.register({ 'TextChanged', 'TextChangedI' }, data.nbuf, function()
     local lines = vim.api.nvim_buf_get_lines(data.nbuf, 0, -1, true)
     local len = L.tbl.max_len(lines)
 

@@ -2,12 +2,11 @@
 local Str = {}
 
 ---Return index of last occurence of `pattern` in `str`.
---- TODO: rename `rindex`
 ---
 ---@param str string
 ---@param pattern string
 ---@return number?
-function Str.last_index(str, pattern)
+function Str.rindex(str, pattern)
   local index = str:reverse():find(pattern)
 
   if not index then

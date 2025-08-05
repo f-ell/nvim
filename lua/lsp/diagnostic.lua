@@ -202,7 +202,7 @@ function M:_open(raw)
   self:_set_highlights(data.nbuf, proc)
 
   -- TODO: WinScrolled - move window to new cursor position instead
-  L.cmd.event(
+  L.cmd.register(
     { 'BufLeave', 'CursorMoved', 'InsertEnter', 'WinScrolled' },
     data.obuf,
     function()

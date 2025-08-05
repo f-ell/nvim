@@ -187,7 +187,7 @@ function M:_open(raw)
 
   self:_set_highlights(data.nbuf, proc)
 
-  L.cmd.event(
+  L.cmd.register(
     { 'BufLeave', 'CursorMoved', 'InsertLeave', 'TextChangedI', 'WinNew' },
     data.obuf,
     function()

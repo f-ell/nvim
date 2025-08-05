@@ -2,12 +2,13 @@
 local Cmd = {}
 
 ---Register buffer-local autocommand on `events`.
---- TODO: rename
 ---
 ---@param events string|string[]
 ---@param bufnr number
 ---@param callback string|function
-function Cmd.event(events, bufnr, callback)
+function Cmd.register(events, bufnr, callback)
+  -- TODO: return autocmd ID for removal
+  -- TODO: does this need to be deferred?
   vim.defer_fn(function()
     vim.api.nvim_create_autocmd(events, {
       buffer = bufnr,

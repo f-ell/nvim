@@ -347,7 +347,7 @@ commands['java.action.organizeImports.chooseImports'] = function(result)
       table.insert(chosen, candidates[1])
     else
       local fqn = candidates[1].fullyQualifiedName
-      local type = fqn:sub(L.str.last_index(fqn, '%.') + 2)
+      local type = fqn:sub(L.str.rindex(fqn, '%.') + 2)
 
       local function format(item, selected)
         return {

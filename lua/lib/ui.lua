@@ -17,7 +17,7 @@ local UI = {
 ---@param bufnr number
 ---@param winnr number
 function UI._register_close_events(bufnr, winnr)
-  UI._cmd.event({ 'WinLeave', 'QuitPre' }, bufnr, function()
+  UI._cmd.register({ 'WinLeave', 'QuitPre' }, bufnr, function()
     UI._win.close(winnr)
   end)
 
