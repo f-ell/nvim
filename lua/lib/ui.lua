@@ -261,8 +261,8 @@ function UI.pick(items, mode, format, config, render)
     vim.api.nvim_win_set_width(
       winnr,
       math.min(
-        UI._tbl.max_len({ UI._win._parse_title(config), unpack(lines) }),
-        UI._win._max_width()
+        UI._tbl.max_len({ UI._win.parse_title(config), unpack(lines) }),
+        UI._win.max_width()
       )
     )
   end
@@ -291,8 +291,8 @@ function UI.pick(items, mode, format, config, render)
 
   config = config or {}
   config.width = math.min(
-    UI._tbl.max_len({ UI._win._parse_title(config), unpack(lines) }),
-    UI._win._max_width()
+    UI._tbl.max_len({ UI._win.parse_title(config), unpack(lines) }),
+    UI._win.max_width()
   )
 
   local data = UI._win.open_cursor(lines, true, config)

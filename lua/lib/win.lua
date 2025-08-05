@@ -4,47 +4,54 @@ local Win = {
   _tbl = require('lib.tbl'),
 }
 
+---@package
 ---Maximum window width when `relative` is 'editor'.
 Win._MAXSIZE = 0.8
+---@package
 ---Reuired offset to center floating window when `relative` is 'editor'.
 Win._OFFSET = (1 - Win._MAXSIZE) / 2
-
 ---@package
+---Desired horizontal padding for floating windows.
+Win._HPAD = 2
+---@package
+---Desired vertical padding for floating windows.
+Win._VPAD = 2
+
 ---Extract window title string from `nvim_open_win()`'s `config` table.
---- TODO: export
 ---
 ---@param config vim.api.keyset.win_config?
 ---@return string
-function Win._parse_title(config)
+function Win.parse_title(config)
   if not (config and config.title) then
     return ''
   end
 
-  return type(config.title) == 'string' and config.title
-    or table.concat(
-      vim.tbl_map(function(t)
-        return t[1]
-      end, config.title),
-      ''
-    )
+  if type(config.title) == 'string' then
+    return config.title
+  end
+
+  return vim
+    .iter(config.title)
+    :map(function(t)
+      return t[1]
+    end)
+    :join('')
 end
 
----@package
 ---Calculate maximum window width, maintaining desired padding.
---- TODO: receiver, export
+--- TODO: receiver
 ---
 ---@return integer
-function Win._max_width()
-  return math.floor(vim.o.columns * Win._MAXSIZE) - 2
+function Win.max_width()
+  return math.floor(vim.o.columns * Win._MAXSIZE) - Win._HPAD
 end
 
----@package
 ---Calculate maximum window height, maintaining desired padding.
---- TODO: receiver, export
+--- TODO: receiver
 ---
 ---@return integer
-function Win._max_height()
-  return math.floor(vim.o.lines * Win._MAXSIZE)
+function Win.max_height()
+  return math.floor(vim.o.lines * Win._MAXSIZE) - Win._VPAD
 end
 
 ---@package
@@ -55,10 +62,10 @@ end
 ---@return integer
 function Win._width(data)
   if type(data) == 'number' then
-    return Win._max_width()
+    return Win.max_width()
   else
     local len = Win._tbl.max_len(data)
-    return math.min(len > 0 and len or 1, Win._max_width())
+    return math.min(len > 0 and len or 1, Win.max_width())
   end
 end
 
@@ -70,15 +77,15 @@ end
 ---@return integer
 function Win._height(data)
   if type(data) == 'number' then
-    return Win._max_height()
+    return Win.max_height()
   end
 
   -- FIX: should account for cursor offset (getpos('.')[3]-1)
   -- issue: we don't know if the window will be offset to the left because of
   -- its width
-  local maxw = vim.o.columns - 2
+  local maxw = vim.o.columns - Win._HPAD
   if Win._tbl.max_len(data) < maxw then
-    return math.min(#data > 0 and #data or 1, Win._max_height())
+    return math.min(#data > 0 and #data or 1, Win.max_height())
   end
 
   local h, showbreak = #data, vim.fn.strdisplaywidth(vim.o.showbreak)
@@ -98,7 +105,7 @@ function Win._height(data)
     end
   end
 
-  return math.min(h, Win._max_height())
+  return math.min(h, Win.max_height())
 end
 
 ---Calculate appropriate window anchor and required offset for centering the
@@ -146,7 +153,7 @@ function Win.open(lines, enter, config)
       type(lines) == 'number' and lines
         -- if title is present, ensure that it's not cut off
         ---@diagnostic disable-next-line: param-type-mismatch
-        or { Win._parse_title(config), unpack(lines) }
+        or { Win.parse_title(config), unpack(lines) }
     ),
     height = Win._height(lines),
   }
