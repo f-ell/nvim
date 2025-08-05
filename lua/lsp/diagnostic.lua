@@ -180,10 +180,12 @@ function M:_open(raw)
     vim.fn.cursor({ proc.diag[#proc.diag].ln, proc.diag[#proc.diag].col })
   end
 
-  vim.iter(M._util.active_wins):each(L.win.close)
+  vim.iter(M._util.active_wins):each(function(w)
+    L.win:close(w)
+  end)
   M._util.active_wins = {}
 
-  local data = L.win.open_cursor(content, false, {
+  local data = L.win:open_cursor(content, false, {
     title = {
       proc.title.icon,
       { 'Diagnostics ', 'FloatTitle' },
@@ -206,7 +208,7 @@ function M:_open(raw)
     { 'BufLeave', 'CursorMoved', 'InsertEnter', 'WinScrolled' },
     data.obuf,
     function()
-      L.win.close(data.nwin)
+      L.win:close(data.nwin)
       M._util.active_wins = vim
         .iter(M._util.active_wins)
         :filter(function(w)

@@ -172,7 +172,7 @@ function M:_open(raw)
   local proc = self:_preprocess(raw)
   local content = self:_format(proc)
 
-  local data = L.win.open_cursor(content, false, {
+  local data = L.win:open_cursor(content, false, {
     title = {
       {
         (' %s '):format(self._util.signs.text[vim.diagnostic.severity.INFO]),
@@ -191,7 +191,7 @@ function M:_open(raw)
     { 'BufLeave', 'CursorMoved', 'InsertLeave', 'TextChangedI', 'WinNew' },
     data.obuf,
     function()
-      L.win.close(data.nwin)
+      L.win:close(data.nwin)
     end
   )
 end

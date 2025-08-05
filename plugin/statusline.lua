@@ -283,7 +283,7 @@ local git = {
 
     self.meta.root = {
       global = stat and (stat.type == 'file' and L.io
-        .read(path, true)
+        :read(path, true)
         :match('^gitdir: (.*)$') or path) or nil,
       _local = path ~= nil and path:gsub('%.git$', '') or nil,
     }
@@ -306,7 +306,7 @@ local git = {
     vim.fn.jobwait({ id }, 100)
   end,
   _head = function(self)
-    local content = L.io.read(self.meta.root.global .. '/HEAD', true)
+    local content = L.io:read(self.meta.root.global .. '/HEAD', true)
     if content == '' then
       return
     end

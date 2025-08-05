@@ -12,17 +12,16 @@ local UI = {
 
 ---@package
 ---Register events to automatically close window `winnr`.
---- TODO: receiver
 ---
 ---@param bufnr number
 ---@param winnr number
-function UI._register_close_events(bufnr, winnr)
-  UI._cmd.register({ 'WinLeave', 'QuitPre' }, bufnr, function()
-    UI._win.close(winnr)
+function UI:_register_close_events(bufnr, winnr)
+  self._cmd.register({ 'WinLeave', 'QuitPre' }, bufnr, function()
+    self._win:close(winnr)
   end)
 
-  UI._key.nnmap('<C-c>', function()
-    UI._win.close(winnr)
+  self._key.nnmap('<C-c>', function()
+    self._win:close(winnr)
   end, { buffer = bufnr })
 end
 
@@ -207,8 +206,6 @@ end
 ---
 ---Requires 0.10 for `nvim__redraw`.
 ---
---- TODO: receiver
----
 ---@generic T
 ---@param items T[]
 ---@param mode Mode
@@ -216,7 +213,7 @@ end
 ---@param config vim.api.keyset.win_config?
 ---@param render fun(winnr:number,bufnr:number,nsid:number)? @Hook invoked on each draw to perform additional logic.
 ---@return T[] selected
-function UI.pick(items, mode, format, config, render)
+function UI:pick(items, mode, format, config, render)
   if table.isempty(items) then
     return {}
   end
@@ -252,20 +249,21 @@ function UI.pick(items, mode, format, config, render)
   ---@param indices number[]
   local function rerender(bufnr, winnr, indices)
     for _, i in pairs(indices) do
-      chunks[i] = UI._chunk(i, format(items[i], selected[i] or false, i), delim)
-      lines[i] = UI._chunk_tostring(chunks[i])
+      chunks[i] =
+        self._chunk(i, format(items[i], selected[i] or false, i), delim)
+      lines[i] = self._chunk_tostring(chunks[i])
     end
 
     vim.bo[bufnr].modifiable = true
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, lines)
     vim.bo[bufnr].modifiable = false
-    UI._highlight(bufnr, nsid, vim.fn.flatten(chunks) --[[ @as Chunk[] ]])
+    self._highlight(bufnr, nsid, vim.fn.flatten(chunks) --[[ @as Chunk[] ]])
 
     vim.api.nvim_win_set_width(
       winnr,
       math.min(
-        UI._tbl.max_len({ UI._win.parse_title(config), unpack(lines) }),
-        UI._win.max_width()
+        self._tbl.max_len({ self._win.parse_title(config), unpack(lines) }),
+        self._win.max_width()
       )
     )
   end
@@ -286,21 +284,21 @@ function UI.pick(items, mode, format, config, render)
   end
 
   for i = 1, #items do
-    local ch = UI._chunk(i, format(items[i], selected[i] or false, i), delim)
+    local ch = self._chunk(i, format(items[i], selected[i] or false, i), delim)
 
     table.insert(chunks, ch)
-    table.insert(lines, UI._chunk_tostring(ch))
+    table.insert(lines, self._chunk_tostring(ch))
   end
 
   config = config or {}
   config.width = math.min(
-    UI._tbl.max_len({ UI._win.parse_title(config), unpack(lines) }),
-    UI._win.max_width()
+    self._tbl.max_len({ self._win.parse_title(config), unpack(lines) }),
+    self._win.max_width()
   )
 
-  local data = UI._win.open_cursor(lines, true, config)
-  UI._highlight(data.nbuf, nsid, vim.fn.flatten(chunks) --[[ @as Chunk[] ]])
-  UI._register_close_events(data.nbuf, data.nwin)
+  local data = self._win:open_cursor(lines, true, config)
+  self._highlight(data.nbuf, nsid, vim.fn.flatten(chunks) --[[ @as Chunk[] ]])
+  self:_register_close_events(data.nbuf, data.nwin)
 
   while true do
     if render then
@@ -326,7 +324,7 @@ function UI.pick(items, mode, format, config, render)
       rerender(
         data.nbuf,
         data.nwin,
-        UI._select(data.nwin, mode, vim.fn.line('.'), selected)
+        self._select(data.nwin, mode, vim.fn.line('.'), selected)
       )
 
       if mode == 'instant' then
@@ -346,7 +344,7 @@ function UI.pick(items, mode, format, config, render)
         rerender(
           data.nbuf,
           data.nwin,
-          UI._select(data.nwin, mode, num, selected)
+          self._select(data.nwin, mode, num, selected)
         )
 
         -- Terminate after first valid number instead of selecting again.
@@ -369,7 +367,7 @@ function UI.pick(items, mode, format, config, render)
     ::continue::
   end
 
-  UI._win.close(data.nwin)
+  self._win:close(data.nwin)
 
   local tbl = {}
   for i, _ in pairs(selected) do

@@ -16,13 +16,12 @@ function IO._open(file, mode)
 end
 
 ---Read contents of `file`. Returns an emtpy string in case of errors.
---- TODO: receiver
 ---
 ---@param file string|file* @Name or handle of file to open. Closed automatically.
 ---@param chop boolean? @Remove trailing newline. Defaults to `false`.
 ---@return string
-function IO.read(file, chop)
-  local fh = IO._open(file, 'r')
+function IO:read(file, chop)
+  local fh = self._open(file, 'r')
   if fh == nil then
     return ''
   end
@@ -34,12 +33,11 @@ end
 
 ---Read file contents to consecutive table indices. Returns an emtpy table in
 ---case of errors.
---- TODO: receiver
 ---
 ---@param file string|file* @Name or handle of file to open. Closed automatically.
 ---@return string[]
-function IO.tbl_read(file)
-  local fh = IO._open(file, 'r')
+function IO:tbl_read(file)
+  local fh = self._open(file, 'r')
   if fh == nil then
     return {}
   end
@@ -51,18 +49,17 @@ function IO.tbl_read(file)
 end
 
 ---Write `data` to `file`.
---- TODO: receiver
 ---
 ---@param file string|file* @Name or handle of file to open. Closed automatically.
 ---@param data string[]
 ---@param mode 'w'|'w+'|'wb'|'w+b'? @Defaults to 'w+'.
-function IO.write(file, data, mode)
+function IO:write(file, data, mode)
   assert(
     vim.tbl_contains({ 'w', 'w+', 'wb', 'w+b' }, mode),
     'illegal mode: ' .. mode
   )
 
-  local fh = IO._open(file, mode or 'w+')
+  local fh = self._open(file, mode or 'w+')
   assert(fh ~= nil, ('failed to open: %s'):format(file))
 
   fh:write(table.concat(data, '\n') .. '\n')

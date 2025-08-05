@@ -146,7 +146,7 @@ function M:_open(raw)
     raw.cword:len(), math.min(vim.o.columns, 18), math.min(vim.o.columns, 60)
 
   vim.api.nvim_win_set_cursor(0, { raw.pos[1] + 1, raw.pos[2] })
-  local data = L.win.open_cursor({ raw.cword }, true, {
+  local data = L.win:open_cursor({ raw.cword }, true, {
     title = {
       {
         (' %s '):format(self._util.signs.text[vim.diagnostic.severity.INFO]),
