@@ -1,218 +1,257 @@
----@class lsp.ui.Diagnostic : lsp.ui
-local M = {}
+---@alias lsp.ui.dgn.Type 'dir'|'line'
+---
+---@class (exact) lsp.ui.dgn.Request
+---@field type lsp.ui.dgn.Type
+---@field dgn vim.Diagnostic[]
+---
+---@class (exct) lsp.ui.dgn.Diagnostic
+---@field head HlTuple
+---@field virt HlTuple[][] @Subsequent message lines to render as virtual text.
+---@field virt_id number? @Extmark ID.
+---@field sev vim.diagnostic.Severity
+---@field lnum number
+---@field col number
+---
+---@class (exact) lsp.ui.dgn.Data
+---@field type lsp.ui.dgn.Type
+---@field title_icon HlTuple
+---@field title_loc HlTuple
+---@field dgn lsp.ui.dgn.Diagnostic[]
 
-M._util = {
-  signs = vim.diagnostic.config().signs,
-  active_wins = {},
+---@class lsp.ui.Diagnostic
+local M = {
+  ---@package
+  _util = {
+    signs = vim.diagnostic.config().signs,
+    ---@type number[]
+    wins = {},
+  },
 }
 
-function M.get_dir(dir)
-  assert(dir == 'next' or dir == 'prev', 'invalid direction')
+function M.get_next()
+  M:_get_dir(vim.diagnostic.get_next())
+end
 
-  local diag = dir == 'next' and vim.diagnostic.get_next()
-    or vim.diagnostic.get_prev()
-  if not diag then
+function M.get_prev()
+  M:_get_dir(vim.diagnostic.get_prev())
+end
+
+function M.get_line()
+  local pos = vim.fn.getcurpos()
+  local dgn = vim.diagnostic.get(0, { lnum = pos[2] - 1 })
+  if #dgn == 0 then
     vim.notify('No diagnostics found', vim.log.levels.INFO)
     return
   end
 
-  local pos = { diag.lnum, diag.col }
-  local diagnostics = vim
+  M:_open({ type = 'line', dgn = dgn })
+end
+
+---@package
+---@param dgn vim.Diagnostic?
+function M:_get_dir(dgn)
+  if not dgn then
+    vim.notify('No diagnostics found', vim.log.levels.INFO)
+    return
+  end
+
+  local pos = { dgn.lnum, dgn.col }
+  -- Get all diagnostics at the starting position.
+  dgn = vim
     .iter(vim.diagnostic.get(0, { lnum = pos[1] }))
     :filter(function(d)
       return d.col == pos[2]
     end)
     :totable()
 
-  if #diagnostics == 0 then
+  if #dgn == 0 then
     vim.notify('No diagnostics found', vim.log.levels.INFO)
     return
   end
 
-  M:_open({ type = 'dir', diag = diagnostics })
+  M:_open({ type = 'dir', dgn = dgn })
 end
 
-function M.get_line()
-  local pos = vim.fn.getcurpos()
-  local diag = vim.diagnostic.get(0, { lnum = pos[2] - 1 })
+---@param req lsp.ui.dgn.Request
+---@return lsp.ui.dgn.Data
+function M:_transform(req)
+  ---@type lsp.ui.dgn.Diagnostic[]
+  local dgn = {}
 
-  if #diag == 0 then
-    vim.notify('No diagnostics found', vim.log.levels.INFO)
-    return
+  for _, r in pairs(req.dgn) do
+    -- NOTE: hanging carriage return when server returns '\r\n'-delimited lines.
+    local it = vim.iter(vim.split(r.message, '\n', { trimempty = true }))
+
+    local head = { it:next(), self._util.signs.numhl[r.severity] }
+    -- FIX: break to prevent possibly long lines (see long messages from
+    -- tinymist with `__`)
+    local virt = it:map(
+      ---@param ln string
+      function(ln)
+        return {
+          {
+            (' '):rep(string.len(vim.o.showbreak)) .. ln,
+            self._util.signs.numhl[r.severity],
+          },
+        }
+      end
+    ):totable()
+
+    ---@type lsp.ui.dgn.Diagnostic
+    local d = {
+      head = head,
+      virt = virt,
+      sev = r.severity,
+      lnum = r.lnum + 1,
+      col = r.col + 1,
+    }
+
+    table.insert(dgn, d)
   end
 
-  M:_open({ type = 'line', diag = diag })
-end
+  ---Maximum diagnostic severity (i.e. minimum value) present.
+  ---@type vim.diagnostic.Severity
+  local sev = vim
+    .iter(dgn)
+    :map(
+      ---@param d lsp.ui.dgn.Diagnostic
+      function(d)
+        return d.sev
+      end
+    )
+    :fold(math.huge, function(min, i)
+      if i < min then
+        min = i
+      end
+      return min
+    end)
 
-function M:_preprocess(raw)
-  local diag = raw.diag
-  local tbl = {
-    title = {},
-    type = raw.type,
-    diag = {},
+  ---@type lsp.ui.dgn.Data
+  local data = {
+    type = req.type,
+    title_icon = {
+      (' %s '):format(self._util.signs.text[sev]),
+      self._util.signs.numhl[sev],
+    },
+    title_loc = {
+      ('l.%d:%d '):format(dgn[1].lnum, dgn[1].col),
+      'NeutralFloat',
+    },
+    dgn = dgn,
   }
 
-  for i = 1, #diag do
-    tbl.diag[i] = {
-      msg = {},
-      src = diag[i].source,
-      sev = diag[i].severity,
-      ln = diag[i].lnum + 1,
-      col = diag[i].col + 1,
-      ecol = diag[i].end_col,
-      vcol = diag[i].col + 1 < diag[i].end_col
-          and diag[i].col + 1 .. '-' .. diag[i].end_col
-        or diag[i].col + 1,
-    }
-
-    for ln in diag[i].message:gmatch('(.-)\r?\n') do
-      table.insert(tbl.diag[i].msg, ln)
-    end
-    -- WARN: unstable use of character class
-    table.insert(tbl.diag[i].msg, diag[i].message:match('[\r\n]*([^\r\n]*)$'))
-
-    tbl.diag[i].msg[1] = tbl.diag[i].msg[1]
-  end
-
-  for i = 1, #tbl.diag do
-    for j = 2, #tbl.diag[i].msg do
-      tbl.diag[i].msg[j] = (' '):rep(
-        vim.fn.strdisplaywidth(self._util.signs.text[tbl.diag[i].sev])
-      ) .. tbl.diag[i].msg[j]
-    end
-  end
-
-  if raw.type == 'dir' then
-    tbl.title.icon = {
-      (' %s '):format(self._util.signs.text[tbl.diag[1].sev]),
-      self._util.signs.numhl[tbl.diag[1].sev],
-    }
-  else
-    local max_sev = vim
-      .iter(tbl.diag)
-      :map(function(d)
-        return d.sev
-      end)
-      :fold(math.huge, function(min, i)
-        if i < min then
-          min = i
-        end
-        return min
-      end)
-
-    tbl.title.icon = {
-      (' %s '):format(self._util.signs.text[tbl.diag[1].sev]),
-      self._util.signs.numhl[max_sev],
-    }
-  end
-
-  tbl.title.loc = (
-    raw.type == 'line' and tbl.diag[1].ln
-    or tbl.diag[1].ln .. ':' .. tbl.diag[1].vcol
-  ) .. ' '
-
-  return tbl
+  return data
 end
 
-function M:_format(proc)
-  local tbl = {}
+---@package
+---@param winnr number
+---@param bufnr number
+---@param dgn lsp.ui.dgn.Diagnostic[]
+function M:_set_highlights(winnr, bufnr, dgn, msg)
+  local nsid = vim.api.nvim_create_namespace('lsp-ui')
+  vim.api.nvim_buf_clear_namespace(bufnr, nsid, 0, -1)
 
-  for i = 1, #proc.diag do
-    for j = 1, #proc.diag[i].msg do
-      table.insert(tbl, proc.diag[i].msg[j])
+  -- FIX: height, including wrapcount, should be fully handled by lib.win
+  local height = vim.iter(dgn):fold(
+    #dgn,
+    ---@param c lsp.ui.cda.CodeAction
+    function(acc, c)
+      return acc + #c.virt
     end
+  ) + L.ui:wrapcount(winnr, msg)
 
-    tbl[#tbl] = tbl[#tbl]
-      .. ' '
-      .. (proc.type == 'dir' and proc.diag[i].src or proc.diag[i].vcol)
-  end
-
-  return tbl
-end
-
-function M:_set_highlights(bufnr, proc)
-  local ns_id = vim.api.nvim_create_namespace('lsp-ui')
-  local offset = -1
-
-  for i = 1, #proc.diag do
-    if #proc.diag[i].msg > 1 then
-      for j = 1, #proc.diag[i].msg do
-        vim.hl.range(
-          bufnr,
-          ns_id,
-          self._util.signs.numhl[proc.diag[i].sev],
-          { offset + i + j - 1, 0 },
-          { offset + i + j - 1, -1 }
-        )
-      end
-    end
-
-    vim.hl.range(
-      bufnr,
-      ns_id,
-      self._util.signs.numhl[proc.diag[i].sev],
-      { offset + i + #proc.diag[i].msg - 1, 0 },
-      {
-        offset + i + #proc.diag[i].msg - 1,
-        proc.diag[i].msg[#proc.diag[i].msg]:len(),
-      }
-    )
-    vim.hl.range(bufnr, ns_id, 'NeutralFloat', {
-      offset + (#proc.diag[i].msg > 1 and #proc.diag[i].msg - 1 or 0) + i,
-      proc.diag[i].msg[#proc.diag[i].msg]:len(),
-    }, {
-      offset + (#proc.diag[i].msg > 1 and #proc.diag[i].msg - 1 or 0) + i,
-      -1,
+  for i, d in pairs(dgn) do
+    d.virt_id = vim.api.nvim_buf_set_extmark(bufnr, nsid, i - 1, 0, {
+      id = d.virt_id,
+      virt_lines = d.virt,
     })
-
-    if #proc.diag[i].msg > 1 then
-      offset = offset + #proc.diag[i].msg - 1
-    end
   end
+
+  vim.api.nvim_win_set_height(winnr, height)
 end
 
-function M:_open(raw)
-  local proc = self:_preprocess(raw)
-  local content = self:_format(proc)
+---@package
+---@param req lsp.ui.dgn.Request
+function M:_open(req)
+  local data = self:_transform(req)
 
-  if proc.type == 'dir' then
+  local content = vim
+    .iter(data.dgn)
+    :map(function(d)
+      return { d.head }
+    end)
+    :totable()
+
+  -- FIX: deprecate - duplicating the text like this is not pretty.
+  local text = vim
+    .iter(data.dgn)
+    :map(
+      ---@param d lsp.ui.dgn.Diagnostic
+      function(d)
+        return d.head[1]
+      end
+    )
+    :totable()
+
+  local virt = vim
+    .iter(data.dgn)
+    :map(
+      ---@param d lsp.ui.dgn.Diagnostic
+      function(d)
+        return vim
+          .iter(d.virt)
+          :flatten(1)
+          :map(function(v)
+            return v[1]
+          end)
+          :totable()
+      end
+    )
+    :flatten(1)
+    :totable()
+
+  -- Jump to diagnotic location, adding the current position to the jumplist.
+  if data.type == 'dir' then
     vim.cmd('mark`')
-    vim.fn.cursor({ proc.diag[#proc.diag].ln, proc.diag[#proc.diag].col })
+    vim.fn.cursor({ data.dgn[1].lnum, data.dgn[1].col })
   end
 
-  vim.iter(M._util.active_wins):each(function(w)
+  vim.iter(M._util.wins):each(function(w)
     L.win:close(w)
   end)
-  M._util.active_wins = {}
+  M._util.wins = {}
 
-  local data = L.win:open_cursor(content, false, {
+  local win_data = L.win:open_cursor(content, false, {
     title = {
-      proc.title.icon,
+      data.title_icon,
       { 'Diagnostics ', 'FloatTitle' },
-      { proc.title.loc, 'NeutralFloat' },
+      data.title_loc,
     },
     focusable = false,
     zindex = 2,
     width = math.max(
-      L.tbl.max_len(content),
-      proc.title.icon[1]:len() + ('Diagnostics '):len() + proc.title.loc:len()
+      L.tbl.max_len(text),
+      L.tbl.max_len(virt),
+      data.title_icon[1]:len()
+        + ('Diagnostics '):len()
+        + data.title_loc[1]:len()
     ),
     noautocmd = true,
   })
+  table.insert(M._util.wins, win_data.nwin)
 
-  table.insert(M._util.active_wins, data.nwin)
-  self:_set_highlights(data.nbuf, proc)
+  self:_set_highlights(win_data.nwin, win_data.nbuf, data.dgn, text)
 
-  -- TODO: WinScrolled - move window to new cursor position instead
+  -- TODO: on WinScrolled: move window to new cursor position instead.
   L.cmd.register(
     { 'BufLeave', 'CursorMoved', 'InsertEnter', 'WinScrolled' },
-    data.obuf,
+    win_data.obuf,
     function()
-      L.win:close(data.nwin)
-      M._util.active_wins = vim
-        .iter(M._util.active_wins)
+      L.win:close(win_data.nwin)
+      M._util.wins = vim
+        .iter(M._util.wins)
         :filter(function(w)
-          return w ~= data.nwin
+          return w ~= win_data.nwin
         end)
         :totable()
     end
