@@ -216,10 +216,10 @@ function M:_open(req)
     vim.fn.cursor({ data.dgn[1].lnum, data.dgn[1].col })
   end
 
-  vim.iter(M._util.wins):each(function(w)
+  vim.iter(self._util.wins):each(function(w)
     L.win:close(w)
   end)
-  M._util.wins = {}
+  self._util.wins = {}
 
   local win_data = L.win:open_cursor(content, false, {
     title = {
@@ -238,7 +238,7 @@ function M:_open(req)
     ),
     noautocmd = true,
   })
-  table.insert(M._util.wins, win_data.nwin)
+  table.insert(self._util.wins, win_data.nwin)
 
   self:_set_highlights(win_data.nwin, win_data.nbuf, data.dgn, text)
 
@@ -248,8 +248,8 @@ function M:_open(req)
     win_data.obuf,
     function()
       L.win:close(win_data.nwin)
-      M._util.wins = vim
-        .iter(M._util.wins)
+      self._util.wins = vim
+        .iter(self._util.wins)
         :filter(function(w)
           return w ~= win_data.nwin
         end)

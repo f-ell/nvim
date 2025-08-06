@@ -73,6 +73,8 @@ function M:_transform(req)
     local it = vim.iter(vim.split(res.title, '\n', { trimempty = true }))
 
     local title = it:next()
+    -- FIX: break to prevent possibly long lines (see long messages from
+    -- tinymist with `__`)
     local virt = it:map(
       ---@param ln string
       function(ln)
@@ -222,7 +224,7 @@ function M:_open(req)
     zindex = 2,
     noautocmd = true,
   }, function(winnr, bufnr, nsid)
-    return M:_set_highlights(actions, winnr, bufnr, nsid)
+    return self:_set_highlights(actions, winnr, bufnr, nsid)
   end)[1]
 
   if c == nil then
