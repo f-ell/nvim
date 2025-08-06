@@ -1,3 +1,6 @@
+---@alias lib.win.ContentLn table<string|HlTuple>
+---@alias lib.win.Content number|string[]|lib.win.ContentLn[]
+
 ---@class (exact) lib.win.Data
 ---@field obuf number @Buffer number of previously active buffer.
 ---@field owin number @Window number of previously active window.
@@ -9,6 +12,8 @@
 
 ---@class lib.Win
 local Win = {
+  ---Namespace ID used to apply highlighting to buffer contents.
+  nsid = vim.api.nvim_create_namespace('lib.win'),
   ---@package
   _tbl = require('lib.tbl'),
 }
@@ -138,55 +143,207 @@ function Win:close(winnr, base, pos)
   end
 end
 
+---@package
+---Map single line of buffer contents to pure `HlTuple`-array.
+---
+---@param ln lib.win.ContentLn
+---@return HlTuple[]
+function Win._map_tuple(ln)
+  return vim
+    .iter(ln)
+    :map(
+      ---@param el string|HlTuple
+      function(el)
+        if type(el) == 'table' then
+          assert(
+            #el == 2 and type(el[1]) == 'string' and type(el[2]) == 'string',
+            'invalid highlight tuple'
+          )
+          return el
+        else
+          return { tostring(el), 'Normal' }
+        end
+      end
+    )
+    :totable()
+end
+
+---@package
+---Chunk an `HlTuple`-array. The tuples are assumed to belong to the same screen
+---line `i`, where tuples are interspersed with `delim` during rendering.
+---
+---@param i number @Line index to associate with the generated chunk.
+---@param tuples HlTuple[]
+---@param delim string? @Delimeter that will be put between text chunks, defaults to ' '.
+---@return lib.ui.Chunk[]
+function Win._chunk(i, tuples, delim)
+  local col = 0
+
+  local chunks = vim
+    .iter(tuples)
+    :map(
+      ---@param t HlTuple
+      ---@return lib.ui.Chunk
+      function(t)
+        local c = {
+          text = t[1],
+          line = i - 1,
+          start = col,
+          end_ = col + t[1]:len(),
+          hl = t[2],
+        } --[[@as lib.ui.Chunk]]
+
+        col = col + t[1]:len() + (delim or ' '):len()
+        return c
+      end
+    )
+    :totable()
+
+  return chunks
+end
+
+---@package
+---Returns a, potentially sparse, array of lines, consisting of the text for
+---all included chunks.
+---
+---The input chunks for each line are expected to appear in order. The generated
+---string is constructed by simply appending the text of each chunk to all
+---previous ones - no sorting is performed!
+---
+---TODO: ordering based on target position.
+---
+---@param chunks lib.ui.Chunk[]
+---@return string[]
+function Win._chunk_tostring(chunks)
+  -- WARN: tbl_values explicitely doesn't guarantee order
+  return vim.tbl_values(vim.iter(chunks):fold(
+    ---@type string[]
+    {},
+    ---@param ch lib.ui.Chunk
+    function(tbl, ch)
+      tbl[ch.line] = tbl[ch.line] and ('%s %s'):format(tbl[ch.line], ch.text)
+        or ch.text
+      return tbl
+    end
+  ))
+end
+
+---@package
+---Apply highlights defined by the chunks to the target buffer.
+---
+---@param bufnr number
+---@param chunks lib.ui.Chunk[]
+function Win:_chunk_hl(bufnr, chunks)
+  for _, ch in pairs(chunks) do
+    vim.hl.range(
+      bufnr,
+      self.nsid,
+      ch.hl or 'Normal',
+      { ch.line, ch.start },
+      { ch.line, ch.end_ },
+      {}
+    )
+  end
+end
+
 ---Open floating window.
 ---
----@param lines number|string[] @Buffer number or array over lines to render.
+---@param content lib.win.Content @Buffer number or content to render.
 ---@param enter boolean
 ---@param config vim.api.keyset.win_config?
 ---@return lib.win.Data
-function Win:open(lines, enter, config)
+function Win:open(content, enter, config)
+  if type(content) == 'number' then
+    assert(
+      vim.api.nvim_buf_is_valid(content),
+      ('invalid buffer: `%d`'):format(content)
+    )
+  else
+    assert(
+      type(content) == 'table',
+      ('invalid buffer contents: expected table, got %s'):format(type(content))
+    )
+  end
+
+  ---Transform target content to chunks. This negatively affects performance
+  ---when content is a plain string-array.
+  ---
+  ---PERF: skip content transform when rendering an existing buffer.
+  ---
+  ---@type lib.ui.Chunk[]
+  local ch = vim
+    .iter(content)
+    :map(
+      ---@param el string|lib.win.ContentLn
+      function(el)
+        return type(el) == 'table' and el or { el }
+      end
+    )
+    :map(
+      ---@param ln lib.win.ContentLn
+      ---@return HlTuple[]
+      function(ln)
+        return self._map_tuple(ln)
+      end
+    )
+    :enumerate()
+    :map(
+      ---@param i number
+      ---@param t HlTuple[]
+      ---@return lib.ui.Chunk[]
+      function(i, t)
+        return self._chunk(i, t)
+      end
+    )
+    :flatten(1)
+    :totable()
+
+  local lines = self._chunk_tostring(ch)
+
+  local w = self:_width(
+    type(content) == 'number' and content
+      -- If title is present, ensure that it's not cut off due to buffer
+      -- containing only very short lines.
+      ---@diagnostic disable-next-line: param-type-mismatch
+      or { self.parse_title(config), unpack(lines) }
+  )
+  local h = self:_height(lines)
+
+  config = vim.tbl_extend('keep', config or {}, {
+    relative = type(content) == 'number' and 'editor' or 'cursor',
+    anchor = 'NW',
+    row = 1,
+    col = type(content) == 'number' and math.floor(vim.o.columns * _OFFSET)
+      or -1,
+    width = w,
+    height = h,
+    border = 'single',
+  } --[[@as vim.api.keyset.win_config]]) --[[@as vim.api.keyset.win_config]]
+
   ---@type lib.win.Data
-  ---@diagnostic disable-next-line: missing-fields
   local data = {
     obuf = vim.api.nvim_get_current_buf(),
     owin = vim.api.nvim_get_current_win(),
-    nbuf = -1,
+    nbuf = type(content) == 'number' and content
+      or vim.api.nvim_create_buf(false, true),
     nwin = -1,
-    width = self:_width(
-      type(lines) == 'number' and lines
-        -- If title is present, ensure that it's not cut off due to buffer
-        -- containing only very short lines.
-        ---@diagnostic disable-next-line: param-type-mismatch
-        or { self.parse_title(config), unpack(lines) }
-    ),
-    height = self:_height(lines),
+    width = w,
+    height = h,
+    config = config,
   }
 
-  config = vim.tbl_extend('keep', config or {}, {
-    relative = type(lines) == 'table' and 'cursor' or 'editor',
-    anchor = 'NW',
-    row = 1,
-    col = type(lines) == 'table' and -1 or math.floor(vim.o.columns * _OFFSET),
-    width = data.width,
-    height = data.height,
-    border = 'single',
-  })
-
-  data.nbuf = type(lines) == 'number' and lines
-    or vim.api.nvim_create_buf(false, true)
   data.nwin = vim.api.nvim_open_win(data.nbuf, enter, config)
 
-  if type(lines) == 'table' then
-    vim.api.nvim_buf_set_lines(data.nbuf, 0, -1, true, lines)
-  else
+  if type(content) == 'number' then
     vim.api.nvim_win_set_buf(data.nwin, data.nbuf)
+  else
+    vim.api.nvim_buf_set_lines(data.nbuf, 0, -1, true, lines)
+    self:_chunk_hl(data.nbuf, ch)
   end
-
-  data.config = vim.api.nvim_win_get_config(data.nwin)
 
   vim.bo[data.nbuf].bufhidden = 'wipe'
   vim.bo[data.nbuf].modifiable = false
-  if type(lines) == 'table' then
+  if type(content) == 'table' then
     vim.wo[data.nwin].wrap = true
   end
 
@@ -195,29 +352,29 @@ end
 
 ---Wraps `win.open`, with default position centered relative to editor.
 ---
----@param lines number|string[] @Buffer number or array over lines to render.
+---@param content lib.win.Content @Buffer number or content to render.
 ---@param enter boolean
 ---@param config vim.api.keyset.win_config?
 ---@return lib.win.Data
-function Win:open_center(lines, enter, config)
+function Win:open_center(content, enter, config)
   config = vim.tbl_extend('keep', config or {}, {
     relative = 'editor',
     anchor = 'NW',
     row = math.floor(vim.o.lines * _OFFSET) - 1,
     col = math.floor(vim.o.columns * _OFFSET),
-  })
+  } --[[@as vim.api.keyset.win_config]]) --[[@as vim.api.keyset.win_config]]
 
-  return self:open(lines, enter, config)
+  return self:open(content, enter, config)
 end
 
 ---Wraps `win.open`, with default position at cursor. Sets `style` to 'minimal'
 ---by default.
 ---
----@param lines number|string[] @Buffer number or array over lines to render.
+---@param content lib.win.Content @Buffer number or content to render.
 ---@param enter boolean
 ---@param config vim.api.keyset.win_config?
 ---@return lib.win.Data
-function Win:open_cursor(lines, enter, config)
+function Win:open_cursor(content, enter, config)
   local anchor, row = self._anchor_offset()
 
   config = vim.tbl_extend('keep', config or {}, {
@@ -226,9 +383,9 @@ function Win:open_cursor(lines, enter, config)
     row = row,
     col = -1,
     style = 'minimal',
-  })
+  } --[[@as vim.api.keyset.win_config]]) --[[@as vim.api.keyset.win_config]]
 
-  return self:open(lines, enter, config)
+  return self:open(content, enter, config)
 end
 
 return Win
