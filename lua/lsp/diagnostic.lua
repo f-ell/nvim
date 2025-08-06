@@ -23,8 +23,8 @@ local M = {
   ---@package
   _util = {
     signs = vim.diagnostic.config().signs,
-    ---@type number[]
-    wins = {},
+    ---@type number
+    win = nil,
   },
 }
 
@@ -173,6 +173,12 @@ end
 ---@package
 ---@param req lsp.ui.dgn.Request
 function M:_open(req)
+  -- Close any existing diagnostic windows. Stored window ID is overwritten with
+  -- the newly opened window's.
+  if self._util.win then
+    L.win:close(self._util.win)
+  end
+
   local data = self:_transform(req)
 
   local content = vim
@@ -216,11 +222,6 @@ function M:_open(req)
     vim.fn.cursor({ data.dgn[1].lnum, data.dgn[1].col })
   end
 
-  vim.iter(self._util.wins):each(function(w)
-    L.win:close(w)
-  end)
-  self._util.wins = {}
-
   local win_data = L.win:open_cursor(content, false, {
     title = {
       data.title_icon,
@@ -238,7 +239,7 @@ function M:_open(req)
     ),
     noautocmd = true,
   })
-  table.insert(self._util.wins, win_data.nwin)
+  self._util.win = win_data.nwin
 
   self:_set_highlights(win_data.nwin, win_data.nbuf, data.dgn, text)
 
@@ -248,12 +249,7 @@ function M:_open(req)
     win_data.obuf,
     function()
       L.win:close(win_data.nwin)
-      self._util.wins = vim
-        .iter(self._util.wins)
-        :filter(function(w)
-          return w ~= win_data.nwin
-        end)
-        :totable()
+      self._util.win = nil
     end
   )
 end
