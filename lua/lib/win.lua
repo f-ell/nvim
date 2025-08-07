@@ -18,10 +18,6 @@ local Win = {
   _tbl = require('lib.tbl'),
 }
 
----Maximum window width when `relative` is 'editor'.
-local _MAXSIZE = 0.8
----Reuired offset to center floating window when `relative` is 'editor'.
-local _OFFSET = (1 - _MAXSIZE) / 2
 ---Desired horizontal padding for floating windows.
 local _HPAD = 2
 ---Desired vertical padding for floating windows.
@@ -52,14 +48,14 @@ end
 ---
 ---@return integer
 function Win.max_width()
-  return math.floor(vim.o.columns * _MAXSIZE) - _HPAD
+  return vim.o.columns - _HPAD
 end
 
 ---Calculate maximum window height, maintaining desired padding.
 ---
 ---@return integer
 function Win.max_height()
-  return math.floor(vim.o.lines * _MAXSIZE) - _VPAD
+  return vim.o.lines - _VPAD
 end
 
 ---@package
@@ -86,32 +82,30 @@ function Win:_height(data)
     return self.max_height()
   end
 
-  -- FIX: should account for cursor offset (getpos('.')[3]-1)
-  -- issue: we don't know if the window will be offset to the left because of
-  -- its width
-  local maxw = vim.o.columns - _HPAD
-  if self._tbl.max_len(data) < maxw then
-    return math.min(#data > 0 and #data or 1, self.max_height())
-  end
+  -- NOTE: this is a duplication of `lib.ui.wrapcount`
+  -- FIX: width needs to account for fold-/sign-/status-/numbercolumn
+  local w = vim.o.columns - _HPAD
+  local sb = vim.fn.strdisplaywidth(vim.o.showbreak)
 
-  local h, showbreak = #data, vim.fn.strdisplaywidth(vim.o.showbreak)
-  for i = 1, #data do
-    local l = vim.fn.strdisplaywidth(data[i])
+  local c = vim
+    .iter(data)
+    :map(vim.fn.strdisplaywidth)
+    :map(function(len)
+      if len == w then
+        return 0
+      end
 
-    -- first wrap
-    if l > maxw then
-      l = l - maxw
-      h = h + 1
-    end
+      local wrap = len / w
+      -- This causes FP rounding issues when a wrap fills an entire screen line.
+      -- Subtract 10e-15 to prevent `wrap + inc` from adding to a whole number.
+      local wrap_inc = (math.floor(wrap) * sb / w) - math.pow(10, -15)
+      return math.floor(wrap + wrap_inc)
+    end)
+    :fold(0, function(acc, v)
+      return acc + v
+    end)
 
-    -- subsequent wraps
-    while l > maxw do
-      l = l - maxw + showbreak
-      h = h + 1
-    end
-  end
-
-  return math.min(h, self.max_height())
+  return math.min(#data + c, self.max_height())
 end
 
 ---@package
@@ -351,9 +345,8 @@ function Win:open(content, enter, config)
   config = vim.tbl_extend('keep', config or {}, {
     relative = type(content) == 'number' and 'editor' or 'cursor',
     anchor = 'NW',
-    row = 1,
-    col = type(content) == 'number' and math.floor(vim.o.columns * _OFFSET)
-      or -1,
+    row = 0,
+    col = 0,
     width = w,
     height = h,
     border = 'single',
@@ -399,8 +392,8 @@ function Win:open_center(content, enter, config)
   config = vim.tbl_extend('keep', config or {}, {
     relative = 'editor',
     anchor = 'NW',
-    row = math.floor(vim.o.lines * _OFFSET) - 1,
-    col = math.floor(vim.o.columns * _OFFSET),
+    row = ((vim.o.lines - self.max_height()) / 2) - 1,
+    col = (vim.o.columns - self.max_width()) / 2,
   } --[[@as vim.api.keyset.win_config]]) --[[@as vim.api.keyset.win_config]]
 
   return self:open(content, enter, config)
