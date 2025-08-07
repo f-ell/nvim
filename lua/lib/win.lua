@@ -246,6 +246,45 @@ function Win:_chunk_hl(bufnr, chunks)
   end
 end
 
+---Prefix each line in `content` with a highlighted numerical index, or an
+---arbitrary symbol computed dynamically by a call to `symbol`.
+---
+---@param content string[]|lib.win.ContentLn[]
+---@param symbol? fun(i: number): string
+---@return lib.win.ContentLn[]
+function Win.enumerate(content, symbol)
+  if table.isempty(content) then
+    return content
+  end
+
+  local hl = {
+    'DiagnosticError',
+    'DiagnosticWarn',
+    'DiagnosticInfo',
+    'DiagnosticHint',
+  }
+
+  return vim
+    .iter(ipairs(content))
+    :map(
+      ---@param i number
+      ---@param ln string|lib.win.ContentLn
+      ---@return lib.win.ContentLn
+      function(i, ln)
+        local s = {
+          symbol and symbol(i) or tostring(i),
+          hl[i % #hl ~= 0 and i % #hl or #hl],
+        }
+
+        return {
+          s,
+          type(ln) == 'string' and ln or unpack(ln --[[@as lib.win.ContentLn]]),
+        }
+      end
+    )
+    :totable()
+end
+
 ---Open floating window.
 ---
 ---@param content lib.win.Content @Buffer number or content to render.
