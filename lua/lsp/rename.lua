@@ -66,7 +66,7 @@ end
 ---@param req lsp.ui.ren.Request
 ---@return lsp.ui.ren.Rename
 function M:_transform(req)
-  ---@type lsp.Location[]
+  ---@type lsp.Location[]|lsp.LocationLink[]
   local def = vim
     .iter(req.definition)
     :map(
@@ -82,12 +82,14 @@ function M:_transform(req)
 
   -- Prevent incorrect rename in cases where multiple servers return different
   -- definitions for the active symbol.
-  local uri, range = def[1].uri, def[1].range
+  local uri, range =
+    def[1].uri or def[1].targetUri, def[1].range or def[1].targetRange
   assert(
     vim.iter(def):all(
-      ---@param l lsp.Location
+      ---@param l lsp.Location|lsp.LocationLink
       function(l)
-        return l.uri == uri and vim.deep_equal(l.range, range)
+        return (l.uri or l.targetUri) == uri
+          and vim.deep_equal(l.range or l.targetRange, range)
       end
     ),
     'failed to resolve definition from mismatched responses'
@@ -109,13 +111,13 @@ function M:_transform(req)
     )
     :totable()
 
-  local bufnr = vim.uri_to_bufnr(def[1].uri)
+  local bufnr = vim.uri_to_bufnr(uri)
   local symbol = vim.api.nvim_buf_get_text(
     bufnr,
-    def[1].range.start.line,
-    def[1].range.start.character,
-    def[1].range['end'].line,
-    def[1].range['end'].character,
+    range.start.line,
+    range.start.character,
+    range['end'].line,
+    range['end'].character,
     {}
   )[1]
 
