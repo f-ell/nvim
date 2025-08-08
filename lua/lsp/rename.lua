@@ -1,153 +1,224 @@
----@class lsp.ui.Rename : lsp.ui
----@diagnostic disable-next-line: missing-fields
-local M = {}
+---@class (exact) lsp.ui.ren.Request
+---@field references lib.lsp.Response[]
+---@field definition lib.lsp.Response[]
+---@field uri string @File URI for the active buffer.
+---@field cursor [number, number] @Original cursor position.
+---
+---@class (exact) lsp.ui.ren.Rename
+---@field references lsp.Location[]
+---@field symbol string @Symbol being renamed.
+---@field uri string @File URI for the active buffer.
+---@field cursor [number, number] @Original cursor position.
 
-M._util = {
-  signs = vim.diagnostic.config().signs,
+---@class lsp.ui.Rename
+local M = {
+  ---@package
+  _util = {
+    signs = vim.diagnostic.config().signs,
+    nsid = vim.api.nvim_create_namespace('lsp-ui'),
+  },
 }
 
-M.rename = function()
-  local params = vim.lsp.util.make_position_params(0, 'utf-8') --[[@as table]]
-  params.context = { includeDeclaration = true }
+function M.rename()
+  local m_ref = vim.lsp.protocol.Methods.textDocument_references
+  local clients = vim.lsp.get_clients({ bufnr = 0, method = m_ref })
 
-  local method = vim.lsp.protocol.Methods.textDocument_references
-  local err, res = L.lsp:request(
-    vim.lsp.get_clients({ bufnr = 0, method = method }),
-    method,
-    params,
-    0
-  )
-
-  if err then
-    L.lsp.notify_error(err)
-    return
-  end
-  if table.isempty(res) then
-    vim.notify('No rename results found', vim.log.levels.INFO)
+  if table.isempty(clients) then
+    vim.notify('No client with reference provider found.', vim.log.levels.INFO)
     return
   end
 
-  local ln, col = params.position.line, params.position.character
+  local p_ref = vim.lsp.util.make_position_params(0, 'utf-8') --[[@as lsp.ReferenceParams]]
+  p_ref.context = { includeDeclaration = true }
 
-  local declaration
-  for i = 1, #res do
-    local r = res[i].result --[[@as lsp.Location]]
-    local s, e = r.range.start, r.range['end']
-    if s.line == ln and s.character <= col and e.character >= col then
-      declaration = res[i]
-      break
-    end
+  local e_ref, r_ref = L.lsp:request(clients, m_ref, p_ref, 0)
+  if e_ref then
+    L.lsp.notify_error(e_ref)
+    return
+  end
+  if table.isempty(r_ref) then
+    vim.notify('No references found', vim.log.levels.INFO)
+    return
   end
 
-  -- TODO: normal message
-  assert(declaration, 'Could not get declaration for symbol under cursor')
+  local m_def = vim.lsp.protocol.Methods.textDocument_definition
+  local p_def = vim.lsp.util.make_position_params(0, 'utf-8') --[[@as lsp.DefinitionParams]]
 
-  local s, e = declaration.result.range.start, declaration.result.range['end']
-  local cword = declaration
-      and vim.api.nvim_buf_get_text(
-        0,
-        s.line,
-        s.character,
-        e.line,
-        e.character,
-        {}
-      )[1]
-    or ''
+  local e_def, r_def = L.lsp:request(clients, m_def, p_def, 0)
+  if e_def then
+    L.lsp.notify_error(e_def)
+    return
+  end
+  if table.isempty(r_def) then
+    vim.notify('No definition found', vim.log.levels.WARN)
+    return
+  end
 
   M:_open({
-    cword = cword,
-    refs = res,
-    pos = { s.line, s.character },
-    path = 'file://' .. vim.fn.expand('%:p'),
+    references = r_ref,
+    definition = r_def,
+    cursor = vim.api.nvim_win_get_cursor(0),
+    uri = 'file://' .. vim.fn.expand('%:p'),
   })
 end
 
-function M:_preprocess(raw)
+---@package
+---@param req lsp.ui.ren.Request
+---@return lsp.ui.ren.Rename
+function M:_transform(req)
+  ---@type lsp.Location[]
+  local def = vim
+    .iter(req.definition)
+    :map(
+      ---@param res lib.lsp.Response
+      ---@return lsp.Location[]
+      function(res)
+        local r = res.result --[[@as lsp.Definition]]
+        return type(r[1]) == 'table' and r or { r }
+      end
+    )
+    :flatten(1)
+    :totable()
+
+  -- Prevent incorrect rename in cases where multiple servers return different
+  -- definitions for the active symbol.
+  local uri, range = def[1].uri, def[1].range
+  assert(
+    vim.iter(def):all(
+      ---@param l lsp.Location
+      function(l)
+        return l.uri == uri and vim.deep_equal(l.range, range)
+      end
+    ),
+    'failed to resolve definition from mismatched responses'
+  )
+
+  ---The reference list may contain duplicate locations when multiple servers
+  ---are queried for references. This does not matter so long as all highlights
+  ---are later created in a single namespace that is always fully wiped.
+  ---
+  ---@type lsp.Location[]
+  local refs = vim
+    .iter(req.references)
+    :map(
+      ---@param res lib.lsp.Response
+      ---@return lsp.Location
+      function(res)
+        return res.result
+      end
+    )
+    :totable()
+
+  local bufnr = vim.uri_to_bufnr(def[1].uri)
+  local symbol = vim.api.nvim_buf_get_text(
+    bufnr,
+    def[1].range.start.line,
+    def[1].range.start.character,
+    def[1].range['end'].line,
+    def[1].range['end'].character,
+    {}
+  )[1]
+
   return {
-    cword = raw.cword,
-    path = raw.path,
-    pos = vim.api.nvim_win_get_cursor(0),
-    refs = raw.refs,
-  }
+    references = refs,
+    symbol = symbol,
+    uri = req.uri,
+    -- Correct column offset for later use with `nvim_win_set_cursor`
+    cursor = { req.cursor[1], req.cursor[2] + 1 },
+  } --[[@as lsp.ui.ren.Rename]]
 end
 
-function M:_set_highlights(bufnr, proc)
-  local ns_id = vim.api.nvim_create_namespace('lsp-ui')
-  local local_refs = vim.tbl_filter(function(r)
-    return r.result.uri == proc.path
-  end, proc.refs)
+---@package
+---@param bufnr number
+---@param ren lsp.ui.ren.Rename
+function M:_set_highlights(bufnr, ren)
+  ---Apply highlights only to references in the current buffer.
+  ---@type lsp.Range[]
+  local refs = vim
+    .iter(ren.references)
+    :filter(
+      ---@param r lsp.Location
+      function(r)
+        return r.uri == ren.uri
+      end
+    )
+    :map(
+      ---@param r lsp.Location
+      ---@return lsp.Range
+      function(r)
+        return r.range
+      end
+    )
+    :totable()
 
-  for i = 1, #local_refs do
-    local r = local_refs[i].result.range
-    if r then
-      vim.hl.range(
-        bufnr,
-        ns_id,
-        'Search',
-        { r.start.line, r.start.character },
-        { r['end'].line, r['end'].character }
-      )
-    end
+  for _, r in pairs(refs) do
+    vim.hl.range(
+      bufnr,
+      self._util.nsid,
+      'Search',
+      { r.start.line, r.start.character },
+      { r['end'].line, r['end'].character }
+    )
   end
 end
 
-function M:_register_float_actions(data)
-  local close_win = function()
-    local ns_id = vim.api.nvim_create_namespace('lsp-ui')
-
+---@package
+---@param data lib.win.Data
+---@param symbol string @Symbol being renamed.
+---@param cursor [number, number] @Original cursor position.
+---@param max number @Maximum window width in screen cells.
+function M:_register_float_actions(data, symbol, cursor, min, max)
+  local close = function()
     if vim.api.nvim_win_is_valid(data.nwin) then
-      vim.cmd('stopinsert')
       vim.api.nvim_win_close(data.nwin, true)
-      vim.api.nvim_buf_clear_namespace(data.obuf, ns_id, 0, -1)
-      vim.api.nvim_win_set_cursor(data.owin, data.proc.pos)
+      vim.api.nvim_buf_clear_namespace(data.obuf, self._util.nsid, 0, -1)
+      vim.api.nvim_win_set_cursor(data.owin, cursor)
     end
   end
 
-  L.key.modemap({ 'n', 'i', 'v' }, '<C-c>', function()
-    close_win()
-  end, { buffer = true })
+  vim.bo[data.nbuf].modifiable = true
+  vim.bo[data.nbuf].buftype = 'prompt'
 
-  L.key.modemap({ 'n', 'i' }, '<CR>', function()
-    local new = vim.trim(vim.api.nvim_get_current_line())
-    close_win()
-
-    if not (new and #new > 0) or new == data.proc.cword then
+  vim.fn.prompt_setprompt(data.nbuf, '')
+  vim.fn.prompt_setinterrupt(data.nbuf, close)
+  vim.fn.prompt_setcallback(data.nbuf, function(txt)
+    txt = vim.trim(txt)
+    if #txt == 0 then
       return
     end
 
-    vim.api.nvim_win_set_cursor(data.owin, data.proc.pos)
-    vim.lsp.buf.rename(new, {})
-    vim.api.nvim_win_set_cursor(
-      data.owin,
-      { data.proc.pos[1], data.proc.pos[2] + 1 }
-    )
-  end, { buffer = true })
+    close()
+    if txt == symbol then
+      return
+    end
 
-  L.cmd.register({ 'WinLeave', 'QuitPre' }, data.nbuf, function()
-    close_win()
+    vim.lsp.buf.rename(txt, {})
   end)
+
+  L.cmd.register({ 'WinLeave', 'QuitPre' }, data.nbuf, close)
+
+  local maxlen = math.max(symbol:len(), min)
   L.cmd.register({ 'TextChanged', 'TextChangedI' }, data.nbuf, function()
-    local lines = vim.api.nvim_buf_get_lines(data.nbuf, 0, -1, true)
-    local len = L.tbl.max_len(lines)
+    local len = vim.api.nvim_get_current_line():len()
 
-    data.width =
-      math.min(len < data.minwidth and data.minwidth or len + 1, data.maxwidth)
-    -- subtraction accounts for cmdheight and window borders
-    data.height = math.min(#lines, vim.o.lines - vim.o.cmdheight - 3)
-
-    vim.api.nvim_win_set_width(data.nwin, data.width)
-    vim.api.nvim_win_set_height(data.nwin, data.height)
+    if len > maxlen and len < max then
+      maxlen = len
+      data.width = len + 1 -- Additional screen column to make room for cursor.
+      vim.api.nvim_win_set_width(data.nwin, data.width)
+    end
   end)
 end
 
-function M:_open(raw)
-  local proc = self:_preprocess(raw)
+---@package
+---@param req lsp.ui.ren.Request
+function M:_open(req)
+  local ren = self:_transform(req)
 
-  local len, min, max =
-    raw.cword:len(), math.min(vim.o.columns, 18), math.min(vim.o.columns, 60)
+  local len = ren.symbol:len()
+  local min = math.min(vim.o.columns, 24)
+  local max = math.min(vim.o.columns, 48)
 
-  vim.api.nvim_win_set_cursor(0, { raw.pos[1] + 1, raw.pos[2] })
-  local data = L.win:open_cursor({ raw.cword }, true, {
+  local data = L.win:open_cursor({ ren.symbol }, true, {
     title = {
       {
         (' %s '):format(self._util.signs.text[vim.diagnostic.severity.INFO]),
@@ -157,22 +228,13 @@ function M:_open(raw)
     },
     zindex = 2,
     col = -1,
-    width = math.min(len < min and min or len + 1, max),
+    width = math.min(math.max(len + 1, min), max),
     noautocmd = true,
   })
-  --- TODO: deprecate
-  ---@diagnostic disable-next-line: inject-field
-  data.proc = proc
-  ---@diagnostic disable-next-line: inject-field
-  data.minwidth = min
-  ---@diagnostic disable-next-line: inject-field
-  data.maxwidth = max
 
-  vim.bo[data.nbuf].modifiable = true
-
-  self:_set_highlights(data.obuf, proc)
-  self:_register_float_actions(data)
-  vim.api.nvim_feedkeys('A', 'n', true)
+  self:_set_highlights(data.obuf, ren)
+  self:_register_float_actions(data, ren.symbol, ren.cursor, min, max)
+  vim.cmd('startinsert!')
 end
 
 return M
