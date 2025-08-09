@@ -6,8 +6,6 @@
 ---@field owin number @Window number of previously active window.
 ---@field nbuf number @Buffer number of newly opened buffer.
 ---@field nwin number @Window number of newly opened window.
----@field width integer
----@field height integer
 ---@field config vim.api.keyset.win_config
 
 ---@class lib.Win
@@ -359,8 +357,6 @@ function Win:open(content, enter, config)
     nbuf = type(content) == 'number' and content
       or vim.api.nvim_create_buf(false, true),
     nwin = -1,
-    width = w,
-    height = h,
     config = config,
   }
 

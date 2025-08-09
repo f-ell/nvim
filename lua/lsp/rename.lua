@@ -205,8 +205,8 @@ function M:_register_float_actions(data, symbol, cursor, min, max)
 
     if len > maxlen and len < max then
       maxlen = len
-      data.width = len + 1 -- Additional screen column to make room for cursor.
-      vim.api.nvim_win_set_width(data.nwin, data.width)
+      data.config.width = len + 1 -- Additional screen column to make room for cursor.
+      vim.api.nvim_win_set_width(data.nwin, data.config.width)
     end
   end)
 end
