@@ -69,10 +69,12 @@ function M:_transform(req)
 
   for i, r in pairs(req) do
     local res = r.result --[[@as lsp.CodeAction]]
-    -- NOTE: hanging carriage return when server returns '\r\n'-delimited lines.
+    -- Split produces hanging CR when the server returns '\r\n'-delimited lines.
     local it = vim.iter(vim.split(res.title, '\n', { trimempty = true }))
 
     local title = it:next()
+    -- FIX: break to prevent possibly long lines (see long messages from
+    -- tinymist with `__`)
     local virt = it:map(
       ---@param ln string
       function(ln)
@@ -175,13 +177,11 @@ function M:_do_action(c)
         cmd.command
       )
     then
-      L.lsp:request(client, vim.lsp.protocol.Methods.workspace_executeCommand, {
-        command = cmd.command,
-        arguments = cmd.arguments,
-        --- FIX: field does not exist - does this work as intended?
-        ---@diagnostic disable-next-line: undefined-field
-        workDoneToken = cmd.workDoneToken,
-      }, 0)
+      L.lsp:request(
+        client,
+        vim.lsp.protocol.Methods.workspace_executeCommand,
+        { command = cmd.command, arguments = cmd.arguments }
+      )
     else
       vim.notify(
         ('Command is not supported by client `%s`.'):format(cmd.command),
@@ -222,7 +222,7 @@ function M:_open(req)
     zindex = 2,
     noautocmd = true,
   }, function(winnr, bufnr, nsid)
-    return M:_set_highlights(actions, winnr, bufnr, nsid)
+    return self:_set_highlights(actions, winnr, bufnr, nsid)
   end)[1]
 
   if c == nil then

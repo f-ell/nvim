@@ -47,7 +47,7 @@ return {
       callback = function(args)
         key.nnmap('grf', function()
           require('conform').format({
-            timeout_ms = 500,
+            timeout_ms = 1000,
             lsp_format = 'fallback',
           })
         end, { buffer = args.buf })
@@ -83,12 +83,8 @@ return {
         end, { buffer = args.buf })
 
         key.nnmap('<leader>h', lsp.dgn.get_line, { buffer = args.buf })
-        key.nnmap('<leader>j', function()
-          lsp.dgn.get_dir('next')
-        end, { buffer = args.buf })
-        key.nnmap('<leader>k', function()
-          lsp.dgn.get_dir('prev')
-        end, { buffer = args.buf })
+        key.nnmap('<leader>j', lsp.dgn.get_next, { buffer = args.buf })
+        key.nnmap('<leader>k', lsp.dgn.get_prev, { buffer = args.buf })
         key.nnmap('<leader>l', function()
           require('telescope.builtin').diagnostics({ bufnr = args.buf })
         end)
