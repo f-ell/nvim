@@ -162,8 +162,10 @@ function LSP:_do_request(client, method, params, bufnr, timeout)
       nil
   end
 
-  if msg.result == nil then
-    return nil, {}
+  if
+    table.isempty(msg.result --[[@as table?]])
+  then
+    return nil, nil
   end
 
   local res = type(msg.result[1]) == 'table' and msg.result or { msg.result } --[[ @as lsp.LSPAny[] ]]
@@ -183,6 +185,10 @@ end
 ---Aggregate responses for the given method from all clients. Ignores global
 ---handlers (i.e. `vim.lsp.handlers`), but respects client-local handlers.
 ---Handlers on clients are expected to return `[err, result]`-tuples.
+---
+---WARN: LSP responses are flattened, such that a single response returning
+---`lsp.Location[]` will be turned into `lib.lsp.Response[]` with one entry for
+---each `lsp.Location` in the original response.
 ---
 ---@param clients vim.lsp.Client|vim.lsp.Client[]
 ---@param method string
@@ -205,8 +211,13 @@ function LSP:request(clients, method, params, bufnr, timeout)
 
   for _, c in pairs(clients) do
     local e, r = self:_do_request(c, method, params, bufnr, timeout)
-    table.insert(errors, e)
-    table.insert(responses, r)
+
+    if e then
+      table.insert(errors, e)
+    end
+    if r then
+      table.insert(responses, r)
+    end
   end
   responses = vim.fn.flatten(responses) --[[ @as lib.lsp.Response[] ]]
 
