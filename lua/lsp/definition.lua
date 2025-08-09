@@ -1,44 +1,35 @@
----@class lsp.ui.Definition : lsp.ui
-local M = {}
+---@class (exact) lsp.ui.def.Request
+---@field clients vim.lsp.Client[]
+---@field cword string
+---@field responses lib.lsp.Response[]
+---
+---@class (exact) lsp.ui.def.Definition
+---@field uri string
+---@field file string
+---@field start [number, number]
+---@field end_ [number, number]
 
-M._util = {
-  definition = {},
-  signs = vim.diagnostic.config().signs,
+---@class lsp.ui.Definition
+local M = {
+  ---@package
+  _util = {
+    signs = vim.diagnostic.config().signs,
+    ---@param item lsp.ui.def.Definition
+    format = function(item, _, _)
+      return {
+        item.file,
+        { ('%s-%s'):format(item.start[1], item.end_[1]), 'NonText' },
+      }
+    end,
+  },
 }
 
-function M.peek()
-  local clients =
-    L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_definition)
-  local err, res = L.lsp.request(
-    clients,
-    vim.lsp.protocol.Methods.textDocument_definition,
-    vim.lsp.util.make_position_params(0, 'utf-8'),
-    0
-  )
-
-  if err then
-    L.lsp.notify_error(err)
-    return
-  end
-  if L.tbl.is_empty(res) then
-    vim.notify('No definition available', vim.log.levels.INFO)
-    return
-  end
-
-  M:_open({
-    cword = vim.fn.expand('<cword>'),
-    clients = clients,
-    res = res,
-    peek = true,
-  })
-end
-
 function M.open()
-  local clients =
-    L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_definition)
-  local err, res = L.lsp.request(
+  local method = vim.lsp.protocol.Methods.textDocument_definition
+  local clients = vim.lsp.get_clients({ bufnr = 0, method = method })
+  local err, res = L.lsp:request(
     clients,
-    vim.lsp.protocol.Methods.textDocument_definition,
+    method,
     vim.lsp.util.make_position_params(0, 'utf-8'),
     0
   )
@@ -46,8 +37,7 @@ function M.open()
   if err then
     L.lsp.notify_error(err)
     return
-  end
-  if L.tbl.is_empty(res) then
+  elseif table.isempty(res) then
     vim.notify('No definition available', vim.log.levels.INFO)
     return
   end
@@ -55,18 +45,16 @@ function M.open()
   M:_open({
     cword = vim.fn.expand('<cword>'),
     clients = clients,
-    res = res,
-    peek = false,
+    responses = res,
   })
 end
 
 function M.type()
-  local clients = L.lsp.clients_by_method(
-    vim.lsp.protocol.Methods.textDocument_typeDefinition
-  )
-  local err, res = L.lsp.request(
+  local method = vim.lsp.protocol.Methods.textDocument_typeDefinition
+  local clients = vim.lsp.get_clients({ bufnr = 0, method = method })
+  local err, res = L.lsp:request(
     clients,
-    vim.lsp.protocol.Methods.textDocument_typeDefinition,
+    method,
     vim.lsp.util.make_position_params(0, 'utf-8'),
     0
   )
@@ -74,8 +62,7 @@ function M.type()
   if err then
     L.lsp.notify_error(err)
     return
-  end
-  if L.tbl.is_empty(res) then
+  elseif table.isempty(res) then
     vim.notify('No definition available', vim.log.levels.INFO)
     return
   end
@@ -83,11 +70,117 @@ function M.type()
   M:_open({
     cword = vim.fn.expand('<cword>'),
     clients = clients,
-    res = res,
+    responses = res,
   })
 end
 
-function M._util.definition.set_highlights(bufnr, def)
+---@package
+---@param req lsp.ui.def.Request
+---@return lsp.ui.def.Definition[]
+function M:_transform(req)
+  ---@type lsp.ui.def.Definition[]
+  local definitions = {}
+
+  ---@type string[]
+  local ws_folders = {}
+  for _, c in pairs(req.clients) do
+    if c.workspace_folders then
+      for _, w in pairs(c.workspace_folders) do
+        table.insert(ws_folders, w.uri)
+      end
+    elseif c.root_dir then
+      table.insert(ws_folders, 'file://' .. c.root_dir)
+    end
+  end
+  vim.fn.uniq(ws_folders)
+
+  local home = os.getenv('HOME')
+  for _, res in pairs(req.responses) do
+    local r = res.result --[[@as lsp.Location|lsp.LocationLink]]
+    local range = r.range or r.targetSelectionRange
+
+    ---@type lsp.ui.def.Definition
+    local def = {
+      uri = r.uri or r.targetUri,
+      file = (r.uri or r.targetUri):gsub('^file://', ''):gsub('^' .. home, '~'),
+      start = { range.start.line + 1, range.start.character },
+      end_ = { range['end'].line + 1, range['end'].character },
+    }
+
+    -- Remove definitions that are fully contained in one another. The
+    -- calculation is performed in a two-step process. `i` and `j` (see below)
+    -- will never both be `nil` at the same time.
+    local it = vim.iter(ipairs(definitions)):filter(
+      ---@param d lsp.ui.def.Definition
+      function(_, d)
+        return d.start[1] == def.start[1]
+      end
+    )
+
+    -- A previous definition is fully contained in `def`. Looking only for the
+    -- first match works, since this is computed on every iteration.
+    local i, _ = it:find(
+      ---@param d lsp.ui.def.Definition
+      function(_, d)
+        return d.end_[1] < def.end_[1]
+          or d.end_[1] == def.end_[1] and d.end_[2] < def.end_[2]
+      end
+    )
+    if i ~= nil then
+      table.remove(definitions, i)
+    end
+
+    -- `def` is fully contained in a previous definition.
+    local j, _ = it:find(
+      ---@param d lsp.ui.def.Definition
+      function(_, d)
+        return def.end_[1] < d.end_[1]
+          or def.end_[1] == d.end_[1] and def.end_[2] < d.end_[2]
+      end
+    )
+    if j == nil then
+      table.insert(definitions, def)
+    end
+  end
+
+  -- Remove definitions from external sources, such as dependencies, if at least
+  -- one project-local definition exists.
+  local ws_only = vim.iter(definitions):find(
+    ---@param d lsp.ui.def.Definition
+    function(d)
+      for _, w in pairs(ws_folders) do
+        if vim.startswith(d.uri, w) then
+          return true
+        end
+      end
+    end
+  ) ~= nil
+
+  if not ws_only then
+    return definitions
+  end
+
+  return vim
+    .iter(definitions)
+    :filter(
+      ---@param d lsp.ui.def.Definition
+      function(d)
+        for _, w in pairs(ws_folders) do
+          if vim.startswith(d.uri, w) then
+            return true
+          end
+
+          return false
+        end
+      end
+    )
+    :totable()
+end
+
+---@package
+---@param bufnr number
+---@param def lsp.ui.def.Definition
+function M:_set_highlights(bufnr, def)
   local nsid = vim.api.nvim_create_namespace('lsp-ui')
   vim.api.nvim_buf_clear_namespace(bufnr, nsid, 0, -1)
 
@@ -96,7 +189,7 @@ function M._util.definition.set_highlights(bufnr, def)
     nsid,
     'Search',
     { def.start[1] - 1, def.start[2] },
-    { def._end[1], def._end[2] }
+    { def.end_[1] - 1, def.end_[2] }
   )
 
   L.key.nnmap('<C-l>', function()
@@ -105,224 +198,29 @@ function M._util.definition.set_highlights(bufnr, def)
   end, { buffer = true, remap = false })
 end
 
-function M._util.definition.register_float_actions(bufnr, winnr)
-  local nsid = vim.api.nvim_create_namespace('lsp-ui')
-  if winnr == nil then
-    return
-  end
+---@package
+---@param d lsp.ui.def.Definition
+function M:_goto(d)
+  local bufnr = vim.uri_to_bufnr(d.uri)
+  vim.api.nvim_win_set_buf(0, bufnr)
+  self:_set_highlights(bufnr, d)
 
-  L.cmd.event('QuitPre', bufnr, function()
-    if L.win.is_cur_valid(winnr) then
-      vim.api.nvim_buf_clear_namespace(bufnr, nsid, 0, -1)
-    end
-  end)
-
-  L.cmd.event('WinLeave', bufnr, function()
-    if L.win.is_cur_valid(winnr) then
-      vim.api.nvim_buf_clear_namespace(bufnr, nsid, 0, -1)
-      vim.api.nvim_win_close(winnr, false)
-    end
-  end)
-end
-
-function M._util.definition.open(data, index)
-  L.win.close(data.nwin)
-
-  local proc = data.proc
-  local bufnr = vim.uri_to_bufnr(proc.def[index].uri)
-
-  if not proc.peek or bufnr == vim.api.nvim_get_current_buf() then
-    vim.api.nvim_win_set_buf(data.owin, bufnr)
-    M._util.definition.set_highlights(bufnr, proc.def[index])
-    vim.api.nvim_win_set_cursor(data.owin, proc.def[index].start)
-    vim.cmd('filetype detect')
-    vim.cmd('norm zz')
-    return
-  end
-
-  data = L.win.open_center(bufnr, true, {
-    title = ' ' .. vim.fn.fnamemodify(vim.fn.bufname(bufnr), ':t') .. ' ',
-    zindex = 1,
-    style = '',
-  })
+  vim.api.nvim_win_set_cursor(0, d.start)
   vim.cmd('filetype detect')
   vim.cmd('norm zz')
-
-  vim.bo[data.nbuf].bufhidden = 'hide'
-  vim.bo[data.nbuf].modifiable = true
-
-  M._util.definition.set_highlights(data.nbuf, proc.def[index])
-  M._util.definition.register_float_actions(data.nbuf, data.nwin)
-  vim.api.nvim_win_set_cursor(data.nwin, proc.def[index].start)
-  vim.cmd('norm! zt')
 end
 
-function M:_preprocess(raw)
-  local tbl = { cword = raw.cword, peek = raw.peek, def = {} }
+---@package
+---@param req lsp.ui.def.Request
+function M:_open(req)
+  local definitions = self:_transform(req)
 
-  local workspace_folders = {}
-  for i = 1, #raw.clients do
-    local config = raw.clients[i]
-    if config.workspace_folders then
-      for j = 1, #config.workspace_folders do
-        table.insert(workspace_folders, config.workspace_folders[j].uri)
-      end
-    elseif config.root_dir then
-      table.insert(workspace_folders, 'file://' .. config.root_dir)
-    end
-  end
-  vim.fn.uniq(workspace_folders)
-
-  local res = raw.res
-  -- TODO: verify this works when lsp returns Location[] or LocationLink[]
-  vim.fn.flatten(res, 1)
-  local home = os.getenv('HOME')
-
-  -- potentially significant runtime overhead for increased usability
-  for i = 1, #res do
-    local range = res[i].result.range or res[i].result.targetSelectionRange
-    local def = {
-      uri = res[i].result.uri or res[i].result.targetUri,
-      file = (res[i].result.uri or res[i].result.targetUri)
-        :gsub('^file://', '')
-        :gsub('^' .. home, '~'),
-      start = { range.start.line + 1, range.start.character },
-      _end = { range['end'].line + 1, range['end'].character },
-    }
-
-    -- remove duplicate definitions on the same line
-    for j = 1, #tbl.def do
-      if def.start[1] ~= tbl.def[j].start[1] then
-        goto continue
-      end
-
-      if
-        def._end[1] < tbl.def[j]._end[1]
-        or def._end[1] == tbl.def[j]._end[1]
-          and def._end[2] < tbl.def[j]._end[2]
-      then
-        table.remove(tbl.def, j)
-        break
-      end
-
-      goto skip
-      ::continue::
-    end
-
-    table.insert(tbl.def, def)
-    ::skip::
-  end
-
-  -- remove external definitions, if at least one local definition is present
-  local workspace_only = false
-  for i = 1, #tbl.def do
-    for j = 1, #workspace_folders do
-      if vim.startswith(tbl.def[i].uri, workspace_folders[j]) then
-        workspace_only = true
-        break
-      end
-    end
-  end
-
-  if not workspace_only then
-    return tbl
-  end
-
-  local keep = {}
-  for i = 1, #tbl.def do
-    for j = 1, #workspace_folders do
-      if vim.startswith(tbl.def[i].uri, workspace_folders[j]) then
-        keep[i] = true
-        goto continue
-      end
-    end
-    ::continue::
-  end
-
-  for i = #tbl.def, 1, -1 do
-    if not keep[i] then
-      table.remove(tbl.def, i)
-    end
-  end
-
-  return tbl
-end
-
-function M:_format(proc)
-  local tbl = {}
-
-  for i = 1, #proc.def do
-    table.insert(
-      tbl,
-      ('%s %s %s-%s'):format(
-        i,
-        proc.def[i].file,
-        proc.def[i].start[1],
-        proc.def[i]._end[1]
-      )
-    )
-  end
-
-  return tbl
-end
-
-function M:_set_highlights(bufnr, proc)
-  local ns_id = vim.api.nvim_create_namespace('lsp-ui')
-
-  for i = 1, #proc.def do
-    local len = string.len(i)
-
-    vim.hl.range(
-      bufnr,
-      ns_id,
-      self._util.signs.numhl[i % #self._util.signs.text ~= 0 and i % #self._util.signs.text or #self._util.signs.text],
-      { i - 1, 0 },
-      { i - 1, len }
-    )
-    vim.hl.range(
-      bufnr,
-      ns_id,
-      'NeutralFloat',
-      { i - 1, len + proc.def[i].file:len() + 2 },
-      { i - 1, -1 }
-    )
-  end
-end
-
-function M:_register_float_actions(data)
-  L.key.nnmap('<C-c>', function()
-    L.win.close(data.nwin)
-  end, { buffer = true })
-
-  L.key.nnmap('<CR>', function()
-    M._util.definition.open(data, vim.fn.line('.'))
-  end, { buffer = true })
-
-  for i = 1, #data.proc.def do
-    L.key.nnmap(tostring(i), function()
-      M._util.definition.open(data, i)
-    end, { buffer = true })
-  end
-
-  for _, lhs in pairs({ 'v', 'V', '<C-v>' }) do
-    L.key.nnmap(lhs, '', { buffer = true })
-  end
-
-  L.cmd.event({ 'WinLeave', 'QuitPre' }, data.nbuf, function()
-    L.win.close(data.nwin)
-  end)
-end
-
-function M:_open(raw)
-  local proc = self:_preprocess(raw)
-  local content = self:_format(proc)
-
-  if #proc.def == 1 then
-    self._util.definition.open({ owin = 0, proc = proc }, 1)
+  if #definitions == 1 then
+    self:_goto(definitions[1])
     return
   end
 
-  local data = L.win.open_cursor(content, true, {
+  local d = L.ui:pick(definitions, 'instant', self._util.format, {
     title = {
       {
         (' %s '):format(self._util.signs.text[vim.diagnostic.severity.INFO]),
@@ -331,11 +229,12 @@ function M:_open(raw)
       { 'Definition ', 'FloatTitle' },
     },
     zindex = 2,
-  })
-  data.proc = proc
+  })[1]
 
-  self:_set_highlights(data.nbuf, proc)
-  self:_register_float_actions(data)
+  if d == nil then
+    return
+  end
+  self:_goto(d)
 end
 
 return M

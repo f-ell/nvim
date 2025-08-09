@@ -6,11 +6,11 @@ M._util = {
 }
 
 M.active = function()
-  local params = vim.lsp.util.make_position_params(0, 'utf-8')
-  local err, res = L.lsp.request(
-    L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_signatureHelp),
-    vim.lsp.protocol.Methods.textDocument_signatureHelp,
-    params,
+  local method = vim.lsp.protocol.Methods.textDocument_signatureHelp
+  local err, res = L.lsp:request(
+    vim.lsp.get_clients({ bufnr = 0, method = method }),
+    method,
+    vim.lsp.util.make_position_params(0, 'utf-8'),
     0
   )
 
@@ -18,11 +18,19 @@ M.active = function()
     L.lsp.notify_error(err)
     return
   end
-  if L.tbl.is_empty(res[1]) or L.tbl.is_empty(res[1].result.signatures) then
+
+  if table.isempty(res[1]) then
     vim.notify('No signature help available', vim.log.levels.INFO)
     return
   end
-  if L.tbl.is_empty(res[1].result.signatures[1].parameters) then
+
+  local s = res[1].result --[[@as lsp.SignatureHelp]]
+  if table.isempty(s.signatures) then
+    vim.notify('No signature help available', vim.log.levels.INFO)
+    return
+  end
+
+  if table.isempty(s.signatures[1].parameters) then
     vim.notify('Function takes no arguments', vim.log.levels.INFO)
     return
   end
@@ -31,11 +39,11 @@ M.active = function()
 end
 
 M.available = function()
-  local params = vim.lsp.util.make_position_params(0, 'utf-8')
-  local err, res = L.lsp.request(
-    L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_signatureHelp),
-    vim.lsp.protocol.Methods.textDocument_signatureHelp,
-    params,
+  local method = vim.lsp.protocol.Methods.textDocument_signatureHelp
+  local err, res = L.lsp:request(
+    vim.lsp.get_clients({ bufnr = 0, method = method }),
+    method,
+    vim.lsp.util.make_position_params(0, 'utf-8'),
     0
   )
 
@@ -43,11 +51,19 @@ M.available = function()
     L.lsp.notify_error(err)
     return
   end
-  if L.tbl.is_empty(res[1]) or L.tbl.is_empty(res[1].result.signatures) then
+
+  if table.isempty(res[1]) then
     vim.notify('No signature help available', vim.log.levels.INFO)
     return
   end
-  if L.tbl.is_empty(res[1].result.signatures[1].parameters) then
+
+  local s = res[1].result --[[@as lsp.SignatureHelp]]
+  if table.isempty(s.signatures) then
+    vim.notify('No signature help available', vim.log.levels.INFO)
+    return
+  end
+
+  if table.isempty(s.signatures[1].parameters) then
     vim.notify('Function takes no arguments', vim.log.levels.INFO)
     return
   end
@@ -172,7 +188,7 @@ function M:_open(raw)
   local proc = self:_preprocess(raw)
   local content = self:_format(proc)
 
-  local data = L.win.open_cursor(content, false, {
+  local data = L.win:open_cursor(content, false, {
     title = {
       {
         (' %s '):format(self._util.signs.text[vim.diagnostic.severity.INFO]),
@@ -187,11 +203,11 @@ function M:_open(raw)
 
   self:_set_highlights(data.nbuf, proc)
 
-  L.cmd.event(
+  L.cmd.register(
     { 'BufLeave', 'CursorMoved', 'InsertLeave', 'TextChangedI', 'WinNew' },
     data.obuf,
     function()
-      L.win.close(data.nwin)
+      L.win:close(data.nwin)
     end
   )
 end
