@@ -79,7 +79,7 @@ function M:_transform(req)
   local dgn = {}
 
   for _, r in pairs(req.dgn) do
-    -- NOTE: hanging carriage return when server returns '\r\n'-delimited lines.
+    -- Split produces hanging CR when the server returns '\r\n'-delimited lines.
     local it = vim.iter(vim.split(r.message, '\n', { trimempty = true }))
 
     local head = { it:next(), self._util.signs.numhl[r.severity] }
@@ -147,18 +147,17 @@ end
 ---@param winnr number
 ---@param bufnr number
 ---@param dgn lsp.ui.dgn.Diagnostic[]
-function M:_set_highlights(winnr, bufnr, dgn, msg)
+function M:_set_highlights(winnr, bufnr, dgn)
   local nsid = vim.api.nvim_create_namespace('lsp-ui')
   vim.api.nvim_buf_clear_namespace(bufnr, nsid, 0, -1)
 
-  -- FIX: height, including wrapcount, should be fully handled by lib.win
-  local height = vim.iter(dgn):fold(
-    #dgn,
-    ---@param c lsp.ui.cda.CodeAction
-    function(acc, c)
-      return acc + #c.virt
+  local vh = vim.iter(dgn):fold(
+    0,
+    ---@param d lsp.ui.dgn.Diagnostic
+    function(acc, d)
+      return acc + #d.virt
     end
-  ) + L.ui:wrapcount(winnr, msg)
+  )
 
   for i, d in pairs(dgn) do
     d.virt_id = vim.api.nvim_buf_set_extmark(bufnr, nsid, i - 1, 0, {
@@ -167,7 +166,10 @@ function M:_set_highlights(winnr, bufnr, dgn, msg)
     })
   end
 
-  vim.api.nvim_win_set_height(winnr, height)
+  vim.api.nvim_win_set_height(
+    winnr,
+    vim.api.nvim_win_get_config(winnr).height + vh
+  )
 end
 
 ---@package
@@ -188,32 +190,24 @@ function M:_open(req)
     end)
     :totable()
 
-  -- FIX: deprecate - duplicating the text like this is not pretty.
-  local text = vim
+  local lines = vim
     .iter(data.dgn)
     :map(
       ---@param d lsp.ui.dgn.Diagnostic
       function(d)
-        return d.head[1]
+        return {
+          { d.head[1] },
+          vim
+            .iter(d.virt)
+            :flatten(1)
+            :map(function(v)
+              return v[1]
+            end)
+            :totable(),
+        }
       end
     )
-    :totable()
-
-  local virt = vim
-    .iter(data.dgn)
-    :map(
-      ---@param d lsp.ui.dgn.Diagnostic
-      function(d)
-        return vim
-          .iter(d.virt)
-          :flatten(1)
-          :map(function(v)
-            return v[1]
-          end)
-          :totable()
-      end
-    )
-    :flatten(1)
+    :flatten(2)
     :totable()
 
   -- Jump to diagnotic location, adding the current position to the jumplist.
@@ -231,8 +225,7 @@ function M:_open(req)
     focusable = false,
     zindex = 2,
     width = math.max(
-      L.tbl.max_len(text),
-      L.tbl.max_len(virt),
+      L.tbl.max_len(lines),
       data.title_icon[1]:len()
         + ('Diagnostics '):len()
         + data.title_loc[1]:len()
@@ -241,7 +234,7 @@ function M:_open(req)
   })
   self._util.win = win_data.nwin
 
-  self:_set_highlights(win_data.nwin, win_data.nbuf, data.dgn, text)
+  self:_set_highlights(win_data.nwin, win_data.nbuf, data.dgn)
 
   -- TODO: on WinScrolled: move window to new cursor position instead.
   L.cmd.register(
