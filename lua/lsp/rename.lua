@@ -1,6 +1,5 @@
 ---@class (exact) lsp.ui.ren.Request
 ---@field references lib.lsp.Response[]
----@field definition lib.lsp.Response[]
 ---@field uri string @File URI for the active buffer.
 ---@field cursor [number, number] @Original cursor position.
 ---
@@ -20,43 +19,27 @@ local M = {
 }
 
 function M.rename()
-  local m_ref = vim.lsp.protocol.Methods.textDocument_references
-  local clients = vim.lsp.get_clients({ bufnr = 0, method = m_ref })
+  local method = vim.lsp.protocol.Methods.textDocument_references
+  local params = vim.lsp.util.make_position_params(0, 'utf-8') --[[@as lsp.ReferenceParams]]
+  params.context = { includeDeclaration = true }
 
-  if table.isempty(clients) then
-    vim.notify('No client with reference provider found.', vim.log.levels.INFO)
+  local err, res = L.lsp:request(
+    vim.lsp.get_clients({ bufnr = 0, method = method }),
+    method,
+    params,
+    0
+  )
+  if err then
+    L.lsp.notify_error(err)
     return
   end
-
-  local p_ref = vim.lsp.util.make_position_params(0, 'utf-8') --[[@as lsp.ReferenceParams]]
-  p_ref.context = { includeDeclaration = true }
-
-  local e_ref, r_ref = L.lsp:request(clients, m_ref, p_ref, 0)
-  if e_ref then
-    L.lsp.notify_error(e_ref)
-    return
-  end
-  if table.isempty(r_ref) then
+  if table.isempty(res) then
     vim.notify('No references found', vim.log.levels.INFO)
     return
   end
 
-  local m_def = vim.lsp.protocol.Methods.textDocument_definition
-  local p_def = vim.lsp.util.make_position_params(0, 'utf-8') --[[@as lsp.DefinitionParams]]
-
-  local e_def, r_def = L.lsp:request(clients, m_def, p_def, 0)
-  if e_def then
-    L.lsp.notify_error(e_def)
-    return
-  end
-  if table.isempty(r_def) then
-    vim.notify('No definition found', vim.log.levels.WARN)
-    return
-  end
-
   M:_open({
-    references = r_ref,
-    definition = r_def,
+    references = res,
     cursor = vim.api.nvim_win_get_cursor(0),
     uri = 'file://' .. vim.fn.expand('%:p'),
   })
@@ -66,35 +49,6 @@ end
 ---@param req lsp.ui.ren.Request
 ---@return lsp.ui.ren.Rename
 function M:_transform(req)
-  ---@type lsp.Location[]|lsp.LocationLink[]
-  local def = vim
-    .iter(req.definition)
-    :map(
-      ---@param res lib.lsp.Response
-      ---@return lsp.Location[]
-      function(res)
-        local r = res.result --[[@as lsp.Definition]]
-        return type(r[1]) == 'table' and r or { r }
-      end
-    )
-    :flatten(1)
-    :totable()
-
-  -- Prevent incorrect rename in cases where multiple servers return different
-  -- definitions for the active symbol.
-  local uri, range =
-    def[1].uri or def[1].targetUri, def[1].range or def[1].targetRange
-  assert(
-    vim.iter(def):all(
-      ---@param l lsp.Location|lsp.LocationLink
-      function(l)
-        return (l.uri or l.targetUri) == uri
-          and vim.deep_equal(l.range or l.targetRange, range)
-      end
-    ),
-    'failed to resolve definition from mismatched responses'
-  )
-
   ---The reference list may contain duplicate locations when multiple servers
   ---are queried for references. This does not matter so long as all highlights
   ---are later created in a single namespace that is always fully wiped.
@@ -111,13 +65,16 @@ function M:_transform(req)
     )
     :totable()
 
-  local bufnr = vim.uri_to_bufnr(uri)
+  -- All references are attached to the same symbol, such that it may be
+  -- retrieved from an arbitrary reference.
+  local r = refs[1].range
+  local bufnr = vim.uri_to_bufnr(refs[1].uri)
   local symbol = vim.api.nvim_buf_get_text(
     bufnr,
-    range.start.line,
-    range.start.character,
-    range['end'].line,
-    range['end'].character,
+    r.start.line,
+    r.start.character,
+    r['end'].line,
+    r['end'].character,
     {}
   )[1]
 
