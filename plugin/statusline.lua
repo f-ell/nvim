@@ -484,10 +484,7 @@ local lsp = {
       #self.meta.diagnostics.string == 0 and '' or self.meta.diagnostics.string,
       '%#NonText#',
       vim.o.columns < 100 and ''
-        or (' %%@v:lua.user_sl_lsp@[%s client%s]%%X'):format(
-          #self.meta.clients,
-          #self.meta.clients > 1 and 's' or ''
-        ),
+        or (' %%@v:lua.user_sl_lsp@[lsp: %d]%%X'):format(#self.meta.clients),
       ' %#StatusLine#',
     })
   end,
