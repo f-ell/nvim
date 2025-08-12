@@ -5,10 +5,6 @@ return {
   dependencies = {
     'nvim-treesitter/nvim-treesitter-textobjects',
     {
-      'JoosepAlviste/nvim-ts-context-commentstring',
-      opts = { enable = true, enable_autocmd = false },
-    },
-    {
       'nvim-treesitter/nvim-treesitter-context',
       opts = {
         enable = true,
