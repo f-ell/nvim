@@ -28,6 +28,15 @@ end
 
 key.nnmap('<leader>dh', dec2hex)
 key.modemap({ 'n', 'i' }, '<C-.>', require('emmet').expand_word)
+key.vnmap('<leader>*', function()
+  local base = os.getenv('XGD_PICTURES_HOME')
+    or os.getenv('HOME') .. '/Pictures'
+
+  require('silicon'):screenshot({
+    directory = base .. '/Screenshots/Code/',
+    font = 'Ellograph CF',
+  })
+end)
 
 key.nnmap('--', '<CMD>w<CR>')
 key.nnmap('<leader>w', '<CMD>w !doas tee %<CR>')
