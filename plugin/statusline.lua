@@ -455,6 +455,10 @@ local lsp = {
         }
 
         local diagnostics = vim.diagnostic.get(0)
+        if table.isempty(diagnostics) then
+          return
+        end
+
         for i = 1, #diagnostics do
           self.meta.diagnostics.count[diagnostics[i].severity] = self.meta.diagnostics.count[diagnostics[i].severity]
             + 1
