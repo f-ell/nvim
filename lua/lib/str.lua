@@ -42,4 +42,48 @@ function Str.word(match_any, pos)
   return ln:sub(1, i and (i - 1) or -1):reverse()
 end
 
+---Break `str` into multiple lines with at most `width` characters per line.
+---
+---@param str string
+---@param width integer
+---@param preserve boolean? @Whether to preserve indentation in wrapped lines. Only relevant when `str` starts with whitespace. Defaults to `true`.
+---@return string[]
+function Str:wrap(str, width, preserve)
+  if str:len() <= width then
+    return { str }
+  end
+
+  ---@type string[]
+  local tbl = {}
+
+  local indent = ''
+  if preserve or preserve == nil then
+    indent = str:match('^(%s+)') or ''
+  end
+
+  local i, j = 0, width
+
+  -- First line must not be trimmed; insert separately.
+  table.insert(tbl, vim.fn.slice(str, i, j))
+  i, j = j, j + width - indent:len()
+
+  while j < str:len() do
+    table.insert(tbl, vim.trim(vim.fn.slice(str, i, j)))
+    i, j = j, j + width - indent:len()
+  end
+
+  table.insert(tbl, vim.trim(vim.fn.slice(str, i)))
+
+  return {
+    tbl[1],
+    unpack(vim
+      .iter(tbl)
+      :skip(1)
+      :map(function(ln)
+        return indent .. ln
+      end)
+      :totable()),
+  }
+end
+
 return Str
