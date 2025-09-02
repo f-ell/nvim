@@ -83,19 +83,25 @@ function M:_transform(req)
     local it = vim.iter(vim.split(r.message, '\n', { trimempty = true }))
 
     local head = { it:next(), self._util.signs.numhl[r.severity] }
-    -- FIX: break to prevent possibly long lines (see long messages from
-    -- tinymist with `__`)
     local virt = it:map(
       ---@param ln string
       function(ln)
-        return {
-          {
-            (' '):rep(string.len(vim.o.showbreak)) .. ln,
-            self._util.signs.numhl[r.severity],
-          },
-        }
+        return L.str:wrap(ln, math.floor(vim.o.columns * 0.7))
       end
-    ):totable()
+    )
+      :flatten(1)
+      :map(
+        ---@param ln string
+        function(ln)
+          return {
+            {
+              (' '):rep(string.len(vim.o.showbreak)) .. ln,
+              self._util.signs.numhl[r.severity],
+            },
+          }
+        end
+      )
+      :totable()
 
     ---@type lsp.ui.dgn.Diagnostic
     local d = {

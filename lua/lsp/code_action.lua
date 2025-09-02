@@ -73,14 +73,20 @@ function M:_transform(req)
     local it = vim.iter(vim.split(res.title, '\n', { trimempty = true }))
 
     local title = it:next()
-    -- FIX: break to prevent possibly long lines (see long messages from
-    -- tinymist with `__`)
     local virt = it:map(
       ---@param ln string
       function(ln)
-        return { { (' '):rep(string.len(i) + 1) .. ln, 'Normal' } }
+        return L.str:wrap(ln, math.floor(vim.o.columns * 0.7))
       end
-    ):totable()
+    )
+      :flatten(1)
+      :map(
+        ---@param ln string
+        function(ln)
+          return { { (' '):rep(string.len(i) + 1) .. ln, 'Normal' } }
+        end
+      )
+      :totable()
     if #virt > 0 then
       table.insert(virt[#virt], { ' ' .. r.name, 'NonText' })
     end
