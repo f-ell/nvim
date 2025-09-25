@@ -173,6 +173,8 @@ local buffer = {
 local git = {
   meta = {
     relative_name = nil,
+    MAXSIZE = 1024 * 1024,
+    fsize = -1,
     root = {
       global = nil,
       _local = nil,
@@ -188,6 +190,12 @@ local git = {
     },
   },
   events = {
+    {
+      M._buf_events,
+      function(self)
+        self.meta.fsize = vim.fn.getfsize(vim.fn.expand('%'))
+      end,
+    },
     {
       M._buf_events,
       function(self)
@@ -209,7 +217,7 @@ local git = {
           .. M._realpath:sub(self.meta.root._local:len() + 1)
         self:_tracked()
 
-        if not self.meta.tracked then
+        if not self.meta.tracked or self.meta.fsize > self.meta.MAXSIZE then
           return
         end
 
@@ -234,7 +242,7 @@ local git = {
         self:_head()
         self:_tracked()
 
-        if not self.meta.tracked then
+        if not self.meta.tracked or self.meta.fsize > self.meta.MAXSIZE then
           return
         end
 
@@ -254,6 +262,8 @@ local git = {
       diff = '%#GitZero#untracked'
     elseif self.meta.diff.unmerged then
       diff = '%#GitDel#unmerged'
+    elseif self.meta.fsize > self.meta.MAXSIZE then
+      diff = '%#GitZero#+? ~? -?'
     else
       local hl = {
         '%#Git' .. (self.meta.diff.add == 0 and 'Zero' or 'Add') .. '#',
@@ -342,7 +352,9 @@ local git = {
       cwd = self.meta.root._local,
       stdout_buffered = true,
       on_stdout = function(_, data, _)
-        self.meta.hstate = { unpack(data, 1, #data - 1) }
+        -- `unpack` limits the number of items that may be unpacked; iterator is
+        -- most likely slower however.
+        self.meta.hstate = vim.iter(data):rskip(1):totable()
       end,
     })
     vim.fn.jobwait({ id }, 100)
