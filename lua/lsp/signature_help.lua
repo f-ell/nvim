@@ -195,6 +195,11 @@ function M:_set_highlights(bufnr, active_only, sh)
   vim.api.nvim_buf_clear_namespace(bufnr, nsid, 0, -1)
 
   local p = sh.signatures[sh.active_sig].params[sh.active_param]
+  -- Cursor is outside of valid range.
+  if not p then
+    return
+  end
+
   -- Highlight offset based on stripped label and signature index.
   local offset = -sh.signatures[sh.active_sig].params[1][1]
     + (active_only and 0 or (string.len(sh.active_sig) + 1))
