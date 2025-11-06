@@ -2,7 +2,7 @@ return {
   'williamboman/mason.nvim',
   lazy = true,
   cmd = 'Mason',
-  event = { 'BufReadPost', 'BufNewFile', 'BufFilePost' },
+  event = { 'BufReadPre', 'BufNewFile', 'BufFilePost' },
   dependencies = { 'neovim/nvim-lspconfig', 'saghen/blink.cmp' },
   init = function()
     -- Loading the user's `lsp/` first prevents making changes to nvim-lspconfig
