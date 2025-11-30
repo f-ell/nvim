@@ -8,6 +8,14 @@ local function organizeImports()
     end)
     :nth(1)
 
+  if not client then
+    vim.notify(
+      'Failed to organize imports. No server available.',
+      vim.log.levels.WARN
+    )
+    return
+  end
+
   local diagnostics = vim
     .iter(vim.diagnostic.get(0, {
       namespace = vim.lsp.diagnostic.get_namespace(client.id),

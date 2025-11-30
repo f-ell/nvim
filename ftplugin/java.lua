@@ -1,5 +1,13 @@
 local function organizeImports()
   local client = vim.lsp.get_clients({ name = 'jdtls' })[1]
+  if not client then
+    vim.notify(
+      'Failed to organize imports. No server available.',
+      vim.log.levels.WARN
+    )
+    return
+  end
+
   local params = vim.lsp.util.make_range_params(0, client.offset_encoding) --[[@as table]]
   params.context =
     { diagnostics = vim.diagnostic.get(0, { lnum = vim.fn.line('.') - 1 }) }
@@ -18,13 +26,13 @@ local function organizeImports()
   local req = vim
     .iter(res)
     :filter(
-      ---@param r LspResponse
+      ---@param r lib.lsp.Response
       function(r)
         local ca = r.result --[[@as lsp.CodeAction]]
         return ca.kind == 'source.organizeImports'
       end
     )
-    :nth(1) --[[@as LspResponse]]
+    :nth(1) --[[@as lib.lsp.Response]]
   if table.isempty(req) then
     return
   end
@@ -32,7 +40,7 @@ local function organizeImports()
   err, res = L.lsp:request(
     client,
     vim.lsp.protocol.Methods.codeAction_resolve,
-    req.result,
+    req.result --[[@as table]],
     0
   )
   if err then

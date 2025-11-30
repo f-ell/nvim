@@ -2,6 +2,14 @@ vim.bo.expandtab = false
 
 local function organizeImports()
   local client = vim.lsp.get_clients({ name = 'gopls' })[1]
+  if not client then
+    vim.notify(
+      'Failed to organize imports. No server available.',
+      vim.log.levels.WARN
+    )
+    return
+  end
+
   local params = vim.lsp.util.make_range_params(0, client.offset_encoding) --[[@as table]]
   params.context =
     { diagnostics = vim.diagnostic.get(0, { lnum = vim.fn.line('.') - 1 }) }
@@ -20,14 +28,14 @@ local function organizeImports()
   vim
     .iter(res)
     :filter(
-      ---@param r LspResponse
+      ---@param r lib.lsp.Response
       function(r)
         local ca = r.result --[[@as lsp.CodeAction]]
         return ca.kind == 'source.organizeImports'
       end
     )
     :each(
-      ---@param r LspResponse
+      ---@param r lib.lsp.Response
       function(r)
         L.lsp.apply_edit(r)
       end
