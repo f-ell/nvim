@@ -88,7 +88,9 @@ function LSP:_do_request(client, method, params, bufnr, timeout)
 
     local ok, res = pcall(h, err, result, ctx, config or {})
     if ok then
-      msg = { error = res.err, result = res.result } --[[@as lsp.ResponseMessage]]
+      -- Some servers return a nil-response when no work should be done.
+      msg = table.isempty(res) and {}
+        or { error = res.err, result = res.result } --[[@as lsp.ResponseMessage]]
       return
     end
 
