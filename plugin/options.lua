@@ -69,5 +69,5 @@ vim.o.undofile = true
 
 -- folds
 vim.o.foldtext = ''
-vim.o.foldlevel = 1
+vim.o.foldlevel = 2
 vim.o.foldnestmax = 3
