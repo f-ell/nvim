@@ -173,6 +173,8 @@ local buffer = {
 local git = {
   meta = {
     relative_name = nil,
+    MAXSIZE = 1024 * 1024,
+    fsize = -1,
     root = {
       global = nil,
       _local = nil,
@@ -188,6 +190,12 @@ local git = {
     },
   },
   events = {
+    {
+      M._buf_events,
+      function(self)
+        self.meta.fsize = vim.fn.getfsize(vim.fn.expand('%'))
+      end,
+    },
     {
       M._buf_events,
       function(self)
@@ -209,7 +217,7 @@ local git = {
           .. M._realpath:sub(self.meta.root._local:len() + 1)
         self:_tracked()
 
-        if not self.meta.tracked then
+        if not self.meta.tracked or self.meta.fsize > self.meta.MAXSIZE then
           return
         end
 
@@ -234,7 +242,7 @@ local git = {
         self:_head()
         self:_tracked()
 
-        if not self.meta.tracked then
+        if not self.meta.tracked or self.meta.fsize > self.meta.MAXSIZE then
           return
         end
 
@@ -254,6 +262,8 @@ local git = {
       diff = '%#GitZero#untracked'
     elseif self.meta.diff.unmerged then
       diff = '%#GitDel#unmerged'
+    elseif self.meta.fsize > self.meta.MAXSIZE then
+      diff = '%#GitZero#+? ~? -?'
     else
       local hl = {
         '%#Git' .. (self.meta.diff.add == 0 and 'Zero' or 'Add') .. '#',
@@ -283,7 +293,7 @@ local git = {
 
     self.meta.root = {
       global = stat and (stat.type == 'file' and L.io
-        .read(path, true)
+        :read(path, true)
         :match('^gitdir: (.*)$') or path) or nil,
       _local = path ~= nil and path:gsub('%.git$', '') or nil,
     }
@@ -306,7 +316,7 @@ local git = {
     vim.fn.jobwait({ id }, 100)
   end,
   _head = function(self)
-    local content = L.io.read(self.meta.root.global .. '/HEAD', true)
+    local content = L.io:read(self.meta.root.global .. '/HEAD', true)
     if content == '' then
       return
     end
@@ -342,7 +352,9 @@ local git = {
       cwd = self.meta.root._local,
       stdout_buffered = true,
       on_stdout = function(_, data, _)
-        self.meta.hstate = { unpack(data, 1, #data - 1) }
+        -- `unpack` limits the number of items that may be unpacked; iterator is
+        -- most likely slower however.
+        self.meta.hstate = vim.iter(data):rskip(1):totable()
       end,
     })
     vim.fn.jobwait({ id }, 100)
@@ -433,7 +445,7 @@ local lsp = {
       function(self)
         -- updated on first LspAttach - signs may not be defined beforehand
         local signs = vim.diagnostic.config().signs
-        if L.tbl.is_empty(self.meta.signs) and type(signs) == 'table' then
+        if table.isempty(self.meta.signs) and type(signs) == 'table' then
           self.meta.signs = signs
         end
 
@@ -445,7 +457,7 @@ local lsp = {
     {
       { 'BufEnter', 'DiagnosticChanged' },
       function(self)
-        if L.tbl.is_empty(self.meta.signs) then
+        if table.isempty(self.meta.signs) then
           return
         end
 
@@ -455,6 +467,10 @@ local lsp = {
         }
 
         local diagnostics = vim.diagnostic.get(0)
+        if table.isempty(diagnostics) then
+          return
+        end
+
         for i = 1, #diagnostics do
           self.meta.diagnostics.count[diagnostics[i].severity] = self.meta.diagnostics.count[diagnostics[i].severity]
             + 1
@@ -484,10 +500,7 @@ local lsp = {
       #self.meta.diagnostics.string == 0 and '' or self.meta.diagnostics.string,
       '%#NonText#',
       vim.o.columns < 100 and ''
-        or (' %%@v:lua.user_sl_lsp@[%s client%s]%%X'):format(
-          #self.meta.clients,
-          #self.meta.clients > 1 and 's' or ''
-        ),
+        or (' %%@v:lua.user_sl_lsp@[lsp: %d]%%X'):format(#self.meta.clients),
       ' %#StatusLine#',
     })
   end,

@@ -1,8 +1,26 @@
----@class lsp.ui.CodeAction : lsp.ui
-local M = {}
+---@class (exact) lsp.ui.cda.CodeAction
+---@field title string
+---@field virt HlTuple[][] @Subsequent title lines to render as virtual text.
+---@field virt_id number? @Extmark ID.
+---@field client_id number
+---@field client_name string
+---@field action lsp.CodeAction
 
-M._util = {
-  signs = vim.diagnostic.config().signs,
+---@class lsp.ui.CodeAction
+local M = {
+  ---@package
+  _util = {
+    signs = vim.diagnostic.config().signs,
+    ---@param item lsp.ui.cda.CodeAction
+    format = function(item, _, _)
+      return {
+        item.title,
+        -- stylua: ignore
+        -- Show source only if there is no virtual text.
+        #item.virt == 0 and { item.client_name, 'NonText' } or nil,
+      }
+    end,
+  },
 }
 
 function M.codeaction()
@@ -14,12 +32,13 @@ function M.codeaction()
         return vim.fn.values(d.user_data)
       end)
       :flatten()
-      :totable() or {},
+      :totable(),
   }
 
-  local err, res = L.lsp.request(
-    L.lsp.clients_by_method(vim.lsp.protocol.Methods.textDocument_codeAction),
-    vim.lsp.protocol.Methods.textDocument_codeAction,
+  local method = vim.lsp.protocol.Methods.textDocument_codeAction
+  local err, res = L.lsp:request(
+    vim.lsp.get_clients({ bufnr = 0, method = method }),
+    method,
     params,
     0
   )
@@ -27,208 +46,178 @@ function M.codeaction()
   if err then
     L.lsp.notify_error(err)
     return
-  end
-  if L.tbl.is_empty(res) then
+  elseif table.isempty(res) then
     vim.notify('No codeactions available', vim.log.levels.INFO)
     return
   end
 
-  for i = 1, #res do
-    res[i].result.kind = nil
+  -- Ignore code action kind for deduplication. Primarily relevant for
+  -- 'identical' code actions returned from both an LSP and a Linter.
+  for _, r in pairs(res) do
+    local result = r.result --[[@as lsp.CodeAction]]
+    result.kind = nil
   end
 
-  ---@diagnostic disable-next-line: param-type-mismatch
-  M:_open(vim.fn.uniq(res))
+  M:_open(vim.fn.uniq(res) --[[ @as lib.lsp.Response[] ]])
 end
 
-function M:_preprocess(raw)
-  local tbl = {}
+---@package
+---@param req lib.lsp.Response[]
+---@return lsp.ui.cda.CodeAction[]
+function M:_transform(req)
+  local actions = {}
 
-  for i = 1, #raw do
-    tbl[i] = {
-      msg = {},
-      src = raw[i].name,
-    }
+  for i, r in pairs(req) do
+    local res = r.result --[[@as lsp.CodeAction]]
+    -- Split produces hanging CR when the server returns '\r\n'-delimited lines.
+    local it = vim.iter(vim.split(res.title, '\n', { trimempty = true }))
 
-    for ln in raw[i].result.title:gmatch('(.-)\r?\n') do
-      table.insert(tbl[i].msg, ln)
-    end
-    -- WARN: unstable use of character class
-    table.insert(tbl[i].msg, raw[i].result.title:match('[\r\n]*([^\r\n]*)$'))
-  end
-
-  for i = 1, #tbl do
-    for j = 2, #tbl[i].msg do
-      tbl[i].msg[j] = (' '):rep(string.len(i) + 1) .. tbl[i].msg[j]
-    end
-  end
-
-  return tbl
-end
-
-function M:_format(proc)
-  local tbl = {}
-
-  for i = 1, #proc do
-    local offset = #tbl + 1
-
-    for j = 1, #proc[i].msg do
-      table.insert(tbl, proc[i].msg[j])
-    end
-
-    tbl[offset] = i .. ' ' .. tbl[offset]
-    tbl[#tbl] = tbl[#tbl] .. ' ' .. proc[i].src
-  end
-
-  return tbl
-end
-
-function M:_set_highlights(bufnr, proc)
-  local ns_id = vim.api.nvim_create_namespace('lsp-ui')
-  local offset = -1
-
-  for i = 1, #proc do
-    local len = string.len(i)
-
-    vim.hl.range(
-      bufnr,
-      ns_id,
-      self._util.signs.numhl[i % #self._util.signs.text ~= 0 and i % #self._util.signs.text or #self._util.signs.text],
-      { offset + i, 0 },
-      { offset + i, len }
+    local title = it:next()
+    local virt = it:map(
+      ---@param ln string
+      function(ln)
+        return L.str:wrap(ln, math.floor(vim.o.columns * 0.7))
+      end
     )
-    vim.hl.range(bufnr, ns_id, 'NeutralFloat', {
-      offset + (#proc[i].msg > 1 and #proc[i].msg - 1 or 0) + i,
-      (#proc[i].msg > 1 and 0 or len + 1) + proc[i].msg[#proc[i].msg]:len(),
-    }, { offset + (#proc[i].msg > 1 and #proc[i].msg - 1 or 0) + i, -1 })
-
-    if #proc[i].msg > 1 then
-      offset = offset + #proc[i].msg - 1
+      :flatten(1)
+      :map(
+        ---@param ln string
+        function(ln)
+          return { { (' '):rep(string.len(i) + 1) .. ln, 'Normal' } }
+        end
+      )
+      :totable()
+    if #virt > 0 then
+      table.insert(virt[#virt], { ' ' .. r.name, 'NonText' })
     end
+
+    table.insert(actions, {
+      title = title,
+      virt = virt,
+      virt_id = nil,
+      client_id = r.id,
+      client_name = r.name,
+      action = res,
+    } --[[@as lsp.ui.cda.CodeAction]])
   end
+
+  return actions
 end
 
-function M:_register_float_actions(data)
-  local do_action = function(num)
-    L.win.close(data.nwin)
+---@package
+---@param items lsp.ui.cda.CodeAction[]
+---@param winnr number
+---@param bufnr number
+---@param nsid number
+function M:_set_highlights(items, winnr, bufnr, nsid)
+  local height = vim.iter(items):fold(
+    #items,
+    ---@param c lsp.ui.cda.CodeAction
+    function(acc, c)
+      return acc + #c.virt
+    end
+  )
 
-    local act = data.res[num]
-    local res = act.result
+  for i, item in pairs(items) do
+    item.virt_id = vim.api.nvim_buf_set_extmark(bufnr, nsid, i - 1, 0, {
+      id = item.virt_id,
+      virt_lines = item.virt,
+    })
+  end
 
-    if not L.tbl.is_empty(res.edit) then
-      L.lsp.apply_edit(act)
-    elseif res.action and type(res.action) == 'function' then
-      res.action()
-    elseif res.command then
-      local cmd = type(res.command) == 'table' and res.command or act.result
-      local client = vim.lsp.get_client_by_id(act.id)
+  vim.api.nvim_win_set_height(winnr, height)
+end
 
-      assert(
-        client
-          and client:supports_method(
-            vim.lsp.protocol.Methods.workspace_executeCommand
-          ),
-        'Missing `executeCommand provider`'
+---@package
+---@param c lsp.ui.cda.CodeAction
+function M:_do_action(c)
+  local ca = c.action
+
+  if ca.edit then
+    L.lsp.apply_edit({
+      id = c.client_id,
+      name = c.client_name,
+      result = ca --[[@as lsp.ResponseMessage]],
+    })
+  elseif
+    ca.action --[[@as fun()?]]
+    and type(ca.action --[[@as fun()?]]) == 'function'
+  then
+    -- WARN: out of spec, which servers rely on this?
+    vim.notify(
+      'Executing out-of-spec function with field `action`.',
+      vim.log.levels.WARN
+    )
+
+    ---@diagnostic disable-next-line: undefined-field
+    ca.action()
+  elseif ca.command then
+    local cmd = type(ca.command) == 'table' and ca.command or ca
+    local client = vim.lsp.get_client_by_id(c.client_id)
+
+    assert(
+      client
+        and client:supports_method(
+          vim.lsp.protocol.Methods.workspace_executeCommand
+        ),
+      'Client is missing `executeCommand` provider.'
+    )
+
+    if
+      client.handlers
+      ---Required for out-of-spec code actions with jdtls.
+      ---@diagnostic disable-next-line
+      and client.handlers['workspace/executeClientCommand']
+      and vim.lsp.commands[cmd.command]
+    then
+      vim.lsp.commands[cmd.command](cmd, {
+        method = vim.lsp.protocol.Methods.textDocument_codeAction,
+        bufnr = 0,
+        client_id = client.id,
+        params = vim.lsp.util.make_range_params(0, client.offset_encoding),
+      })
+    elseif
+      -- Command is available.
+      vim.tbl_contains(
+        client.server_capabilities.executeCommandProvider.commands,
+        cmd.command
       )
-
-      if
-        client.handlers
-        ---required for some code actions with jdtls
-        ---@diagnostic disable-next-line
-        and client.handlers['workspace/executeClientCommand']
-        and vim.lsp.commands[cmd.command]
-      then
-        vim.lsp.commands[cmd.command](cmd, {
-          method = vim.lsp.protocol.Methods.textDocument_codeAction,
-          bufnr = data.obuf,
-          client_id = act.id,
-          params = vim.lsp.util.make_range_params(0, client.offset_encoding),
-        })
-      elseif
-        vim.list_contains(
-          client.server_capabilities.executeCommandProvider.commands,
-          cmd.command
-        )
-      then
-        L.lsp.request(
-          client,
-          vim.lsp.protocol.Methods.workspace_executeCommand,
-          {
-            command = cmd.command,
-            arguments = cmd.arguments,
-            workDoneToken = cmd.workDoneToken,
-          },
-          0
-        )
-      else
-        vim.notify(
-          ('`%s` not supported by client'):format(cmd.command),
-          vim.log.levels.ERROR
-        )
-      end
+    then
+      L.lsp:request(
+        client,
+        vim.lsp.protocol.Methods.workspace_executeCommand,
+        { command = cmd.command, arguments = cmd.arguments }
+      )
     else
-      local err
-      err, res = L.lsp.request(
-        { vim.lsp.get_client_by_id(act.id) },
-        vim.lsp.protocol.Methods.codeAction_resolve,
-        res,
-        0,
-        -1
+      vim.notify(
+        ('Command is not supported by client `%s`.'):format(cmd.command),
+        vim.log.levels.ERROR
       )
-
-      if err then
-        L.lsp.notify_error(err)
-        return
-      end
-
-      L.lsp.apply_edit(res[1])
     end
-  end
+  else
+    local err, resolved = L.lsp:request(
+      { vim.lsp.get_client_by_id(c.client_id) },
+      vim.lsp.protocol.Methods.codeAction_resolve,
+      ca,
+      0,
+      -1
+    )
 
-  L.key.nnmap('<C-c>', function()
-    L.win.close(data.nwin)
-  end, { buffer = true })
-
-  L.key.nnmap('<CR>', function()
-    local ln = vim.fn.line('.')
-    local offset = 0
-
-    -- suboptimal; performance should good enough for any reasonable use-case
-    for i = 1, #data.proc do
-      for _ = 2, #data.proc[i].msg do
-        table.insert(data.res, offset + i, data.res[offset + i])
-        offset = offset + 1
-      end
-
-      if offset + i > ln then
-        goto continue
-      end
+    if err then
+      L.lsp.notify_error(err)
+      return
     end
-    ::continue::
 
-    do_action(ln)
-  end, { buffer = true })
-
-  for i = 1, #data.proc do
-    L.key.nnmap(tostring(i), function()
-      do_action(i)
-    end, { buffer = true })
+    L.lsp.apply_edit(resolved[1])
   end
-
-  for _, lhs in pairs({ 'v', 'V', '<C-v>' }) do
-    L.key.nnmap(lhs, '', { buffer = true })
-  end
-
-  L.cmd.event({ 'WinLeave', 'QuitPre' }, data.nbuf, function()
-    L.win.close(data.nwin)
-  end)
 end
 
-function M:_open(raw)
-  local proc = self:_preprocess(raw)
-  local content = self:_format(proc)
+---@package
+---@param req lib.lsp.Response[]
+function M:_open(req)
+  local actions = self:_transform(req)
 
-  local data = L.win.open_cursor(content, true, {
+  local c = L.ui:pick(actions, 'instant', self._util.format, {
     title = {
       {
         (' %s '):format(self._util.signs.text[vim.diagnostic.severity.INFO]),
@@ -238,12 +227,14 @@ function M:_open(raw)
     },
     zindex = 2,
     noautocmd = true,
-  })
-  data.proc = proc
-  data.res = raw
+  }, function(winnr, bufnr, nsid)
+    return self:_set_highlights(actions, winnr, bufnr, nsid)
+  end)[1]
 
-  self:_set_highlights(data.nbuf, proc)
-  self:_register_float_actions(data)
+  if c == nil then
+    return
+  end
+  self:_do_action(c)
 end
 
 return M

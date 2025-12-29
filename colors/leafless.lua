@@ -86,7 +86,7 @@ local groups = {
   DiffAdd = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.gre },
   DiffChange = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.blu },
   DiffText = { fg = LEAFLESS.fg[1], bg = LEAFLESS.bright.blu },
-  DiffDelete = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.red },
+  DiffDelete = { fg = LEAFLESS.gr[5], bg = '' },
 
   -- ui
   NormalFloat = { link = 'Fg' },

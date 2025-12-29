@@ -21,7 +21,7 @@ function M.expand_word()
     position = vim.lsp.util.make_position_params(0, emmetls.offset_encoding),
     abbreviation = L.str.word(true),
   }
-  local err, res = L.lsp.request(emmetls, 'emmet/expandAbbreviation', params, 0)
+  local err, res = L.lsp:request(emmetls, 'emmet/expandAbbreviation', params, 0)
 
   if err then
     L.lsp.notify_error(err)

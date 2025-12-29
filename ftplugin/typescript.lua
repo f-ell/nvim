@@ -8,6 +8,14 @@ local function organizeImports()
     end)
     :nth(1)
 
+  if not client then
+    vim.notify(
+      'Failed to organize imports. No server available.',
+      vim.log.levels.WARN
+    )
+    return
+  end
+
   local diagnostics = vim
     .iter(vim.diagnostic.get(0, {
       namespace = vim.lsp.diagnostic.get_namespace(client.id),
@@ -51,17 +59,17 @@ local function organizeImports()
     },
   }
 
-  local err, res = L.lsp.request(
+  local err, res = L.lsp:request(
     client,
     vim.lsp.protocol.Methods.textDocument_codeAction,
     params,
     0
   )
-  if err or L.tbl.is_empty(res) then
+  if err or table.isempty(res) then
     return
   end
 
-  err, res = L.lsp.request(
+  err, res = L.lsp:request(
     client,
     vim.lsp.protocol.Methods.codeAction_resolve,
     res[1].result --[[@as lsp.TextDocumentPositionParams]],

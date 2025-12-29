@@ -2,7 +2,7 @@ return {
   'williamboman/mason.nvim',
   lazy = true,
   cmd = 'Mason',
-  event = { 'BufReadPost', 'BufNewFile', 'BufFilePost' },
+  event = { 'BufReadPre', 'BufNewFile', 'BufFilePost' },
   dependencies = { 'neovim/nvim-lspconfig', 'saghen/blink.cmp' },
   init = function()
     -- Loading the user's `lsp/` first prevents making changes to nvim-lspconfig
@@ -47,12 +47,11 @@ return {
       callback = function(args)
         key.nnmap('grf', function()
           require('conform').format({
-            timeout_ms = 500,
+            timeout_ms = 1000,
             lsp_format = 'fallback',
           })
         end, { buffer = args.buf })
-        key.nnmap('gd', lsp.def.peek, { buffer = args.buf })
-        key.nnmap('grd', lsp.def.open, { buffer = args.buf })
+        key.nnmap('gd', lsp.def.open, { buffer = args.buf })
         key.nnmap('grt', lsp.def.type, { buffer = args.buf })
 
         key.nnmap('gra', lsp.cda.codeaction, { buffer = args.buf })
@@ -84,12 +83,8 @@ return {
         end, { buffer = args.buf })
 
         key.nnmap('<leader>h', lsp.dgn.get_line, { buffer = args.buf })
-        key.nnmap('<leader>j', function()
-          lsp.dgn.get_dir('next')
-        end, { buffer = args.buf })
-        key.nnmap('<leader>k', function()
-          lsp.dgn.get_dir('prev')
-        end, { buffer = args.buf })
+        key.nnmap('<leader>j', lsp.dgn.get_next, { buffer = args.buf })
+        key.nnmap('<leader>k', lsp.dgn.get_prev, { buffer = args.buf })
         key.nnmap('<leader>l', function()
           require('telescope.builtin').diagnostics({ bufnr = args.buf })
         end)
