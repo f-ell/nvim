@@ -22,7 +22,9 @@ local M = {
     TabInactive = { fg = LEAFLESS.fg[3], bg = LEAFLESS.bg[3] },
 
     -- blink
+    BlinkCmpLabelDeprecated = { fg = LEAFLESS.gr[3] },
     BlinkCmpMenuSelection = { fg = nil, bg = LEAFLESS.bg[1] },
+    BlinkCmpSource = { link = 'NonText' },
 
     BlinkCmpKindArray = { fg = LEAFLESS.normal.aqu },
     BlinkCmpKindBoolean = { fg = LEAFLESS.normal.aqu },
