@@ -14,7 +14,6 @@ return {
     },
     formatters = {
       prettierd = { require_cwd = true },
-      perltidy = { args = { '-pro=.../.perltidyrc' } },
     },
     format_on_save = {
       lsp_format = 'fallback',
