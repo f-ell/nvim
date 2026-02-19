@@ -19,10 +19,6 @@ local M = {
     GitCha = { fg = LEAFLESS.bright.blu },
     GitDel = { fg = LEAFLESS.bright.red },
 
-    -- tabline
-    TabActive = { fg = LEAFLESS.fg[2], bg = LEAFLESS.bg[2], bold = true },
-    TabInactive = { fg = LEAFLESS.fg[3], bg = LEAFLESS.bg[3] },
-
     -- blink
     BlinkCmpLabelDeprecated = { fg = LEAFLESS.gr[3] },
     BlinkCmpMenuSelection = { fg = nil, bg = LEAFLESS.bg[1] },
