@@ -4,6 +4,7 @@ vim.cmd.highlight('clear')
 if vim.fn.exists('syntax_on') then
   vim.cmd.syntax('reset')
 end
+vim.cmd('source $VIMRUNTIME/colors/vim.lua')
 vim.g.colors_name = 'leafless'
 
 LEAFLESS = {
@@ -62,66 +63,99 @@ LEAFLESS = {
 
 ---@type table<string, vim.api.keyset.highlight>
 local groups = {
-  ---- generic ----
-  Fg = { fg = LEAFLESS.fg[3] },
-  Normal = { fg = LEAFLESS.fg[3] },
-  NormalNC = { link = 'Normal' },
-  NonText = { fg = LEAFLESS.gr[4] },
-  Directory = { fg = LEAFLESS.bright.gre },
-  Comment = { fg = LEAFLESS.gr[4], bold = true },
-  Conceal = { link = 'Comment' },
-
-  MatchParen = { fg = LEAFLESS.bright.gre, underline = true },
-  SpecialKey = { link = 'NonText' },
-  Underlined = { fg = LEAFLESS.bright.blu, underline = true },
-
-  -- search
-  Search = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.blu },
-  IncSearch = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.yel },
+  ---- builtin ----
+  ColorColumn = { bg = LEAFLESS.bg[2] },
+  Conceal = { fg = LEAFLESS.gr[4] },
   CurSearch = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.pur },
-  Substitute = { link = 'Search' },
-  Visual = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.yel },
+  Cursor = { fg = LEAFLESS.bg[6], bg = LEAFLESS.fg[1] },
+  lCursor = { link = 'Cursor' },
+  CursorIM = { link = 'Cursor' },
+  CursorColumn = { bg = LEAFLESS.bg[1] },
+  CursorLine = { bg = LEAFLESS.bg[2] },
+  Directory = { fg = LEAFLESS.bright.yel },
 
-  -- diff
   DiffAdd = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.gre },
   DiffChange = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.blu },
-  DiffText = { fg = LEAFLESS.fg[1], bg = LEAFLESS.bright.blu },
   DiffDelete = { fg = LEAFLESS.gr[5], bg = '' },
+  DiffText = { fg = LEAFLESS.fg[1], bg = LEAFLESS.bright.blu, underline = true },
 
-  -- ui
-  NormalFloat = { link = 'Fg' },
-  NeutralFloat = { fg = LEAFLESS.gr[3] },
-  FloatTitle = { link = 'Fg' },
-  FloatBorder = { fg = LEAFLESS.gr[3] },
+  EndOfBuffer = { link = 'NonText' },
+  TermCursor = { link = 'Cursor' },
+  ErrorMsg = { fg = LEAFLESS.bright.red },
   WinSeparator = { fg = LEAFLESS.bg[1] },
+  Folded = { link = 'CursorLine' },
+  FoldColumn = { link = 'NonText' },
+  SignColumn = { link = 'NonText' },
+  IncSearch = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.yel },
+  Substitute = { link = 'Search' },
 
-  StatusLine = { link = 'Fg' },
+  LineNr = { fg = LEAFLESS.gr[5] },
+  LineNrAbove = { link = 'LineNr' },
+  LineNrBelow = { link = 'LineNr' },
+  CursorLineNr = { fg = LEAFLESS.bright.gre },
+  CursorLineFold = { link = 'FoldColumn' },
+  CursorLineSign = { link = 'SignColumn' },
+
+  MatchParen = { fg = LEAFLESS.bright.gre, underline = true },
+  ModeMsg = { fg = LEAFLESS.bright.cya },
+  MsgArea = { link = 'Normal' },
+  MsgSeparator = { link = 'WinSeparator' },
+  MoreMsg = { link = 'NonText' },
+  NonText = { fg = LEAFLESS.gr[4] },
+  Normal = { fg = LEAFLESS.fg[3] },
+  NormalFloat = { link = 'Normal' },
+  FloatBorder = { fg = LEAFLESS.gr[3] },
+  FloatTitle = { link = 'Normal' },
+  FloatFooter = { link = 'FloatTitle' },
+  NormalNC = { link = 'Normal' },
 
   Pmenu = { fg = LEAFLESS.fg[3], bg = LEAFLESS.bg[2] },
   PmenuSel = { fg = LEAFLESS.fg[2], bg = LEAFLESS.bg[1] },
+  PmenuKind = { link = 'Pmenu' },
+  PmenuKindSel = { link = 'PmenuSel' },
+  PmenuExtra = { link = 'Pmenu' },
+  PmenuExtraSel = { link = 'PmenuExtra' },
   PmenuSbar = { bg = LEAFLESS.bg[1] },
   PmenuThumb = { bg = LEAFLESS.gr[2] },
+  PmenuMatch = { underline = true },
+  PmenuMatchSel = { link = 'PmenuMatch' },
 
-  CursorLine = { bg = LEAFLESS.bg[2] },
-  CursorLineNr = { fg = LEAFLESS.bright.gre },
-  Folded = { link = 'CursorLine' },
-  QuickFixLine = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.gre },
-
-  MsgArea = { link = 'Fg' },
-  MoreMsg = { link = 'NonText' },
-  MsgSeparator = { fg = LEAFLESS.gr[3] },
-  ModeMsg = { fg = LEAFLESS.bright.cya },
-  WarningMsg = { fg = LEAFLESS.bright.yel },
-  ErrorMsg = { fg = LEAFLESS.bright.red },
+  ComplMatchIns = { fg = LEAFLESS.bright.gre },
   Question = { link = 'NonText' },
+  QuickFixLine = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.gre },
+  Search = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.blu },
+  SnippetTabstop = { link = 'Visual' },
+  SpecialKey = { link = 'NonText' },
 
-  -- spell
   SpellBad = { sp = LEAFLESS.bright.blu, underline = true },
   SpellCap = { sp = LEAFLESS.bright.gre, underline = true },
-  SpellRare = { sp = LEAFLESS.bright.pur, underline = true },
   SpellLocal = { sp = LEAFLESS.bright.cya, underline = true },
+  SpellRare = { sp = LEAFLESS.bright.pur, underline = true },
+
+  StatusLine = { bg = LEAFLESS.bg[2] },
+  StatusLineNC = { link = 'StatusLine' },
+  StatusLineTerm = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.gre },
+  StatusLineTermNC = { link = 'StatusLineTerm' },
+  TabLine = { link = 'Normal' },
+  TabLineFill = { bg = LEAFLESS.bg[2] },
+  TabLineSel = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.gre },
+  Title = { fg = LEAFLESS.bright.pur },
+
+  Visual = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.yel },
+  VisualNOS = { link = 'Visual' },
+  WarningMsg = { fg = LEAFLESS.bright.yel },
+  Whitespace = { link = 'NonText' },
+  WildMenu = { link = 'ComplMatchIns' },
+  WinBar = { link = 'NormalFloat' },
+  WinBarNC = { link = 'WinBar' },
+
+  Added = { fg = LEAFLESS.bright.gre },
+  Changed = { fg = LEAFLESS.bright.blu },
+  Removed = { fg = LEAFLESS.bright.red },
 
   ---- syntax ----
+  Comment = { fg = LEAFLESS.gr[4], bold = true },
+
   Constant = { fg = LEAFLESS.fg[2] },
   String = { link = 'Constant' },
   Character = { link = 'Constant' },
@@ -132,7 +166,7 @@ local groups = {
   Identifier = { fg = LEAFLESS.fg[2] },
   Function = { link = 'Identifier' },
 
-  Statement = { link = 'Fg' },
+  Statement = { link = 'Normal' },
   Conditional = { link = 'Statement' },
   Repeat = { link = 'Statement' },
   Label = { link = 'Statement' },
@@ -146,23 +180,25 @@ local groups = {
   Macro = { link = 'PreProc' },
   PreCondit = { link = 'PreProc' },
 
-  Type = { link = 'Fg' },
+  Type = { link = 'Normal' },
   StorageClass = { link = 'Type' },
   Structure = { link = 'Type' },
   TypeDef = { link = 'Type' },
 
-  Special = { link = 'Fg' },
+  Special = { link = 'Normal' },
   SpecialChar = { link = 'Special' },
   Tag = { link = 'Special' },
   Delimiter = { link = 'Special' },
   SpecialComment = { link = 'Special' },
   Debug = { link = 'Special' },
 
+  Underlined = { fg = LEAFLESS.bright.blu, underline = true },
   Error = {
     fg = LEAFLESS.bright.red,
     sp = LEAFLESS.bright.red,
     underline = true,
   },
+  Todo = { bg = '' },
 
   ---- treesitter ----
   ['@annotation'] = { link = 'PreProc' },
@@ -284,12 +320,12 @@ local groups = {
   TelescopeMatching = { fg = LEAFLESS.bright.red },
   TelescopeSelection = { link = 'CursorLine' },
   TelescopeSelectionCaret = { fg = LEAFLESS.bright.gre, bg = LEAFLESS.bg[2] },
-  TelescopeTitle = { link = 'Fg' },
-  TelescopePreviewTitle = { link = 'Fg' },
+  TelescopeTitle = { link = 'Normal' },
+  TelescopePreviewTitle = { link = 'Normal' },
   TelescopePromptBorder = { link = 'TelescopeBorder' },
   TelescopePromptCounter = { link = 'NonText' },
   TelescopePromptPrefix = { fg = LEAFLESS.bright.gre },
-  TelescopePromptTitle = { link = 'Fg' },
+  TelescopePromptTitle = { link = 'Normal' },
 
   -- treesitter
   TreesitterContext = { link = 'CursorLine' },

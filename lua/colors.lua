@@ -1,6 +1,8 @@
 local M = {
   ---@type table<string, vim.api.keyset.highlight>
   groups = {
+    NeutralFloat = { fg = LEAFLESS.gr[3] },
+
     -- statusline
     StatusLineReadonly = { fg = LEAFLESS.bright.red },
 
@@ -56,7 +58,7 @@ local M = {
     BlinkCmpKindSnippet = { fg = LEAFLESS.normal.aqu },
     BlinkCmpKindString = { fg = LEAFLESS.normal.aqu },
     BlinkCmpKindStruct = { fg = LEAFLESS.normal.yel },
-    BlinkCmpKindText = { link = 'Fg' },
+    BlinkCmpKindText = { link = 'Normal' },
     BlinkCmpKindTypeParameter = { fg = LEAFLESS.normal.yel },
     BlinkCmpKindUnit = { fg = LEAFLESS.normal.pur },
     BlinkCmpKindValue = { fg = LEAFLESS.normal.pur },
