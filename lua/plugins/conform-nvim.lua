@@ -11,6 +11,7 @@ return {
       lua = { 'stylua' },
       typescript = { 'prettierd' },
       perl = { 'perltidy' },
+      typst = { 'typstyle' },
     },
     formatters = {
       prettierd = { require_cwd = true },
