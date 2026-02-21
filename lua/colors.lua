@@ -21,7 +21,7 @@ local M = {
 
     -- blink
     BlinkCmpLabelDeprecated = { fg = LEAFLESS.gr[3] },
-    BlinkCmpMenuSelection = { fg = nil, bg = LEAFLESS.bg[1] },
+    BlinkCmpMenuSelection = { link = 'PmenuSel' },
     BlinkCmpSource = { link = 'NonText' },
 
     BlinkCmpKindArray = { fg = LEAFLESS.normal.aqu },
@@ -63,6 +63,7 @@ local M = {
 }
 
 function M:set()
+  vim.print(LEAFLESS.bg)
   for name, spec in pairs(self.groups) do
     vim.api.nvim_set_hl(0, name, spec)
   end
