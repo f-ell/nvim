@@ -247,7 +247,10 @@ function M:_do_action(c)
       return
     end
 
-    L.lsp.apply_edit(res[1])
+    vim.lsp.util.apply_workspace_edit(
+      res[1].result.edit,
+      client.offset_encoding
+    )
   end
 end
 

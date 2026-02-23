@@ -91,7 +91,10 @@ commands['java.action.generateConstructorsPrompt'] = function(_, ctx)
     return
   end
 
-  L.lsp.apply_edit(res[1])
+  vim.lsp.util.apply_workspace_edit(
+    res[1].result --[[@as lsp.WorkspaceEdit]],
+    client.offset_encoding
+  )
 end
 
 commands['java.action.generateDelegateMethodsPrompt'] = function(_, ctx)
@@ -183,7 +186,10 @@ commands['java.action.generateDelegateMethodsPrompt'] = function(_, ctx)
     return
   end
 
-  L.lsp.apply_edit(res[1])
+  vim.lsp.util.apply_workspace_edit(
+    res[1].result --[[@as lsp.WorkspaceEdit]],
+    client.offset_encoding
+  )
 end
 
 commands['java.action.generateToStringPrompt'] = function(_, ctx)
@@ -234,7 +240,10 @@ commands['java.action.generateToStringPrompt'] = function(_, ctx)
     return
   end
 
-  L.lsp.apply_edit(res[1])
+  vim.lsp.util.apply_workspace_edit(
+    res[1].result --[[@as lsp.WorkspaceEdit]],
+    client.offset_encoding
+  )
 end
 
 commands['java.action.hashCodeEqualsPrompt'] = function(_, ctx)
@@ -313,7 +322,10 @@ commands['java.action.hashCodeEqualsPrompt'] = function(_, ctx)
     end
   end
 
-  L.lsp.apply_edit(res[1])
+  vim.lsp.util.apply_workspace_edit(
+    res[1].result --[[@as lsp.WorkspaceEdit]],
+    client.offset_encoding
+  )
 end
 
 commands['java.action.organizeImports.chooseImports'] = function(result)
@@ -434,7 +446,10 @@ commands['java.action.overrideMethodsPrompt'] = function(_, ctx)
     return
   end
 
-  L.lsp.apply_edit(res[1])
+  vim.lsp.util.apply_workspace_edit(
+    res[1].result --[[@as lsp.WorkspaceEdit]],
+    client.offset_encoding
+  )
 end
 
 --------------------------------------------------------------------------------

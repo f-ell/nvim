@@ -17,30 +17,6 @@
 ---@class lib.LSP
 local LSP = {}
 
----Apply a workspace edit from an LSP reponse.
----
----@param response lib.lsp.Response
-function LSP.apply_edit(response)
-  local r = response.result --[[@as lsp.ApplyWorkspaceEditParams]]
-  local edit = r.edit and r.edit or response.result --[[@as lsp.WorkspaceEdit]]
-
-  vim.lsp.util.apply_workspace_edit(
-    edit,
-    vim.lsp.get_client_by_id(response.id).offset_encoding
-  )
-
-  --- WARN: out of spec, which servers rely on this?
-  ---
-  ---@cast r +{ action: fun()? }
-  if r.action and type(r.action) == 'function' then
-    vim.notify(
-      ('Calling out-of-spec action for `%s`'):format(response.name),
-      vim.log.levels.WARN
-    )
-    r.action()
-  end
-end
-
 ---Format and print RequestError via `vim.notify`.
 ---
 ---@param errors lib.lsp.Error|lib.lsp.Error[]
@@ -90,16 +66,6 @@ function LSP:_do_request(client, method, params, bufnr, timeout)
       -- Servers may return an empty- / nil-response when no work should be done.
       res = table.isempty(pres) and {}
         or { err = pres.err, result = pres.result }
-      return
-    end
-
-    -- FIX: do we need this or can we simply fail here? Poor implementation
-    -- regardless - sync-request should not be nested in async handler.
-    --
-    -- Try a direct request to the server, if the default handler failed.
-    local sync_res = client:request_sync(method, params, timeout, bufnr)
-    if sync_res then
-      res = sync_res
       return
     end
 
@@ -194,7 +160,6 @@ function LSP:request(clients, method, params, bufnr, timeout)
   ---@type lib.lsp.Response[], lib.lsp.Error[]
   local res, err = {}, {}
 
-  -- PERF: these could be parallelized.
   for _, c in pairs(clients) do
     local r, e = self:_do_request(c, method, params, bufnr, timeout)
 
