@@ -97,9 +97,9 @@ function LSP:_do_request(client, method, params, bufnr, timeout)
     -- regardless - sync-request should not be nested in async handler.
     --
     -- Try a direct request to the server, if the default handler failed.
-    local rs_res = client:request_sync(method, params, 800, bufnr)
-    if rs_res then
-      res = rs_res
+    local sync_res = client:request_sync(method, params, timeout, bufnr)
+    if sync_res then
+      res = sync_res
       return
     end
 
@@ -211,7 +211,14 @@ function LSP:request(clients, method, params, bufnr, timeout)
     -- don't return a value in time.
     if e then
       table.insert(err, e)
-    elseif r then
+    elseif
+      r
+      and (
+        type(r.result) == 'table'
+          and not table.isempty(r.result --[[@as table]])
+        or r.result ~= nil
+      )
+    then
       table.insert(res, r)
     end
   end
