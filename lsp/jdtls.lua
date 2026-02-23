@@ -7,10 +7,11 @@ local commands = {}
 
 commands['java.action.generateConstructorsPrompt'] = function(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
-  local err, res
+  ---@cast client -nil
 
-  err, res = L.lsp:request(
-    { client },
+  local res, err = L.lsp:request(
+    client,
+    ---@diagnostic disable-next-line: param-type-mismatch
     'java/checkConstructorsStatus',
     ctx.params,
     ctx.bufnr
@@ -23,7 +24,7 @@ commands['java.action.generateConstructorsPrompt'] = function(_, ctx)
 
   res = res[1]
   if
-    not res
+    table.isempty(res)
     or not res.result.constructors
     or #res.result.constructors == 0
   then
@@ -81,9 +82,10 @@ commands['java.action.generateConstructorsPrompt'] = function(_, ctx)
 
   local params =
     { context = ctx.params, constructors = constructors, fields = fields }
-  err, res =
-    L.lsp:request({ client }, 'java/generateConstructors', params, ctx.bufnr)
 
+  res, err =
+    ---@diagnostic disable-next-line: param-type-mismatch
+    L.lsp:request(client, 'java/generateConstructors', params, ctx.bufnr)
   if err then
     L.lsp.notify_error(err)
     return
@@ -94,22 +96,22 @@ end
 
 commands['java.action.generateDelegateMethodsPrompt'] = function(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
-  local err, res
+  ---@cast client -nil
 
-  err, res = L.lsp:request(
-    { client },
+  local res, err = L.lsp:request(
+    client,
+    ---@diagnostic disable-next-line: param-type-mismatch
     'java/checkDelegateMethodsStatus',
     ctx.params,
     ctx.bufnr
   )
-
   if err then
     L.lsp.notify_error(err)
     return
   end
 
   res = res[1]
-  if not res or table.isempty(res.result.delegateFields) then
+  if table.isempty(res) or table.isempty(res.result.delegateFields) then
     vim.notify('Delegate methods already exist', vim.log.levels.INFO)
     return
   end
@@ -159,7 +161,6 @@ commands['java.action.generateDelegateMethodsPrompt'] = function(_, ctx)
       { '<ESC> to confirm ', 'NeutralFloat' },
     },
   })
-
   if table.isempty(methods) then
     return
   end
@@ -174,9 +175,9 @@ commands['java.action.generateDelegateMethodsPrompt'] = function(_, ctx)
     end, methods),
   }
 
-  err, res =
+  res, err =
+    ---@diagnostic disable-next-line: param-type-mismatch
     L.lsp:request({ client }, 'java/generateDelegateMethods', params, ctx.bufnr)
-
   if err then
     L.lsp.notify_error(err)
     return
@@ -187,10 +188,11 @@ end
 
 commands['java.action.generateToStringPrompt'] = function(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
+  ---@cast client -nil
 
-  local err, res =
-    L.lsp:request({ client }, 'java/checkToStringStatus', ctx.params, ctx.bufnr)
-
+  local res, err =
+    ---@diagnostic disable-next-line: param-type-mismatch
+    L.lsp:request(client, 'java/checkToStringStatus', ctx.params, ctx.bufnr)
   if err then
     L.lsp.notify_error(err)
     return
@@ -223,14 +225,10 @@ commands['java.action.generateToStringPrompt'] = function(_, ctx)
     },
   })
 
-  err, res = L.lsp:request(
-    { client },
-    'java/generateToString',
-    ---@diagnostic disable-next-line
-    { context = ctx.params, fields = items },
-    ctx.bufnr
-  )
+  local params = { context = ctx.params, fields = items }
 
+  ---@diagnostic disable-next-line: param-type-mismatch
+  res, err = L.lsp:request(client, 'java/generateToString', params, ctx.bufnr)
   if err then
     L.lsp.notify_error(err)
     return
@@ -241,21 +239,22 @@ end
 
 commands['java.action.hashCodeEqualsPrompt'] = function(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
+  ---@cast client -nil
 
-  local err, res = L.lsp:request(
-    { client },
+  local res, err = L.lsp:request(
+    client,
+    ---@diagnostic disable-next-line: param-type-mismatch
     'java/checkHashCodeEqualsStatus',
     ctx.params,
     ctx.bufnr
   )
-
   if err then
     L.lsp.notify_error(err)
     return
   end
 
   res = res[1]
-  if not res or table.isempty(res.result.fields) then
+  if table.isempty(res) or table.isempty(res.result.fields) then
     vim.notify(
       ('`hashCodeEquals` not applicable for type `%s`'):format(res.result.type),
       vim.log.levels.INFO
@@ -290,14 +289,11 @@ commands['java.action.hashCodeEqualsPrompt'] = function(_, ctx)
     },
   })
 
-  err, res = L.lsp:request(
-    { client },
-    'java/generateHashCodeEquals',
-    ---@diagnostic disable-next-line
-    { context = ctx.params, fields = items },
-    ctx.bufnr
-  )
+  local params = { context = ctx.params, fields = items }
 
+  res, err =
+    ---@diagnostic disable-next-line: param-type-mismatch
+    L.lsp:request(client, 'java/generateHashCodeEquals', params, ctx.bufnr)
   if err then
     L.lsp.notify_error(err)
     return
@@ -377,22 +373,22 @@ end
 
 commands['java.action.overrideMethodsPrompt'] = function(_, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
-  local err, res
+  ---@cast client -nil
 
-  err, res = L.lsp:request(
-    { client },
+  local res, err = L.lsp:request(
+    client,
+    ---@diagnostic disable-next-line: param-type-mismatch
     'java/listOverridableMethods',
     ctx.params,
     ctx.bufnr
   )
-
   if err then
     L.lsp.notify_error(err)
     return
   end
 
   res = res[1]
-  if not res or table.isempty(res.result.methods) then
+  if table.isempty(res) or table.isempty(res.result.methods) then
     vim.notify('No overridable methods found', vim.log.levels.INFO)
     return
   end
@@ -426,14 +422,10 @@ commands['java.action.overrideMethodsPrompt'] = function(_, ctx)
     },
   })
 
-  err, res = L.lsp:request(
-    { client },
-    'java/addOverridableMethods',
-    ---@diagnostic disable-next-line
-    { context = ctx.params, overridableMethods = items },
-    ctx.bufnr
-  )
-
+  local params = { context = ctx.params, overridableMethods = items }
+  res, err =
+    ---@diagnostic disable-next-line: param-type-mismatch
+    L.lsp:request(client, 'java/addOverridableMethods', params, ctx.bufnr)
   if err then
     L.lsp.notify_error(err)
     return
@@ -450,6 +442,9 @@ end
 local handlers = {}
 
 function handlers.definition(err, result, ctx, _)
+  local client = vim.lsp.get_client_by_id(ctx.client_id)
+  ---@cast client -nil
+
   local uri, range =
     result.uri or result[1].uri, result.range or result[1].range
   if not vim.endswith(uri, '.class') then
@@ -461,14 +456,15 @@ function handlers.definition(err, result, ctx, _)
   end
 
   local params = { command = 'java.decompile', arguments = { uri } }
-  err, result = L.lsp:request(
-    vim.lsp.get_client_by_id(ctx.client_id) --[[@as vim.lsp.Client]],
+
+  ---@diagnostic disable-next-line: redefined-local
+  local res, err = L.lsp:request(
+    client,
     vim.lsp.protocol.Methods.workspace_executeCommand,
     params,
     ctx.bufnr
   )
-
-  if err == nil then
+  if err then
     uri = uri:sub(0, ({ uri:find('^%w-://.-%.class%?') })[2] - 1)
     local bufnr = vim.uri_to_bufnr(uri)
 
@@ -485,10 +481,10 @@ function handlers.definition(err, result, ctx, _)
       )
     end
 
-    result = { targetUri = uri, range = range }
+    res = { targetUri = uri, range = range }
   end
 
-  return { err = err, result = result }
+  return { err = err, result = res }
 end
 
 function handlers.execute_client_command(_, params, ctx)
