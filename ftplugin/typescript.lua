@@ -1,21 +1,6 @@
-local function organizeImports()
-  local client = vim
-    .iter(vim.lsp.get_clients())
-    :filter(function(
-      c --[[@cast c vim.lsp.Client]]
-    )
-      return c.name == 'vtsls' or c.name == 'denols'
-    end)
-    :nth(1)
-
-  if not client then
-    vim.notify(
-      'Failed to organize imports. No server available.',
-      vim.log.levels.WARN
-    )
-    return
-  end
-
+---@param client vim.lsp.Client
+local function organizeImports(client)
+  ---@type lsp.Diagnostic[]
   local diagnostics = vim
     .iter(vim.diagnostic.get(0, {
       namespace = vim.lsp.diagnostic.get_namespace(client.id),
@@ -37,10 +22,11 @@ local function organizeImports()
         source = d.source,
         code = d.code,
         data = d.user_data and (d.user_data.lsp or {}),
-      }
+      } --[[@as lsp.Diagnostic]]
     end)
     :totable()
 
+  ---@type lsp.CodeActionParams
   local params = {
     textDocument = vim.lsp.util.make_text_document_params(0),
     range = {
@@ -59,27 +45,53 @@ local function organizeImports()
     },
   }
 
-  local err, res = L.lsp:request(
+  local res, err = L.lsp:request(
     client,
     vim.lsp.protocol.Methods.textDocument_codeAction,
     params,
     0
   )
-  if err or table.isempty(res) then
-    return
-  end
-
-  err, res = L.lsp:request(
-    client,
-    vim.lsp.protocol.Methods.codeAction_resolve,
-    res[1].result --[[@as lsp.TextDocumentPositionParams]],
-    0
-  )
   if err then
+    vim.notify('Failed to organize imports.', vim.log.levels.ERROR)
     return
   end
 
-  L.lsp.apply_edit(res[1])
+  ---@type lsp.CodeAction
+  local ca = vim
+    .iter(res[1].result)
+    :filter(
+      ---This filters any returned commands, since those don't have a `kind`.
+      ---@param ca lsp.CodeAction | lsp.Command
+      function(ca)
+        return ca.kind == 'source.organizeImports'
+      end
+    )
+    :nth(1)
+
+  if table.isempty(ca) then
+    vim.notify(
+      'Failed to organize imports: no suitable code action found.',
+      vim.log.levels.WARN
+    )
+    return
+  end
+
+  res, err =
+    L.lsp:request(client, vim.lsp.protocol.Methods.codeAction_resolve, ca, 0)
+  if err then
+    vim.notify(
+      'Failed to organize imports: resolution failed.',
+      vim.log.levels.ERROR
+    )
+    return
+  end
+
+  -- Resolution request always returns a single code action.
+  ca = res[1].result --[[@as lsp.CodeAction]]
+  vim.lsp.util.apply_workspace_edit(ca.edit, client.offset_encoding)
+  if ca.command then
+    client:exec_cmd(ca.command)
+  end
 end
 
 vim.api.nvim_create_autocmd('BufWritePre', {
@@ -89,6 +101,22 @@ vim.api.nvim_create_autocmd('BufWritePre', {
       return
     end
 
-    organizeImports()
+    local client = vim
+      .iter(vim.lsp.get_clients())
+      :filter(function(
+        c --[[@cast c vim.lsp.Client]]
+      )
+        return c.name == 'vtsls' or c.name == 'denols'
+      end)
+      :nth(1)
+    if not client then
+      vim.notify(
+        'Failed to run hooks. No server available.',
+        vim.log.levels.WARN
+      )
+      return
+    end
+
+    organizeImports(client)
   end,
 })
