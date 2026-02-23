@@ -161,15 +161,6 @@ function LSP:_do_request(client, method, params, bufnr, timeout)
     } --[[@as lib.lsp.Error]]
   end
 
-  if not res.result then
-    return {}, {
-      id = client.id,
-      name = client.name,
-      method = method,
-      message = 'no result found',
-    } --[[@as lib.lsp.Error]]
-  end
-
   return {
     id = client.id,
     name = client.name,
