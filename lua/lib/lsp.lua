@@ -1,17 +1,17 @@
----@class (exact) lsp.ResponseMessage
----@field id integer | string | nil @Request ID.
----@field error lsp.ResponseError?
+---@class (exact) lsp.Response
+---@field err lsp.ResponseError?
 ---@field result lsp.LSPAny
 ---
 ---@class (exact) lib.lsp.Error
 ---@field id number @Client ID.
 ---@field name string @Client name.
----@field method string
+---@field method vim.lsp.protocol.Method
 ---@field message string?
 ---
 ---@class (exact) lib.lsp.Response
 ---@field id number @Client ID.
 ---@field name string @Client name.
+---@field method vim.lsp.protocol.Method
 ---@field result lsp.LSPAny
 
 ---@class lib.LSP
@@ -21,8 +21,8 @@ local LSP = {}
 ---
 ---@param response lib.lsp.Response
 function LSP.apply_edit(response)
-  local res = response.result --[[@as lsp.ApplyWorkspaceEditParams]]
-  local edit = res.edit and res.edit or response.result --[[@as lsp.WorkspaceEdit]]
+  local r = response.result --[[@as lsp.ApplyWorkspaceEditParams]]
+  local edit = r.edit and r.edit or response.result --[[@as lsp.WorkspaceEdit]]
 
   vim.lsp.util.apply_workspace_edit(
     edit,
@@ -31,13 +31,13 @@ function LSP.apply_edit(response)
 
   --- WARN: out of spec, which servers rely on this?
   ---
-  ---@cast res +{ action: fun()? }
-  if res.action and type(res.action) == 'function' then
+  ---@cast r +{ action: fun()? }
+  if r.action and type(r.action) == 'function' then
     vim.notify(
-      'Applying out-of-spec workspace edit with field `action`.',
+      ('Calling out-of-spec action for %s.'):format(response.name),
       vim.log.levels.WARN
     )
-    res.action()
+    r.action()
   end
 end
 
@@ -46,7 +46,9 @@ end
 ---@param errors lib.lsp.Error|lib.lsp.Error[]
 ---@param level vim.log.levels? @Defaults to `vim.log.levels.ERROR`.
 function LSP.notify_error(errors, level)
-  errors = type(errors[1]) == 'table' and errors or { errors }
+  if type(errors[1]) ~= 'table' then
+    errors = { errors }
+  end
 
   for _, e in pairs(errors) do
     vim.notify(
@@ -64,33 +66,30 @@ end
 ---Send request and handle returned result for the given client.
 ---
 ---@param client vim.lsp.Client
+---@param method vim.lsp.protocol.Method
 ---@param params table
 ---@param bufnr number @Buffer to use for requests.
 ---@param timeout number @Passed as `timeout` parameter to `wait`.
----@return lib.lsp.Error?, lib.lsp.Response[]?
+---@return lib.lsp.Response, lib.lsp.Error?
 function LSP:_do_request(client, method, params, bufnr, timeout)
-  ---@type lsp.ResponseMessage
-  local msg
-  ---@type lib.lsp.Error, lib.lsp.Response[]
-  local error, responses = nil, {}
-
-  ---Handler to use for the request to the server. Wraps any handlers already
-  ---defined on the client and uses them to process the result.
+  ---@type lsp.Response
+  local res
+  ---Wraps the client's handler for this method to populate `res`.
   ---
   ---@type lsp.Handler
-  local function handler(err, result, ctx, config)
+  local function handler(e, r, ctx, cfg)
+    -- Grab and use the client's handler for this method if one exists.
     local h = client.handlers[method]
-
     if not h then
-      msg = { error = err, result = result } --[[@as lsp.ResponseMessage]]
+      res = { err = e, result = r }
       return
     end
 
-    local ok, res = pcall(h, err, result, ctx, config or {})
+    local ok, pres = pcall(h, e, r, ctx, cfg or {})
     if ok then
-      -- Some servers return a nil-response when no work should be done.
-      msg = table.isempty(res) and {}
-        or { error = res.err, result = res.result } --[[@as lsp.ResponseMessage]]
+      -- Servers may return an empty- / nil-response when no work should be done.
+      res = table.isempty(pres) and {}
+        or { err = pres.err, result = pres.result }
       return
     end
 
@@ -100,46 +99,46 @@ function LSP:_do_request(client, method, params, bufnr, timeout)
     -- Try a direct request to the server, if the default handler failed.
     local rs_res = client:request_sync(method, params, 800, bufnr)
     if rs_res then
-      msg = { error = rs_res.err, result = rs_res.result }
+      res = rs_res
       return
     end
 
-    msg = { error = err, result = result } --[[@as lsp.ResponseMessage]]
+    res = { error = e, result = r }
   end
 
-  -- Send request and await result.
-  local status, req_id = client:request(method, params, handler, bufnr)
-  if status == false then
-    return {
+  local ok, id = client:request(method, params, handler, bufnr)
+  if not ok then
+    return {}, {
       id = client.id,
       name = client.name,
       method = method,
-      message = 'client not available',
-    }, --[[@as lib.lsp.Error]]
-      nil
+      message = 'client shut down',
+    } --[[@as lib.lsp.Error]]
   end
 
+  -- Poll request completion.
   local wait = vim.fn.wait(timeout, function()
-    return client.requests[req_id] == nil
+    return client.requests[id] == nil
   end, 50)
 
   -- Handle non-graceful request termination.
+  local wait_err
   if wait == -1 then
-    error = {
+    wait_err = {
       id = client.id,
       name = client.name,
       method = method,
       message = 'timeout',
     }
   elseif wait == -2 then
-    error = {
+    wait_err = {
       id = client.id,
       name = client.name,
       method = method,
       message = 'interrupt',
     }
   elseif wait == -3 then
-    error = {
+    wait_err = {
       id = client.id,
       name = client.name,
       method = method,
@@ -147,83 +146,77 @@ function LSP:_do_request(client, method, params, bufnr, timeout)
     }
   end
 
-  if error then
-    return error, nil
+  if wait_err then
+    return {}, wait_err
   end
 
   -- Graceful request termination, handling internal errors and request
   -- post-processing.
-  if msg.error then
-    -- stylua: ignore
-    return {
+  if res.err then
+    return {}, {
       id = client.id,
       name = client.name,
       method = method,
-      message = msg.error.message,
-    } --[[@as lib.lsp.Error]],
-      nil
+      message = res.err.message,
+    } --[[@as lib.lsp.Error]]
   end
 
-  if
-    table.isempty(msg.result --[[@as table?]])
-  then
-    return nil, nil
+  if not res.result then
+    return {}, {
+      id = client.id,
+      name = client.name,
+      method = method,
+      message = 'no result found',
+    } --[[@as lib.lsp.Error]]
   end
 
-  local res = type(msg.result[1]) == 'table' and msg.result or { msg.result } --[[ @as lsp.LSPAny[] ]]
-  responses = vim
-    .iter(res)
-    :map(
-      ---@param r lsp.LSPAny
-      function(r)
-        return { id = client.id, name = client.name, result = r } --[[@as lib.lsp.Response]]
-      end
-    )
-    :totable()
-
-  return error, responses
+  return {
+    id = client.id,
+    name = client.name,
+    result = res.result,
+  }, --[[@as lib.lsp.Response]]
+    nil
 end
 
 ---Aggregate responses for the given method from all clients. Ignores global
 ---handlers (i.e. `vim.lsp.handlers`), but respects client-local handlers.
----Handlers on clients are expected to return `[err, result]`-tuples.
----
----WARN: LSP responses are flattened, such that a single response returning
----`lsp.Location[]` will be turned into `lib.lsp.Response[]` with one entry for
----each `lsp.Location` in the original response.
+---Handlers on clients are expected to return `[result, err]`-tuples.
 ---
 ---@param clients vim.lsp.Client|vim.lsp.Client[]
----@param method string
+---@param method vim.lsp.protocol.Method
 ---@param params table
 ---@param bufnr number? @Buffer to use for requests, defaults to '0'.
 ---@param timeout number? @Passed as `timeout` parameter to `wait`, defaults to '2000'.
----@return lib.lsp.Error[]?, lib.lsp.Response[]
+---@return lib.lsp.Response[], lib.lsp.Error[]?
 function LSP:request(clients, method, params, bufnr, timeout)
-  if
-    type(clients) == 'table'
-    and not (type(clients[1]) == 'table' or table.isempty(clients))
-  then
+  if table.isempty(clients) then
+    return {}, nil
+  end
+
+  if type(clients[1]) ~= 'table' then
     clients = { clients }
   end
 
   bufnr = bufnr or 0
   timeout = timeout or 2000
-  ---@type lib.lsp.Error[], lib.lsp.Response[][]
-  local errors, responses = {}, {}
 
+  ---@type lib.lsp.Response[], lib.lsp.Error[]
+  local res, err = {}, {}
+
+  -- PERF: these could be parallelized.
   for _, c in pairs(clients) do
-    local e, r = self:_do_request(c, method, params, bufnr, timeout)
+    local r, e = self:_do_request(c, method, params, bufnr, timeout)
 
+    -- Requests return either a response, or an error. Ignore requests that
+    -- don't return a value in time.
     if e then
-      table.insert(errors, e)
-    end
-    if r then
-      table.insert(responses, r)
+      table.insert(err, e)
+    elseif r then
+      table.insert(res, r)
     end
   end
-  responses = vim.fn.flatten(responses) --[[ @as lib.lsp.Response[] ]]
 
-  return #errors > 0 and errors or nil, responses
+  return res, #err > 0 and err or nil
 end
 
 return LSP
