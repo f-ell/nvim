@@ -27,17 +27,18 @@ local M = {
 function M.open()
   local method = vim.lsp.protocol.Methods.textDocument_definition
   local clients = vim.lsp.get_clients({ bufnr = 0, method = method })
-  local err, res = L.lsp:request(
+  local res, err = L.lsp:request(
     clients,
     method,
     vim.lsp.util.make_position_params(0, 'utf-8'),
     0
   )
-
   if err then
     L.lsp.notify_error(err)
     return
-  elseif table.isempty(res) then
+  end
+
+  if table.isempty(res) then
     vim.notify('No definition available', vim.log.levels.INFO)
     return
   end
@@ -52,17 +53,19 @@ end
 function M.type()
   local method = vim.lsp.protocol.Methods.textDocument_typeDefinition
   local clients = vim.lsp.get_clients({ bufnr = 0, method = method })
-  local err, res = L.lsp:request(
+
+  local res, err = L.lsp:request(
     clients,
     method,
     vim.lsp.util.make_position_params(0, 'utf-8'),
     0
   )
-
   if err then
     L.lsp.notify_error(err)
     return
-  elseif table.isempty(res) then
+  end
+
+  if table.isempty(res) then
     vim.notify('No definition available', vim.log.levels.INFO)
     return
   end
@@ -95,14 +98,26 @@ function M:_transform(req)
   vim.fn.uniq(ws_folders)
 
   local home = os.getenv('HOME')
-  for _, res in pairs(req.responses) do
-    local r = res.result --[[@as lsp.Location|lsp.LocationLink]]
-    local range = r.range or r.targetSelectionRange
+
+  ---@type (lsp.Location | lsp.LocationLink)[]
+  local loc = vim
+    .iter(req.responses)
+    :map(
+      ---@param r lib.lsp.Response
+      function(r)
+        return type(r.result[1]) == 'table' and r.result or { r.result }
+      end
+    )
+    :flatten()
+    :totable()
+
+  for _, l in pairs(loc) do
+    local range = l.range or l.targetSelectionRange
 
     ---@type lsp.ui.def.Definition
     local def = {
-      uri = r.uri or r.targetUri,
-      file = (r.uri or r.targetUri):gsub('^file://', ''):gsub('^' .. home, '~'),
+      uri = l.uri or l.targetUri,
+      file = (l.uri or l.targetUri):gsub('^file://', ''):gsub('^' .. home, '~'),
       start = { range.start.line + 1, range.start.character },
       end_ = { range['end'].line + 1, range['end'].character },
     }
