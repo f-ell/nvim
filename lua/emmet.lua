@@ -2,27 +2,30 @@ local M = {}
 
 -- NOTE: expressions containing whitespace are not supported
 function M.expand_word()
-  local emmetls = vim
+  ---@type vim.lsp.Client
+  local client = vim
     .iter(vim.lsp.get_clients({ bufnr = 0 }))
-    :filter(function(
-      client --[[@cast client vim.lsp.Client]]
+    :filter(
+      ---@param c vim.lsp.Client
+      function(c)
+        return c.name == 'emmet_language_server'
+      end
     )
-      return client.name == 'emmet_language_server'
-    end)
-    :next() --[[@as vim.lsp.Client]]
+    :nth(1)
 
-  if emmetls == nil then
+  if client == nil then
     vim.notify('emmet-language-server is not running', vim.log.levels.ERROR)
     return
   end
 
   local params = {
     textDocument = vim.lsp.util.make_text_document_params(),
-    position = vim.lsp.util.make_position_params(0, emmetls.offset_encoding),
+    position = vim.lsp.util.make_position_params(0, client.offset_encoding),
     abbreviation = L.str.word(true),
   }
-  local err, res = L.lsp:request(emmetls, 'emmet/expandAbbreviation', params, 0)
 
+  ---@diagnostic disable-next-line: param-type-mismatch
+  local res, err = L.lsp:request(client, 'emmet/expandAbbreviation', params, 0)
   if err then
     L.lsp.notify_error(err)
     return

@@ -94,21 +94,21 @@ local convert = {
 vim.api.nvim_create_user_command('Num', function(args)
   if not convert[args.fargs[1]] then
     vim.notify(
-      ('invalid conversion: %s'):format(args.fargs[1]),
+      ('Invalid conversion: %s'):format(args.fargs[1]),
       vim.log.levels.ERROR
     )
     return
   end
 
   if not vim.bo.modifiable then
-    vim.notify('not modifiable', vim.log.levels.ERROR)
+    vim.notify('Not modifiable', vim.log.levels.ERROR)
     return
   end
 
   local from, pos = get_word(vim.api.nvim_get_mode(), vim.fn.getpos('.'))
 
   if from == '' then
-    vim.notify('no word under cursor', vim.log.levels.ERROR)
+    vim.notify('No word under cursor', vim.log.levels.ERROR)
     return
   end
 

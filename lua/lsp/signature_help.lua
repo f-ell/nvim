@@ -36,13 +36,14 @@ end
 ---@param active_only boolean
 function M:_sig(active_only)
   local method = vim.lsp.protocol.Methods.textDocument_signatureHelp
-  local err, res = L.lsp:request(
-    vim.lsp.get_clients({ bufnr = 0, method = method }),
+  local clients = vim.lsp.get_clients({ bufnr = 0, method = method })
+
+  local res, err = L.lsp:request(
+    clients,
     method,
     vim.lsp.util.make_position_params(0, 'utf-8'),
     0
   )
-
   if err then
     L.lsp.notify_error(err)
     return

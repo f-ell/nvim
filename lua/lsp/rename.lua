@@ -23,7 +23,7 @@ function M.rename()
   local params = vim.lsp.util.make_position_params(0, 'utf-8') --[[@as lsp.ReferenceParams]]
   params.context = { includeDeclaration = true }
 
-  local err, res = L.lsp:request(
+  local res, err = L.lsp:request(
     vim.lsp.get_clients({ bufnr = 0, method = method }),
     method,
     params,
@@ -33,6 +33,7 @@ function M.rename()
     L.lsp.notify_error(err)
     return
   end
+
   if table.isempty(res) then
     vim.notify('No references found', vim.log.levels.INFO)
     return
@@ -54,21 +55,21 @@ function M:_transform(req)
   ---are later created in a single namespace that is always fully wiped.
   ---
   ---@type lsp.Location[]
-  local refs = vim
+  local loc = vim
     .iter(req.references)
     :map(
       ---@param res lib.lsp.Response
-      ---@return lsp.Location
       function(res)
         return res.result
       end
     )
+    :flatten()
     :totable()
 
   -- All references are attached to the same symbol, such that it may be
   -- retrieved from an arbitrary reference.
-  local r = refs[1].range
-  local bufnr = vim.uri_to_bufnr(refs[1].uri)
+  local r = loc[1].range
+  local bufnr = vim.uri_to_bufnr(loc[1].uri)
   local symbol = vim.api.nvim_buf_get_text(
     bufnr,
     r.start.line,
@@ -79,7 +80,7 @@ function M:_transform(req)
   )[1]
 
   return {
-    references = refs,
+    references = loc,
     symbol = symbol,
     uri = req.uri,
     -- Correct column offset for later use with `nvim_win_set_cursor`
