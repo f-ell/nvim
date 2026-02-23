@@ -455,16 +455,17 @@ function handlers.definition(err, result, ctx, _)
     uri = vim.uri_from_fname(uri)
   end
 
-  local params = { command = 'java.decompile', arguments = { uri } }
+  local cmd = { command = 'java.decompile', arguments = { uri } }
 
   ---@diagnostic disable-next-line: redefined-local
   local res, err = L.lsp:request(
     client,
     vim.lsp.protocol.Methods.workspace_executeCommand,
-    params,
+    cmd,
     ctx.bufnr
   )
-  if err then
+
+  if not err then
     uri = uri:sub(0, ({ uri:find('^%w-://.-%.class%?') })[2] - 1)
     local bufnr = vim.uri_to_bufnr(uri)
 
@@ -477,7 +478,7 @@ function handlers.definition(err, result, ctx, _)
         0,
         -1,
         true,
-        vim.split(result[1].result:gsub('\r\n', '\n'), '\n')
+        vim.split(res[1].result:gsub('\r\n', '\n'), '\n')
       )
     end
 
