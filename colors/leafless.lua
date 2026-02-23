@@ -118,12 +118,13 @@ local groups = {
   lCursor = { link = 'Cursor' },
   CursorIM = { link = 'Cursor' },
   CursorColumn = { bg = LEAFLESS.bg[1] },
+  -- FIX: extmarks overwrite this with Normal background.
   CursorLine = { bg = LEAFLESS.bg[2] },
   Directory = { fg = LEAFLESS.bright.yel },
 
   DiffAdd = { fg = LEAFLESS.bg[4], bg = LEAFLESS.bright.gre },
   DiffChange = { fg = LEAFLESS.bg[4], bg = LEAFLESS.bright.blu },
-  DiffDelete = { fg = LEAFLESS.gr[4], bg = '' },
+  DiffDelete = { fg = LEAFLESS.gr[4], bg = nil },
   DiffText = { fg = LEAFLESS.fg[1], bg = LEAFLESS.bright.blu, underline = true },
 
   EndOfBuffer = { link = 'NonText' },
@@ -221,7 +222,7 @@ local groups = {
   Keyword = { link = 'Statement' },
   Exception = { link = 'Statement' },
 
-  PreProc = { fg = LEAFLESS.gr[2] },
+  PreProc = { fg = LEAFLESS.gr[3] },
   Include = { link = 'PreProc' },
   Define = { link = 'PreProc' },
   Macro = { link = 'PreProc' },
@@ -245,7 +246,7 @@ local groups = {
     sp = LEAFLESS.bright.red,
     underline = true,
   },
-  Todo = { bg = '' },
+  Todo = { bg = nil },
 
   ---- treesitter ----
   ['@annotation'] = { link = 'PreProc' },

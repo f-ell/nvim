@@ -14,7 +14,7 @@ local M = {
     modeV = { fg = LEAFLESS.bright.yel },
 
     Git = { fg = '#fca326' },
-    GitZero = { fg = LEAFLESS.gr[4] },
+    GitZero = { link = 'NonText' },
     GitAdd = { fg = LEAFLESS.bright.gre },
     GitCha = { fg = LEAFLESS.bright.blu },
     GitDel = { fg = LEAFLESS.bright.red },
@@ -63,7 +63,6 @@ local M = {
 }
 
 function M:set()
-  vim.print(LEAFLESS.bg)
   for name, spec in pairs(self.groups) do
     vim.api.nvim_set_hl(0, name, spec)
   end
