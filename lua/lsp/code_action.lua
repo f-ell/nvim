@@ -193,7 +193,7 @@ function M:_do_action(c)
   then
     -- WARN: out of spec, which servers rely on this?
     vim.notify(
-      'Executing out-of-spec function with field `action`.',
+      'Executing out-of-spec function with field `action`',
       vim.log.levels.WARN
     )
 
@@ -230,7 +230,7 @@ function M:_do_action(c)
       client:exec_cmd(cmd --[[@as lsp.Command]])
     else
       vim.notify(
-        ('Command is not supported by client `%s`.'):format(cmd.command),
+        ('Command is not supported by client `%s`'):format(cmd.command),
         vim.log.levels.ERROR
       )
     end

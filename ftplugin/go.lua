@@ -9,7 +9,7 @@ local function organize_imports(client)
   local method = vim.lsp.protocol.Methods.textDocument_codeAction
   local res, err = L.lsp:request(client, method, params, 0)
   if err then
-    vim.notify('Failed to organize imports.', vim.log.levels.ERROR)
+    L.lsp.notify_error(err)
     return
   end
 
@@ -49,10 +49,7 @@ vim.api.nvim_create_autocmd('BufWritePre', {
 
     local client = vim.lsp.get_clients({ name = 'gopls' })[1]
     if not client then
-      vim.notify(
-        'Failed to run hooks. No server available.',
-        vim.log.levels.WARN
-      )
+      vim.notify('No server available for LSP hooks', vim.log.levels.WARN)
       return
     end
 

@@ -34,7 +34,7 @@ function LSP.apply_edit(response)
   ---@cast r +{ action: fun()? }
   if r.action and type(r.action) == 'function' then
     vim.notify(
-      ('Calling out-of-spec action for %s.'):format(response.name),
+      ('Calling out-of-spec action for `%s`'):format(response.name),
       vim.log.levels.WARN
     )
     r.action()
