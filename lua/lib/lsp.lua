@@ -169,10 +169,12 @@ function LSP:request(clients, method, params, bufnr, timeout)
       table.insert(err, e)
     elseif
       r
+      -- Check that the result is a non-empty table or a non-nil primitive.
       and (
-        type(r.result) == 'table'
+        (
+          type(r.result) == 'table'
           and not table.isempty(r.result --[[@as table]])
-        or r.result ~= nil
+        ) or (type(r.result) ~= 'table' and r.result ~= nil)
       )
     then
       table.insert(res, r)
