@@ -533,7 +533,7 @@ local search = {
     end
 
     return table.concat({
-      '%#NonText#%#StatusLine#',
+      '%#NonText#󰍉%#StatusLine#',
       search.current .. '/' .. search.total,
     }, ' ')
   end,
