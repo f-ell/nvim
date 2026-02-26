@@ -130,7 +130,7 @@ local groups = {
   EndOfBuffer = { link = 'NonText' },
   TermCursor = { link = 'Cursor' },
   ErrorMsg = { fg = LEAFLESS.bright.red },
-  WinSeparator = { fg = LEAFLESS.bg[1] },
+  WinSeparator = { fg = LEAFLESS.gr[2] },
   Folded = { link = 'CursorLine' },
   FoldColumn = { link = 'NonText' },
   SignColumn = { link = 'NonText' },
