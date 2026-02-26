@@ -221,8 +221,8 @@ function M:_goto(d)
   self:_set_highlights(bufnr, d)
 
   vim.api.nvim_win_set_cursor(0, d.start)
-  vim.cmd('filetype detect')
-  vim.cmd('norm zz')
+  vim.cmd.filetype('detect')
+  vim.cmd.norm('zz')
 end
 
 ---@package

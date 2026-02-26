@@ -218,7 +218,7 @@ function M:_open(req)
 
   -- Jump to diagnotic location, adding the current position to the jumplist.
   if data.type == 'dir' then
-    vim.cmd('mark`')
+    vim.cmd.mark('`')
     vim.fn.cursor({ data.dgn[1].lnum, data.dgn[1].col })
   end
 

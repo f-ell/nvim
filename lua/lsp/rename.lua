@@ -194,7 +194,7 @@ function M:_open(req)
 
   self:_set_highlights(data.obuf, ren)
   self:_register_float_actions(data, ren.symbol, ren.cursor, min, max)
-  vim.cmd('startinsert!')
+  vim.cmd.startinsert({ bang = true })
 end
 
 return M

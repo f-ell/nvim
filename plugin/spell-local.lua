@@ -89,5 +89,5 @@ vim.api.nvim_create_user_command('SpellEdit', function()
       }
     end)
     :totable())
-  vim.cmd('copen')
+  vim.cmd.copen()
 end, {})

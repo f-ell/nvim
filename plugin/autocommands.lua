@@ -10,7 +10,7 @@ vim.api.nvim_create_autocmd({ 'VimEnter', 'VimResume' }, {
 vim.api.nvim_create_autocmd({ 'VimLeave', 'VimSuspend' }, {
   callback = function()
     vim.opt.guicursor = { 'a:hor20-blinkwait700-blinkon700-blinkoff300' }
-    vim.cmd('sleep 1ms')
+    vim.cmd.sleep('1ms')
   end,
 })
 
