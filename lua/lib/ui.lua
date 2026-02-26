@@ -384,6 +384,7 @@ function UI:pick(items, mode, format, config, render)
     -- FIX: does not handle multi-character commands. Could be implmented by
     -- storing queued keys as typeahead-string and checking whether string is a
     -- valid command-sequence. See `maplist` | `maparg`.
+    -- TODO: index into `nvim_get_keymap` by `lhs`.
     vim.fn.feedkeys(vim.fn.nr2char(c))
     vim.fn.feedkeys('', 'x')
 
@@ -398,42 +399,3 @@ function UI:pick(items, mode, format, config, render)
   end
   return tbl
 end
-
----Calculate number of text wraps required to display `lines` in the given
----window. Respects the window's `wrap` setting as well as the width of
----`showbreak`.
----
----@param winnr number
----@param lines string[]
----@return number
-function UI:wrapcount(winnr, lines)
-  if not vim.wo[winnr].wrap then
-    return 0
-  end
-
-  -- FIX: width needs to account for fold-/sign-/status-/numbercolumn
-  local w = vim.api.nvim_win_get_width(winnr)
-  local sb = vim.fn.strdisplaywidth(vim.wo[winnr].showbreak)
-
-  local c = vim
-    .iter(lines)
-    :map(vim.fn.strdisplaywidth)
-    :map(function(len)
-      if len == w then
-        return 0
-      end
-
-      local wrap = len / w
-      -- This causes FP rounding issues when a wrap fills an entire screen line.
-      -- Subtract 10e-15 to prevent `wrap + inc` from adding to a whole number.
-      local wrap_inc = (math.floor(wrap) * sb / w) - math.pow(10, -15)
-      return math.floor(wrap + wrap_inc)
-    end)
-    :fold(0, function(acc, v)
-      return acc + v
-    end)
-
-  return c
-end
-
-return UI
