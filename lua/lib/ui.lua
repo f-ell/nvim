@@ -399,3 +399,5 @@ function UI:pick(items, mode, format, config, render)
   end
   return tbl
 end
+
+return UI
