@@ -112,13 +112,12 @@ end
 local groups = {
   ---- builtin ----
   ColorColumn = { bg = LEAFLESS.bg[2] },
-  Conceal = { fg = LEAFLESS.gr[3] },
+  Conceal = { fg = LEAFLESS.gr[4] },
   CurSearch = { fg = LEAFLESS.bg[4], bg = LEAFLESS.bright.pur },
   Cursor = { fg = LEAFLESS.bg[4], bg = LEAFLESS.fg[1] },
   lCursor = { link = 'Cursor' },
   CursorIM = { link = 'Cursor' },
   CursorColumn = { bg = LEAFLESS.bg[1] },
-  -- FIX: extmarks overwrite this with Normal background.
   CursorLine = { bg = LEAFLESS.bg[2] },
   Directory = { fg = LEAFLESS.bright.yel },
 
@@ -130,14 +129,14 @@ local groups = {
   EndOfBuffer = { link = 'NonText' },
   TermCursor = { link = 'Cursor' },
   ErrorMsg = { fg = LEAFLESS.bright.red },
-  WinSeparator = { fg = LEAFLESS.gr[2] },
+  WinSeparator = { fg = LEAFLESS.gr[4] },
   Folded = { link = 'CursorLine' },
   FoldColumn = { link = 'NonText' },
   SignColumn = { link = 'NonText' },
   IncSearch = { fg = LEAFLESS.bg[4], bg = LEAFLESS.bright.yel },
   Substitute = { link = 'Search' },
 
-  LineNr = { fg = LEAFLESS.gr[4] },
+  LineNr = { fg = LEAFLESS.gr[3] },
   LineNrAbove = { link = 'LineNr' },
   LineNrBelow = { link = 'LineNr' },
   CursorLineNr = { fg = LEAFLESS.bright.gre },
@@ -152,7 +151,7 @@ local groups = {
   NonText = { fg = LEAFLESS.gr[3] },
   Normal = { fg = LEAFLESS.fg[2], bg = LEAFLESS.bg[3] },
   NormalFloat = { link = 'Normal' },
-  FloatBorder = { fg = LEAFLESS.gr[2] },
+  FloatBorder = { fg = LEAFLESS.gr[4] },
   FloatTitle = { link = 'Normal' },
   FloatFooter = { link = 'FloatTitle' },
   NormalNC = { link = 'Normal' },
@@ -214,7 +213,7 @@ local groups = {
   Identifier = { fg = LEAFLESS.fg[1] },
   Function = { link = 'Identifier' },
 
-  Statement = { link = 'Normal' },
+  Statement = { fg = LEAFLESS.fg[2] },
   Conditional = { link = 'Statement' },
   Repeat = { link = 'Statement' },
   Label = { link = 'Statement' },
@@ -228,12 +227,12 @@ local groups = {
   Macro = { link = 'PreProc' },
   PreCondit = { link = 'PreProc' },
 
-  Type = { link = 'Normal' },
+  Type = { fg = LEAFLESS.fg[2] },
   StorageClass = { link = 'Type' },
   Structure = { link = 'Type' },
   TypeDef = { link = 'Type' },
 
-  Special = { link = 'Normal' },
+  Special = { fg = LEAFLESS.gr[3] },
   SpecialChar = { link = 'Special' },
   Tag = { link = 'Special' },
   Delimiter = { link = 'Special' },
@@ -348,8 +347,8 @@ local groups = {
   DiagnosticSignInfo = { link = 'DiagnosticInfo' },
   DiagnosticSignHint = { link = 'DiagnosticHint' },
 
-  DiagnosticOk = { fg = LEAFLESS.bright.pur },
-  DiagnosticUnnecessary = { fg = LEAFLESS.gr[3] },
+  DiagnosticOk = { sp = LEAFLESS.bright.cya, underline = true },
+  DiagnosticUnnecessary = { sp = LEAFLESS.bright.pur, underline = true },
   DiagnosticDeprecated = { strikethrough = true },
 
   ---- plugins ----
