@@ -16,6 +16,5 @@ return {
       NOTE = { icon = '•', color = 'hint' },
       TEST = { icon = '•', color = 'test' },
     },
-    colors = { test = { 'DiagnosticOk' } },
   },
 }
