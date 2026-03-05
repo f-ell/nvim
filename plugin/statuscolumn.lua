@@ -60,8 +60,22 @@ local fold = function()
 end
 
 _G.user_sc = function()
-  return (vim.wo.diff and '' or fold() .. ' ') .. '%=' .. lnum() .. '%s'
+  return ((vim.wo.diff or not vim.wo.foldenable) and '' or fold() .. ' ')
+    .. '%='
+    .. lnum()
+    .. '%s'
 end
+
+-- Force recalculation of foldcolumn display width.
+vim.api.nvim_create_autocmd('OptionSet', {
+  group = vim.api.nvim_create_augroup('statuscol', { clear = true }),
+  pattern = 'foldenable',
+  callback = function()
+    if not vim.wo.foldenable then
+      vim.wo.numberwidth = vim.wo.numberwidth
+    end
+  end,
+})
 
 vim.o.numberwidth = 2
 vim.o.signcolumn = 'yes:1'
