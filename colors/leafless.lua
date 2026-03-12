@@ -31,7 +31,7 @@ if vim.o.background == 'dark' then
     },
 
     normal = {
-      aqu = '#83c092',
+      cya = '#83c092',
       blu = '#7fbbb3',
       gre = '#a7c080',
       pur = '#d699b6',
@@ -49,7 +49,7 @@ if vim.o.background == 'dark' then
       ora = '#f57d26',
     },
     dim = {
-      aqu = '#4f7459',
+      cya = '#4f7459',
       blu = '#4d716d',
       gre = '#65744e',
       pur = '#825d6e',
@@ -97,7 +97,7 @@ else
       ora = '#f57d26',
     },
     dim = {
-      aqu = '#83c092',
+      cya = '#83c092',
       blu = '#7fbbb3',
       gre = '#a7c080',
       pur = '#d699b6',
@@ -232,6 +232,8 @@ local groups = {
   Structure = { link = 'Type' },
   TypeDef = { link = 'Type' },
 
+  -- FWIW: this makes it really hard to see fields in Zig struct initialization:
+  -- whitespace, i.e. `.`, before a field, e.g. `.data`, has the same colour.
   Special = { fg = LEAFLESS.gr[3] },
   SpecialChar = { link = 'Special' },
   Tag = { link = 'Special' },
