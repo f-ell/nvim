@@ -68,6 +68,7 @@ vim.o.autochdir = true
 vim.o.undofile = true
 
 -- folds
+vim.o.foldenable = false
 vim.o.foldtext = ''
 vim.o.foldlevel = 2
 vim.o.foldnestmax = 3
