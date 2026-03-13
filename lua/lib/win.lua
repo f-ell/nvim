@@ -80,7 +80,6 @@ function Win:_height(data)
     return self.max_height()
   end
 
-  -- NOTE: this is a duplication of `lib.ui.wrapcount`
   -- FIX: width needs to account for fold-/sign-/status-/numbercolumn
   local w = vim.o.columns - _HPAD
   local sb = vim.fn.strdisplaywidth(vim.o.showbreak)

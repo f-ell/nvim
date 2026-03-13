@@ -30,10 +30,11 @@ require('lazy').setup('plugins', {
       path = std('cache') .. '/lazy/cache',
     },
   },
+  change_detection = { notify = false },
 })
 
 vim.o.termguicolors = true
-vim.api.nvim_command('filetype plugin indent on')
+vim.cmd.filetype('plugin indent on')
 
 vim.cmd.colorscheme('leafless')
 

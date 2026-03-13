@@ -4,10 +4,17 @@ return {
   config = function()
     -- inspired by projekt0n/circles.nvim
     local nwd = require('nvim-web-devicons')
-    nwd.setup({ default = true })
-    for _, icon in pairs(nwd.get_icons()) do
-      icon.icon = '•'
+
+    local override = {}
+    for n, i in pairs(nwd.get_icons()) do
+      -- This modifies the underlying data structure. This doesn't affect
+      -- us, since we (i) provide overrides and (ii) the plugin resets icons
+      -- on colorscheme changes.
+      i.icon = '•'
+      override[n] = i
     end
+
+    nwd.setup({ default = true, override = override })
     nwd.set_default_icon('◦', '#859289')
   end,
 }

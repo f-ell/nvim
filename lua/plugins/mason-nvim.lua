@@ -110,5 +110,47 @@ return {
         )
         vim.lsp.enable(s)
       end)
+
+    -- Enable servers with configurations found anywhere in RTP that are not
+    -- installed through Mason.
+    --
+    -- This may enable some servers multiple times. Servers are enabled based on
+    -- filename and will break for files whose name does not correspond to a
+    -- known server name.
+    vim
+      .iter(vim.opt.rtp:get())
+      :filter(
+        ---@param name string
+        function(name)
+          return not vim.endswith(name, 'nvim-lspconfig')
+        end
+      )
+      :map(
+        ---@param name string
+        function(name)
+          return vim.fs.joinpath(name, '/lsp')
+        end
+      )
+      :filter(
+        ---@param path string
+        function(path)
+          local stat = vim.uv.fs_stat(path)
+          return stat ~= nil and stat.type == 'directory'
+        end
+      )
+      :map(
+        ---@param path string
+        function(path)
+          return vim.fn.glob(vim.fs.joinpath(path, '*.lua'), true, true)
+        end
+      )
+      :flatten()
+      :map(
+        ---@param file string
+        function(file)
+          return string.sub(vim.fs.basename(file), 1, -5)
+        end
+      )
+      :each(vim.lsp.enable)
   end,
 }

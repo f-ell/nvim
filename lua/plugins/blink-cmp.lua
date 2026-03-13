@@ -44,32 +44,20 @@ return {
       },
 
       menu = {
-        max_height = 8,
+        max_height = 12,
         border = 'none',
         winhighlight = 'Normal:BlinkCmpMenu,CursorLine:BlinkCmpMenuSelection,Search:None',
         scrolloff = 1,
 
         draw = {
-          columns = { { 'kind_icon' }, { 'label', 'source', gap = 1 } },
+          columns = { { 'kind_icon' }, { 'label', 'source_name', gap = 1 } },
           components = {
-            kind_icon = {
-              highlight = function(ctx)
-                return ctx.deprecated and 'BlinkCmpLabelDeprecated'
-                  or ctx.kind_hl
-              end,
-            },
-
             label = {
               width = { fill = true, max = 48 },
               ellipsis = true,
-            },
-
-            source = {
-              text = function(ctx)
-                return ctx.item.source_name:sub(0, 1):upper()
-              end,
-              highlight = function()
-                return 'NonText'
+              highlight = function(ctx)
+                return 'BlinkCmpLabel'
+                  .. (ctx.deprecated and 'Deprecated' or 'Detail')
               end,
             },
           },
@@ -134,15 +122,14 @@ return {
     },
 
     appearance = {
-      -- use_nvim_cmp_as_default = true,
       -- stylua: ignore
       kind_icons = {
-        Text     = '', Method = '󰡱', Function  = '', Constructor = '', Field         = '∊',
-        Variable = '󰀫', Class  = '󰠲', Interface = '', Module      = '', Property      = '∊',
-        Unit     = '󰔌', Value  = '', Enum      = '󱀍', Keyword     = '', Snippet       = '',
-        Color    = '', File   = '󰦨', Reference = '', Folder      = '', EnumMember    = '',
-        Constant = 'c', Struct = '', Event     = '󱐋', Operator    = '±', TypeParameter = 'T',
-      }, -- 󰙅 |  |  | 󰻾
+        Text     = '', Method = '󰡱', Function  = '󰊕', Constructor = '󰙴', Field         = '∊',
+        Variable = '󰀫', Class  = '󰠲', Interface = '󱡠', Module      = '󰆧', Property      = '󰖷',
+        Unit     = '󰿦', Value  = '󰎠', Enum      = '󱀍', Keyword     = '󰻾', Snippet       = '',
+        Color    = '', File   = '󰦨', Reference = '', Folder      = '󰉋', EnumMember    = '󰀬',
+        Constant = '', Struct = '󰅩', Event     = '', Operator    = '±', TypeParameter = '󰒓',
+      },
     },
   },
 }

@@ -14,7 +14,7 @@ local M = {
     vim.api.nvim_create_autocmd('FocusGained', {
       callback = function()
         vim.defer_fn(function()
-          vim.cmd('redrawstatus')
+          vim.cmd.redrawstatus()
         end, 0)
       end,
     })
@@ -248,7 +248,7 @@ local git = {
 
         self:_update_headstate()
         self:_diff()
-        vim.cmd('redrawstatus')
+        vim.cmd.redrawstatus()
       end,
     },
   },
@@ -436,7 +436,7 @@ local lsp = {
       { 'LspAttach', 'LspDetach' },
       function()
         vim.defer_fn(function()
-          vim.cmd('redrawstatus')
+          vim.cmd.redrawstatus()
         end, 0)
       end,
     },
@@ -487,7 +487,7 @@ local lsp = {
         end
 
         self.meta.diagnostics.string = table.concat(part, ' ')
-        vim.cmd('redrawstatus')
+        vim.cmd.redrawstatus()
       end,
     },
   },
@@ -533,7 +533,7 @@ local search = {
     end
 
     return table.concat({
-      '%#NonText#%#StatusLine#',
+      '%#NonText#󰍉%#StatusLine#',
       search.current .. '/' .. search.total,
     }, ' ')
   end,

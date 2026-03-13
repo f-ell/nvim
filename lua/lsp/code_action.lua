@@ -4,7 +4,12 @@
 ---@field virt_id number? @Extmark ID.
 ---@field client_id number
 ---@field client_name string
----@field action lsp.CodeAction
+---@field action lsp.CodeAction | lsp.Command
+---
+---@class (exact) lsp.ui.cda.Partial
+---@field id number
+---@field name string
+---@field ca lsp.CodeAction | lsp.Command
 
 ---@class lsp.ui.CodeAction
 local M = {
@@ -36,17 +41,18 @@ function M.codeaction()
   }
 
   local method = vim.lsp.protocol.Methods.textDocument_codeAction
-  local err, res = L.lsp:request(
+  local res, err = L.lsp:request(
     vim.lsp.get_clients({ bufnr = 0, method = method }),
     method,
     params,
     0
   )
-
   if err then
     L.lsp.notify_error(err)
     return
-  elseif table.isempty(res) then
+  end
+
+  if table.isempty(res) then
     vim.notify('No codeactions available', vim.log.levels.INFO)
     return
   end
@@ -54,8 +60,26 @@ function M.codeaction()
   -- Ignore code action kind for deduplication. Primarily relevant for
   -- 'identical' code actions returned from both an LSP and a Linter.
   for _, r in pairs(res) do
-    local result = r.result --[[@as lsp.CodeAction]]
-    result.kind = nil
+    local ca = r.result --[[ @as (lsp.CodeAction | lsp.Command)[] ]]
+    for _, c in pairs(ca) do
+      c.kind = nil
+    end
+  end
+
+  -- Deduplicate code actions. Comparison uses only the title field; both the
+  -- `kind` and `data` fields may differ.
+  for _, r in pairs(res) do
+    local ca = r.result --[[ @as (lsp.CodeAction | lsp.Command)[] ]]
+    local t, dedupe = {}, {}
+
+    for _, c in pairs(ca) do
+      if not t[c.title] then
+        table.insert(dedupe, c)
+        t[c.title] = true
+      end
+    end
+
+    r.result = dedupe
   end
 
   M:_open(vim.fn.uniq(res) --[[ @as lib.lsp.Response[] ]])
@@ -67,10 +91,36 @@ end
 function M:_transform(req)
   local actions = {}
 
-  for i, r in pairs(req) do
-    local res = r.result --[[@as lsp.CodeAction]]
+  ---Responses are flattened, since a single request may return more than one
+  ---code action or command.
+  ---
+  ---@type lsp.ui.cda.Partial[]
+  local ca = vim
+    .iter(req)
+    :map(
+      ---@param r lib.lsp.Response
+      function(r)
+        return vim
+          .iter(r.result)
+          :map(
+            ---@param ca lsp.CodeAction | lsp.Command
+            function(ca)
+              return {
+                id = r.id,
+                name = r.name,
+                ca = ca,
+              }
+            end
+          )
+          :totable()
+      end
+    )
+    :flatten()
+    :totable()
+
+  for i, c in pairs(ca) do
     -- Split produces hanging CR when the server returns '\r\n'-delimited lines.
-    local it = vim.iter(vim.split(res.title, '\n', { trimempty = true }))
+    local it = vim.iter(vim.split(c.ca.title, '\n', { trimempty = true }))
 
     local title = it:next()
     local virt = it:map(
@@ -88,16 +138,16 @@ function M:_transform(req)
       )
       :totable()
     if #virt > 0 then
-      table.insert(virt[#virt], { ' ' .. r.name, 'NonText' })
+      table.insert(virt[#virt], { ' ' .. c.name, 'NonText' })
     end
 
     table.insert(actions, {
       title = title,
       virt = virt,
       virt_id = nil,
-      client_id = r.id,
-      client_name = r.name,
-      action = res,
+      client_id = c.id,
+      client_name = c.name,
+      action = c.ca,
     } --[[@as lsp.ui.cda.CodeAction]])
   end
 
@@ -131,21 +181,19 @@ end
 ---@package
 ---@param c lsp.ui.cda.CodeAction
 function M:_do_action(c)
+  local client = vim.lsp.get_client_by_id(c.client_id)
+  ---@cast client -nil
   local ca = c.action
 
   if ca.edit then
-    L.lsp.apply_edit({
-      id = c.client_id,
-      name = c.client_name,
-      result = ca --[[@as lsp.ResponseMessage]],
-    })
+    vim.lsp.util.apply_workspace_edit(ca.edit, client.offset_encoding)
   elseif
     ca.action --[[@as fun()?]]
     and type(ca.action --[[@as fun()?]]) == 'function'
   then
     -- WARN: out of spec, which servers rely on this?
     vim.notify(
-      'Executing out-of-spec function with field `action`.',
+      'Executing out-of-spec function with field `action`',
       vim.log.levels.WARN
     )
 
@@ -153,13 +201,9 @@ function M:_do_action(c)
     ca.action()
   elseif ca.command then
     local cmd = type(ca.command) == 'table' and ca.command or ca
-    local client = vim.lsp.get_client_by_id(c.client_id)
 
     assert(
-      client
-        and client:supports_method(
-          vim.lsp.protocol.Methods.workspace_executeCommand
-        ),
+      client:supports_method(vim.lsp.protocol.Methods.workspace_executeCommand),
       'Client is missing `executeCommand` provider.'
     )
 
@@ -183,32 +227,30 @@ function M:_do_action(c)
         cmd.command
       )
     then
-      L.lsp:request(
-        client,
-        vim.lsp.protocol.Methods.workspace_executeCommand,
-        { command = cmd.command, arguments = cmd.arguments }
-      )
+      client:exec_cmd(cmd --[[@as lsp.Command]])
     else
       vim.notify(
-        ('Command is not supported by client `%s`.'):format(cmd.command),
+        ('Command is not supported by client `%s`'):format(cmd.command),
         vim.log.levels.ERROR
       )
     end
   else
-    local err, resolved = L.lsp:request(
-      { vim.lsp.get_client_by_id(c.client_id) },
+    local res, err = L.lsp:request(
+      client,
       vim.lsp.protocol.Methods.codeAction_resolve,
       ca,
       0,
       -1
     )
-
     if err then
       L.lsp.notify_error(err)
       return
     end
 
-    L.lsp.apply_edit(resolved[1])
+    vim.lsp.util.apply_workspace_edit(
+      res[1].result.edit,
+      client.offset_encoding
+    )
   end
 end
 

@@ -1,138 +1,219 @@
 -- scaffolding via MariaSolOs/dotfiles
 
-vim.cmd.highlight('clear')
+if vim.g.colors_name then
+  vim.cmd.hi('clear')
+end
 if vim.fn.exists('syntax_on') then
   vim.cmd.syntax('reset')
 end
+
 vim.g.colors_name = 'leafless'
 
-LEAFLESS = {
-  fg = {
-    '#e0dbd0',
-    '#d5cfc1',
-    '#cac3b3',
-    '#bfb7a5',
-    '#b3aa97',
-    '#a79e8a',
-  },
-  gr = {
-    '#a8aeb1',
-    '#94999c',
-    '#808487',
-    '#6d7072',
-    '#5a5d5f',
-    '#484a4b',
-  },
-  bg = {
-    '#465258',
-    '#3c464b',
-    '#333b3f',
-    '#2a3033',
-    '#212628',
-    '#191b1d',
-  },
+if vim.o.background == 'dark' then
+  LEAFLESS = {
+    fg = {
+      '#e0dbd0',
+      '#d5cfc1',
+      '#cac3b3',
+      '#bfb7a5',
+    },
+    gr = {
+      '#94949c',
+      '#80838b',
+      '#6c727a',
+      '#596269',
+    },
+    bg = {
+      '#465258',
+      '#3c464b',
+      '#323c41',
+      '#191b1d',
+    },
 
-  normal = {
-    aqu = '#83c092',
-    blu = '#7fbbb3',
-    gre = '#a7c080',
-    pur = '#d699b6',
-    red = '#e67e80',
-    yel = '#dbbc7f',
-    ora = '#e69875',
-  },
-  bright = {
-    cya = '#35a77c',
-    blu = '#3a94c5',
-    gre = '#8da101',
-    pur = '#df69ba',
-    red = '#f85552',
-    yel = '#dfa000',
-    ora = '#f57d26',
-  },
-  dim = {
-    aqu = '#4f7459',
-    blu = '#4d716d',
-    gre = '#65744e',
-    pur = '#825d6e',
-    red = '#8b4c4e',
-    yel = '#85724d',
-  },
-}
+    normal = {
+      cya = '#83c092',
+      blu = '#7fbbb3',
+      gre = '#a7c080',
+      pur = '#d699b6',
+      red = '#e67e80',
+      yel = '#dbbc7f',
+      ora = '#e69875',
+    },
+    bright = {
+      cya = '#35a77c',
+      blu = '#3a94c5',
+      gre = '#8da101',
+      pur = '#df69ba',
+      red = '#f85552',
+      yel = '#dfa000',
+      ora = '#f57d26',
+    },
+    dim = {
+      cya = '#4f7459',
+      blu = '#4d716d',
+      gre = '#65744e',
+      pur = '#825d6e',
+      red = '#8b4c4e',
+      yel = '#85724d',
+    },
+  }
+else
+  LEAFLESS = {
+    fg = {
+      '#465258',
+      '#3c464b',
+      '#323c41',
+      '#191b1d',
+    },
+    gr = {
+      '#c4beb2',
+      '#aea79d',
+      '#989088',
+      '#827a74',
+    },
+    bg = {
+      '#dbd6c8',
+      '#e3ded0',
+      '#eae7d7',
+      '#f2efdf',
+    },
+
+    normal = {
+      cya = '#35a77c',
+      blu = '#3a94c5',
+      gre = '#8da101',
+      pur = '#df69ba',
+      red = '#f85552',
+      yel = '#dfa000',
+      ora = '#f57d26',
+    },
+    bright = {
+      cya = '#35a77c',
+      blu = '#3a94c5',
+      gre = '#8da101',
+      pur = '#df69ba',
+      red = '#f85552',
+      yel = '#dfa000',
+      ora = '#f57d26',
+    },
+    dim = {
+      cya = '#83c092',
+      blu = '#7fbbb3',
+      gre = '#a7c080',
+      pur = '#d699b6',
+      red = '#e67e80',
+      yel = '#dbbc7f',
+      ora = '#e69875',
+    },
+  }
+end
 
 ---@type table<string, vim.api.keyset.highlight>
 local groups = {
-  ---- generic ----
-  Fg = { fg = LEAFLESS.fg[3] },
-  Normal = { fg = LEAFLESS.fg[3] },
-  NormalNC = { link = 'Normal' },
-  NonText = { fg = LEAFLESS.gr[4] },
-  Directory = { fg = LEAFLESS.bright.gre },
-  Comment = { fg = LEAFLESS.gr[4], bold = true },
-  Conceal = { link = 'Comment' },
+  ---- builtin ----
+  ColorColumn = { bg = LEAFLESS.bg[2] },
+  Conceal = { fg = LEAFLESS.gr[4] },
+  CurSearch = { fg = LEAFLESS.bg[4], bg = LEAFLESS.bright.pur },
+  Cursor = { fg = LEAFLESS.bg[4], bg = LEAFLESS.fg[1] },
+  lCursor = { link = 'Cursor' },
+  CursorIM = { link = 'Cursor' },
+  CursorColumn = { bg = LEAFLESS.bg[1] },
+  CursorLine = { bg = LEAFLESS.bg[2] },
+  Directory = { fg = LEAFLESS.bright.yel },
+
+  DiffAdd = { fg = LEAFLESS.bg[4], bg = LEAFLESS.bright.gre },
+  DiffChange = { fg = LEAFLESS.bg[4], bg = LEAFLESS.bright.blu },
+  DiffDelete = { fg = LEAFLESS.gr[4], bg = nil },
+  DiffText = { fg = LEAFLESS.fg[1], bg = LEAFLESS.bright.blu, underline = true },
+
+  EndOfBuffer = { link = 'NonText' },
+  TermCursor = { link = 'Cursor' },
+  ErrorMsg = { fg = LEAFLESS.bright.red },
+  WinSeparator = { fg = LEAFLESS.gr[4] },
+  Folded = { link = 'CursorLine' },
+  FoldColumn = { link = 'NonText' },
+  SignColumn = { link = 'NonText' },
+  IncSearch = { fg = LEAFLESS.bg[4], bg = LEAFLESS.bright.yel },
+  Substitute = { link = 'Search' },
+
+  LineNr = { fg = LEAFLESS.gr[3] },
+  LineNrAbove = { link = 'LineNr' },
+  LineNrBelow = { link = 'LineNr' },
+  CursorLineNr = { fg = LEAFLESS.bright.gre },
+  CursorLineFold = { link = 'FoldColumn' },
+  CursorLineSign = { link = 'SignColumn' },
 
   MatchParen = { fg = LEAFLESS.bright.gre, underline = true },
-  SpecialKey = { link = 'NonText' },
-  Underlined = { fg = LEAFLESS.bright.blu, underline = true },
-
-  -- search
-  Search = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.blu },
-  IncSearch = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.yel },
-  CurSearch = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.pur },
-  Substitute = { link = 'Search' },
-  Visual = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.yel },
-
-  -- diff
-  DiffAdd = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.gre },
-  DiffChange = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.blu },
-  DiffText = { fg = LEAFLESS.fg[1], bg = LEAFLESS.bright.blu },
-  DiffDelete = { fg = LEAFLESS.gr[5], bg = '' },
-
-  -- ui
-  NormalFloat = { link = 'Fg' },
-  NeutralFloat = { fg = LEAFLESS.gr[3] },
-  FloatTitle = { link = 'Fg' },
-  FloatBorder = { fg = LEAFLESS.gr[3] },
-  WinSeparator = { fg = LEAFLESS.bg[1] },
-
-  StatusLine = { link = 'Fg' },
-
-  Pmenu = { fg = LEAFLESS.fg[3], bg = LEAFLESS.bg[2] },
-  PmenuSel = { fg = LEAFLESS.fg[2], bg = LEAFLESS.bg[1] },
-  PmenuSbar = { bg = LEAFLESS.bg[1] },
-  PmenuThumb = { bg = LEAFLESS.gr[2] },
-
-  CursorLine = { bg = LEAFLESS.bg[2] },
-  CursorLineNr = { fg = LEAFLESS.bright.gre },
-  Folded = { link = 'CursorLine' },
-  QuickFixLine = { fg = LEAFLESS.bg[6], bg = LEAFLESS.bright.gre },
-
-  MsgArea = { link = 'Fg' },
-  MoreMsg = { link = 'NonText' },
-  MsgSeparator = { fg = LEAFLESS.gr[3] },
   ModeMsg = { fg = LEAFLESS.bright.cya },
-  WarningMsg = { fg = LEAFLESS.bright.yel },
-  ErrorMsg = { fg = LEAFLESS.bright.red },
-  Question = { link = 'NonText' },
+  MsgArea = { link = 'Normal' },
+  MsgSeparator = { link = 'WinSeparator' },
+  MoreMsg = { link = 'NonText' },
+  NonText = { fg = LEAFLESS.gr[3] },
+  Normal = { fg = LEAFLESS.fg[2], bg = LEAFLESS.bg[3] },
+  NormalFloat = { link = 'Normal' },
+  FloatBorder = { fg = LEAFLESS.gr[4] },
+  FloatTitle = { link = 'Normal' },
+  FloatFooter = { link = 'FloatTitle' },
+  NormalNC = { link = 'Normal' },
 
-  -- spell
+  Pmenu = { bg = LEAFLESS.bg[2] },
+  PmenuSel = { bg = LEAFLESS.bg[1] },
+  PmenuKind = { link = 'Pmenu' },
+  PmenuKindSel = { link = 'PmenuSel' },
+  PmenuExtra = { link = 'Pmenu' },
+  PmenuExtraSel = { link = 'PmenuExtra' },
+  PmenuSbar = { bg = LEAFLESS.bg[1] },
+  PmenuThumb = { bg = LEAFLESS.gr[1] },
+  PmenuMatch = { underline = true },
+  PmenuMatchSel = { link = 'PmenuMatch' },
+
+  ComplMatchIns = { fg = LEAFLESS.bright.gre },
+  Question = { link = 'NonText' },
+  QuickFixLine = { fg = LEAFLESS.bg[4], bg = LEAFLESS.bright.gre },
+  Search = { fg = LEAFLESS.bg[4], bg = LEAFLESS.bright.blu },
+  SnippetTabstop = { link = 'Visual' },
+  SpecialKey = { link = 'NonText' },
+
   SpellBad = { sp = LEAFLESS.bright.blu, underline = true },
   SpellCap = { sp = LEAFLESS.bright.gre, underline = true },
-  SpellRare = { sp = LEAFLESS.bright.pur, underline = true },
   SpellLocal = { sp = LEAFLESS.bright.cya, underline = true },
+  SpellRare = { sp = LEAFLESS.bright.pur, underline = true },
+
+  StatusLine = { bg = LEAFLESS.bg[2] },
+  StatusLineNC = { link = 'StatusLine' },
+  StatusLineTerm = { fg = LEAFLESS.bg[4], bg = LEAFLESS.bright.gre },
+  StatusLineTermNC = { link = 'StatusLineTerm' },
+  TabLine = { link = 'Normal' },
+  TabLineFill = { bg = LEAFLESS.bg[2] },
+  TabLineSel = { fg = LEAFLESS.bg[4], bg = LEAFLESS.bright.gre },
+  Title = { fg = LEAFLESS.bright.pur },
+
+  Visual = { fg = LEAFLESS.bg[4], bg = LEAFLESS.bright.yel },
+  VisualNOS = { link = 'Visual' },
+  WarningMsg = { fg = LEAFLESS.bright.yel },
+  Whitespace = { link = 'NonText' },
+  WildMenu = { link = 'ComplMatchIns' },
+  WinBar = { link = 'NormalFloat' },
+  WinBarNC = { link = 'WinBar' },
+
+  Added = { fg = LEAFLESS.bright.gre },
+  Changed = { fg = LEAFLESS.bright.blu },
+  Removed = { fg = LEAFLESS.bright.red },
 
   ---- syntax ----
-  Constant = { fg = LEAFLESS.fg[2] },
+  Comment = { fg = LEAFLESS.gr[3], bold = true },
+
+  Constant = { fg = LEAFLESS.fg[1] },
   String = { link = 'Constant' },
   Character = { link = 'Constant' },
   Number = { link = 'Constant' },
   Boolean = { link = 'Constant' },
   Float = { link = 'Constant' },
 
-  Identifier = { fg = LEAFLESS.fg[2] },
+  Identifier = { fg = LEAFLESS.fg[1] },
   Function = { link = 'Identifier' },
 
-  Statement = { link = 'Fg' },
+  Statement = { fg = LEAFLESS.fg[2] },
   Conditional = { link = 'Statement' },
   Repeat = { link = 'Statement' },
   Label = { link = 'Statement' },
@@ -146,23 +227,27 @@ local groups = {
   Macro = { link = 'PreProc' },
   PreCondit = { link = 'PreProc' },
 
-  Type = { link = 'Fg' },
+  Type = { fg = LEAFLESS.fg[2] },
   StorageClass = { link = 'Type' },
   Structure = { link = 'Type' },
   TypeDef = { link = 'Type' },
 
-  Special = { link = 'Fg' },
+  -- FWIW: this makes it really hard to see fields in Zig struct initialization:
+  -- whitespace, i.e. `.`, before a field, e.g. `.data`, has the same colour.
+  Special = { fg = LEAFLESS.gr[3] },
   SpecialChar = { link = 'Special' },
   Tag = { link = 'Special' },
   Delimiter = { link = 'Special' },
   SpecialComment = { link = 'Special' },
   Debug = { link = 'Special' },
 
+  Underlined = { fg = LEAFLESS.bright.blu, underline = true },
   Error = {
     fg = LEAFLESS.bright.red,
     sp = LEAFLESS.bright.red,
     underline = true,
   },
+  Todo = { bg = nil },
 
   ---- treesitter ----
   ['@annotation'] = { link = 'PreProc' },
@@ -264,8 +349,8 @@ local groups = {
   DiagnosticSignInfo = { link = 'DiagnosticInfo' },
   DiagnosticSignHint = { link = 'DiagnosticHint' },
 
-  DiagnosticOk = { fg = LEAFLESS.bright.pur },
-  DiagnosticUnnecessary = { fg = LEAFLESS.gr[4] },
+  DiagnosticOk = { sp = LEAFLESS.bright.cya, underline = true },
+  DiagnosticUnnecessary = { sp = LEAFLESS.bright.pur, underline = true },
   DiagnosticDeprecated = { strikethrough = true },
 
   ---- plugins ----
@@ -284,12 +369,12 @@ local groups = {
   TelescopeMatching = { fg = LEAFLESS.bright.red },
   TelescopeSelection = { link = 'CursorLine' },
   TelescopeSelectionCaret = { fg = LEAFLESS.bright.gre, bg = LEAFLESS.bg[2] },
-  TelescopeTitle = { link = 'Fg' },
-  TelescopePreviewTitle = { link = 'Fg' },
+  TelescopeTitle = { link = 'Normal' },
+  TelescopePreviewTitle = { link = 'Normal' },
   TelescopePromptBorder = { link = 'TelescopeBorder' },
   TelescopePromptCounter = { link = 'NonText' },
   TelescopePromptPrefix = { fg = LEAFLESS.bright.gre },
-  TelescopePromptTitle = { link = 'Fg' },
+  TelescopePromptTitle = { link = 'Normal' },
 
   -- treesitter
   TreesitterContext = { link = 'CursorLine' },

@@ -1,21 +1,6 @@
 ---@class lib.Str
 local Str = {}
 
----Return index of last occurence of `pattern` in `str`.
----
----@param str string
----@param pattern string
----@return number?
-function Str.rindex(str, pattern)
-  local index = str:reverse():find(pattern)
-
-  if not index then
-    return nil
-  end
-
-  return str:len() - index
-end
-
 ---Return the word to the left of the current cursor position or `pos`.
 ---
 ---Falls back to `vim.fn.expand` when called from normal mode. In that case, the

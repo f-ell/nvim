@@ -31,23 +31,6 @@ function IO:read(file, chop)
   return chop and str:sub(0, str:len() - 1) or str
 end
 
----Read file contents to consecutive table indices. Returns an emtpy table in
----case of errors.
----
----@param file string|file* @Name or handle of file to open. Closed automatically.
----@return string[]
-function IO:tbl_read(file)
-  local fh = self._open(file, 'r')
-  if fh == nil then
-    return {}
-  end
-
-  local tbl = vim.iter(fh:lines()):totable()
-
-  fh:close()
-  return tbl
-end
-
 ---Write `data` to `file`.
 ---
 ---@param file string|file* @Name or handle of file to open. Closed automatically.

@@ -8,8 +8,7 @@ local tabline = function()
 
     local tab = {
       ('%%%sT'):format(i),
-      ('%%#Tab%s#'):format(i == vim.fn.tabpagenr() and 'Active' or 'Inactive'),
-      '▎',
+      ('%%#TabLine%s#'):format(i == vim.fn.tabpagenr() and 'Sel' or ''),
       vim.bo[bufnr].modified and ' + ' or '  ',
       name .. '  ',
     }
@@ -17,7 +16,7 @@ local tabline = function()
     table.insert(tabs, table.concat(tab))
   end
 
-  return table.concat(tabs) .. '%#TabInactive#'
+  return table.concat(tabs) .. '%#TabLineFill#'
 end
 
 _G.tabline = tabline

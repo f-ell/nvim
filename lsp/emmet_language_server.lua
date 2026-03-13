@@ -6,6 +6,7 @@ return {
     'javascript',
     'javascriptreact',
     'less',
+    'markdown',
     'sass',
     'scss',
     'pug',

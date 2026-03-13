@@ -7,5 +7,6 @@ return {
       enabled = true,
       when = 'onType',
     },
+    projectResolution = 'lockDatabase',
   },
 }
