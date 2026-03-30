@@ -56,23 +56,9 @@ local function organizeImports(client)
     return
   end
 
-  ---@type lsp.CodeAction
-  local ca = vim
-    .iter(res[1].result)
-    :filter(
-      ---This filters any returned commands, since those don't have a `kind`.
-      ---@param ca lsp.CodeAction | lsp.Command
-      function(ca)
-        return ca.kind == 'source.organizeImports'
-      end
-    )
-    :nth(1)
-
-  if table.isempty(ca) then
-    vim.notify(
-      'Failed to organize imports: no suitable code action found.',
-      vim.log.levels.WARN
-    )
+  ---@type lsp.CodeAction?
+  local ca = res[1].result[1]
+  if not ca then
     return
   end
 
@@ -100,11 +86,12 @@ vim.api.nvim_create_autocmd('BufWritePre', {
 
     local client = vim
       .iter(vim.lsp.get_clients())
-      :filter(function(
-        c --[[@cast c vim.lsp.Client]]
+      :filter(
+        ---@param c vim.lsp.Client
+        function(c)
+          return c.name == 'vtsls' or c.name == 'denols'
+        end
       )
-        return c.name == 'vtsls' or c.name == 'denols'
-      end)
       :nth(1)
     if not client then
       vim.notify('No server available for LSP hooks', vim.log.levels.WARN)
