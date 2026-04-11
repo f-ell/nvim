@@ -9,7 +9,10 @@ return {
       preset = 'none',
 
       ['<C-Space>'] = { 'show' },
-      ['<C-e>'] = { 'hide' },
+      ['<C-e>'] = {
+        'hide',
+        'fallback' --[[prevent ins-completion shadowing]],
+      },
       ['<C-l>'] = { 'accept' },
       ['<C-k>'] = { 'select_prev' },
       ['<C-j>'] = { 'select_next' },
@@ -81,13 +84,8 @@ return {
     },
 
     sources = {
-      default = { 'buffer', 'cmdline', 'lazydev', 'lsp', 'path' },
+      default = { 'cmdline', 'lazydev', 'lsp', 'path' },
       providers = {
-        buffer = {
-          name = 'buffer',
-          module = 'blink.cmp.sources.buffer',
-          score_offset = -2,
-        },
         cmdline = {
           name = 'cmdline',
           module = 'blink.cmp.sources.cmdline',
@@ -111,7 +109,6 @@ return {
               end)
               :totable()
           end,
-          fallbacks = { 'buffer' },
         },
         path = {
           name = 'path',
