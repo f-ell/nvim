@@ -191,7 +191,7 @@ local groups = {
   Visual = { fg = LEAFLESS.bg[4], bg = LEAFLESS.bright.yel },
   VisualNOS = { link = 'Visual' },
   WarningMsg = { fg = LEAFLESS.bright.yel },
-  Whitespace = { link = 'NonText' },
+  Whitespace = { fg = LEAFLESS.bg[1] },
   WildMenu = { link = 'ComplMatchIns' },
   WinBar = { link = 'NormalFloat' },
   WinBarNC = { link = 'WinBar' },
@@ -203,15 +203,15 @@ local groups = {
   ---- syntax ----
   Comment = { fg = LEAFLESS.gr[3], bold = true },
 
-  Constant = { fg = LEAFLESS.fg[1] },
+  Constant = { fg = LEAFLESS.fg[2] },
   String = { link = 'Constant' },
   Character = { link = 'Constant' },
   Number = { link = 'Constant' },
   Boolean = { link = 'Constant' },
   Float = { link = 'Constant' },
 
-  Identifier = { fg = LEAFLESS.fg[1] },
-  Function = { link = 'Identifier' },
+  Identifier = { fg = LEAFLESS.fg[2], bold = true },
+  Function = { link = 'Constant' },
 
   Statement = { fg = LEAFLESS.fg[2] },
   Conditional = { link = 'Statement' },
@@ -221,7 +221,7 @@ local groups = {
   Keyword = { link = 'Statement' },
   Exception = { link = 'Statement' },
 
-  PreProc = { fg = LEAFLESS.gr[3] },
+  PreProc = { fg = LEAFLESS.gr[2] },
   Include = { link = 'PreProc' },
   Define = { link = 'PreProc' },
   Macro = { link = 'PreProc' },
@@ -300,7 +300,7 @@ local groups = {
   ['@type'] = { link = 'Type' },
   ['@type.builtin'] = { link = 'Constant' },
   ['@type.qualifier'] = { link = 'Include' },
-  ['@variable'] = { link = 'Identifier' },
+  ['@variable'] = { link = 'Constant' },
   ['@variable.builtin'] = { link = '@variable' },
   ['@variable.member'] = { link = '@variable' },
   ['@variable.parameter'] = { link = '@variable' },
