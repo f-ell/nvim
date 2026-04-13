@@ -1,10 +1,15 @@
 vim.wo[0][0].spell = true
 
+local MAXW = 9999
 local tw = vim.bo.textwidth
 
 vim.api.nvim_create_autocmd('BufEnter', {
   buffer = vim.api.nvim_get_current_buf(),
   callback = function()
+    if vim.bo.textwidth == MAXW then
+      return
+    end
+
     tw = vim.bo.textwidth
   end,
 })
@@ -28,6 +33,6 @@ vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
       end
     )
 
-    vim.bo.textwidth = b and 9999 or tw
+    vim.bo.textwidth = b and MAXW or tw
   end,
 })
