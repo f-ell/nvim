@@ -37,7 +37,7 @@ function M.expand_word()
 
   local lnum = vim.api.nvim_win_get_cursor(0)[1]
   local col_start, col_end =
-    string.find(vim.api.nvim_get_current_line(), params.abbreviation) --[[@as integer]]
+    string.find(vim.api.nvim_get_current_line(), params.abbreviation, 0, true) --[[@as integer]]
 
   vim.api.nvim_buf_set_text(
     0,
