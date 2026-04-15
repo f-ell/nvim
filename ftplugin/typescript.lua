@@ -55,6 +55,9 @@ local function organizeImports(client)
     L.lsp.notify_error(err)
     return
   end
+  if table.isempty(res) then
+    return
+  end
 
   ---@type lsp.CodeAction?
   local ca = res[1].result[1]
