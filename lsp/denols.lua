@@ -6,4 +6,19 @@ return {
       on_dir(root)
     end
   end,
+  settings = {
+    deno = {
+      suggest = {
+        autoImports = true,
+        completeFunctionCalls = true,
+        imports = {
+          autoDiscover = true,
+          hosts = true,
+        },
+        names = true,
+        paths = true,
+      },
+      lint = true,
+    },
+  },
 }
