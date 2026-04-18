@@ -7,18 +7,21 @@ return {
     end
   end,
   settings = {
+    javascript = {
+      suggest = { completeFunctionCalls = true },
+    },
+    typescript = {
+      suggest = { completeFunctionCalls = true },
+    },
     deno = {
       suggest = {
         autoImports = true,
-        completeFunctionCalls = true,
         imports = {
           autoDiscover = true,
-          hosts = true,
         },
         names = true,
         paths = true,
       },
-      lint = true,
     },
   },
 }
