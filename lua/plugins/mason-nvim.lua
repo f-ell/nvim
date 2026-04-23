@@ -73,7 +73,7 @@ return {
         key.nnmap('grh', function()
           vim.lsp.buf.document_highlight()
           vim.api.nvim_create_autocmd('CursorMoved', {
-            buffer = 0,
+            buffer = vim.api.nvim_get_current_buf(),
             callback = function()
               local ns = vim.api.nvim_get_namespaces()['nvim.lsp.references']
               vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
