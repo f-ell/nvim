@@ -52,11 +52,9 @@ return {
           })
         end, { buffer = args.buf })
         key.nnmap('gd', lsp.def.open, { buffer = args.buf })
-        key.nnmap('grt', lsp.def.type, { buffer = args.buf })
 
         key.nnmap('gra', lsp.cda.codeaction, { buffer = args.buf })
         key.nnmap('grn', lsp.ren.rename, { buffer = args.buf })
-        key.nnmap('grr', vim.lsp.buf.references, { buffer = args.buf })
         key.modemap(
           { 'i', 'n' },
           '<C-s>',

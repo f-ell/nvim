@@ -360,7 +360,7 @@ local git = {
     vim.fn.jobwait({ id }, 100)
   end,
   _diff = function(self)
-    local diff = vim.diff(
+    local diff = vim.text.diff(
       table.concat(self.meta.hstate, '\n'),
       table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), '\n'),
       ---@diagnostic disable-next-line: missing-fields
