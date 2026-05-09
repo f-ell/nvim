@@ -3,7 +3,6 @@ if vim.fn.expand('%:e') == 'sty' then
 end
 
 vim.wo[0][0].spell = true
-vim.opt.formatoptions:append('or')
 
 vim.api.nvim_buf_create_user_command(
   0,
