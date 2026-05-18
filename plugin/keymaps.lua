@@ -11,9 +11,6 @@ key.vnmap('<leader>*', function()
   })
 end)
 
-key.nnmap('<leader>w', '<CMD>w !doas tee %<CR>')
-key.nnmap('<leader>x', '<CMD>!chmod u+x %<CR>')
-
 key.tnmap('<C-d>', '<C-\\><C-n>')
 
 key.nnmap('n', 'nzz')
