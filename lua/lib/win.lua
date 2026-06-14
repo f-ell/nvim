@@ -102,7 +102,7 @@ function Win:_height(data)
       return acc + v
     end)
 
-  return math.min(#data + c, self.max_height())
+  return math.min(math.max(#data + c, 1), self.max_height())
 end
 
 ---@package

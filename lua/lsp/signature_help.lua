@@ -106,10 +106,19 @@ function M:_map_siginfo(si)
     :totable()
 
   -- Omit any contained parameters in the display label.
-  local short_label = ('%s ... %s'):format(
-    si.label:sub(1, params[1][1]),
-    si.label:sub(params[#params][2] + 1)
-  )
+  local short_label
+  local display = ''
+  if table.isempty(params) then
+    short_label = si.label
+  else
+    short_label = ('%s ... %s'):format(
+      si.label:sub(1, params[1][1]),
+      si.label:sub(params[#params][2] + 1)
+    )
+
+    display = si.label:sub(params[1][1] + 1, params[#params][2])
+  end
+
   -- Trim any leading function keywords.
   for _, kw in pairs({ 'fn', 'fun', 'function' }) do
     local _, end_ = short_label:find(('^%s '):format(kw))
@@ -120,10 +129,11 @@ function M:_map_siginfo(si)
   end
 
   return {
+    ---@diagnostic disable-next-line: assign-type-mismatch
     active_param = si.activeParameter,
     label = si.label,
     short_label = short_label,
-    display = si.label:sub(params[1][1] + 1, params[#params][2]),
+    display = display,
     params = params,
   } --[[@as lsp.ui.sig.Signature]]
 end
