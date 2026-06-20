@@ -56,7 +56,7 @@ return {
           columns = { { 'kind_icon' }, { 'label', 'source_name', gap = 1 } },
           components = {
             label = {
-              width = { fill = true, max = 48 },
+              width = { fill = true, max = 64 },
               ellipsis = true,
               highlight = function(ctx)
                 return 'BlinkCmpLabel'
@@ -71,8 +71,7 @@ return {
         auto_show = true,
         window = {
           min_width = 32,
-          max_width = 64,
-          max_height = 24,
+          max_width = 128,
           border = 'single',
           winhighlight = 'FloatBorder:FloatBorder,Search:None',
         },
