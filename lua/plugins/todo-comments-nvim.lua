@@ -4,6 +4,9 @@ return {
   dependencies = 'nvim-lua/plenary.nvim',
   cmd = 'TodoTelescope',
   event = 'BufReadPost',
+  keys = {
+    { '<leader>tt', '<CMD>TodoTelescope<CR>' },
+  },
   opts = {
     signs = false,
     highlight = { multiline = true },
