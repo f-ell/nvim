@@ -1,3 +1,4 @@
+---@type vim.lsp.Config
 return {
   root_dir = function(bufnr, on_dir)
     local root = vim.fs.root(
@@ -15,6 +16,8 @@ return {
       quotePreference = 'single',
     },
   },
+
+  ---@type lspconfig.settings.vtsls
   settings = {
     complete_function_calls = true,
     vtsls = {
