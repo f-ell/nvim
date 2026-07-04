@@ -538,6 +538,7 @@ for k, v in pairs(commands) do
 end
 
 local mpack = vim.fn.stdpath('data') .. '/mason/packages'
+---@type vim.lsp.Config
 return {
   cmd = {
     'jdtls',
@@ -575,6 +576,7 @@ return {
   },
 
   -- https://github.com/eclipse/eclipse.jdt.ls/wiki/Running-the-JAVA-LS-server-from-the-command-line#initialize-request
+  ---@type lspconfig.settings.jdtls
   settings = { java = {} },
 
   init_options = {
@@ -598,7 +600,9 @@ return {
         codeActionLiteralSupport = {
           codeActionKind = {
             valueSet = {
+              ---@diagnostic disable-next-line: assign-type-mismatch
               'source.generate.toString',
+              ---@diagnostic disable-next-line: assign-type-mismatch
               'source.generate.hashCodeEquals',
               'source.organizeImports',
             },

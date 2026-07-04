@@ -82,7 +82,16 @@ function M:_transform(req)
     -- Split produces hanging CR when the server returns '\r\n'-delimited lines.
     local it = vim.iter(vim.split(r.message, '\n', { trimempty = true }))
 
-    local head = { it:next(), self._util.signs.numhl[r.severity] }
+    -- Some language servers, e.g. ZLS, may sometimes return nil-diagnostics
+    -- amidst others. We map those to empty strings to prevent an implicit
+    -- conversion of tuples to an array (i.e. `{ [n] = 'hl-group' }`).
+    --
+    -- Order is important; `it:next()` may return a falsy value, which we want
+    -- to keep intact.
+    local head = {
+      it:peek() == nil and '' or it:next(),
+      self._util.signs.numhl[r.severity],
+    }
     local virt = it:map(
       ---@param ln string
       function(ln)

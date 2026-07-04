@@ -36,6 +36,7 @@ require('lazy').setup('plugins', {
 vim.o.termguicolors = true
 vim.cmd.filetype('plugin indent on')
 
+vim.o.background = 'light'
 vim.cmd.colorscheme('leafless')
 
 -- FIX: deprecate once https://github.com/neovim/neovim/pull/33145 is merged

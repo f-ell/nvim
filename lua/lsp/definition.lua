@@ -50,33 +50,6 @@ function M.open()
   })
 end
 
-function M.type()
-  local method = vim.lsp.protocol.Methods.textDocument_typeDefinition
-  local clients = vim.lsp.get_clients({ bufnr = 0, method = method })
-
-  local res, err = L.lsp:request(
-    clients,
-    method,
-    vim.lsp.util.make_position_params(0, 'utf-8'),
-    0
-  )
-  if err then
-    L.lsp.notify_error(err)
-    return
-  end
-
-  if table.isempty(res) then
-    vim.notify('No definition available', vim.log.levels.INFO)
-    return
-  end
-
-  M:_open({
-    cword = vim.fn.expand('<cword>'),
-    clients = clients,
-    responses = res,
-  })
-end
-
 ---@package
 ---@param req lsp.ui.def.Request
 ---@return lsp.ui.def.Definition[]

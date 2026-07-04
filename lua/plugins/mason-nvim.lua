@@ -52,11 +52,9 @@ return {
           })
         end, { buffer = args.buf })
         key.nnmap('gd', lsp.def.open, { buffer = args.buf })
-        key.nnmap('grt', lsp.def.type, { buffer = args.buf })
 
         key.nnmap('gra', lsp.cda.codeaction, { buffer = args.buf })
         key.nnmap('grn', lsp.ren.rename, { buffer = args.buf })
-        key.nnmap('grr', vim.lsp.buf.references, { buffer = args.buf })
         key.modemap(
           { 'i', 'n' },
           '<C-s>',
@@ -73,7 +71,7 @@ return {
         key.nnmap('grh', function()
           vim.lsp.buf.document_highlight()
           vim.api.nvim_create_autocmd('CursorMoved', {
-            buffer = 0,
+            buffer = vim.api.nvim_get_current_buf(),
             callback = function()
               local ns = vim.api.nvim_get_namespaces()['nvim.lsp.references']
               vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)

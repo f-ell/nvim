@@ -10,6 +10,9 @@ local function organizeImports(client)
     L.lsp.notify_error(err)
     return
   end
+  if table.isempty(res) then
+    return
+  end
 
   ---@type lsp.CodeAction
   local ca = vim
@@ -22,12 +25,7 @@ local function organizeImports(client)
       end
     )
     :nth(1)
-
-  if table.isempty(ca) then
-    vim.notify(
-      'Failed to organize imports: no suitable code action found',
-      vim.log.levels.WARN
-    )
+  if not ca then
     return
   end
 

@@ -9,7 +9,10 @@ return {
       preset = 'none',
 
       ['<C-Space>'] = { 'show' },
-      ['<C-e>'] = { 'hide' },
+      ['<C-e>'] = {
+        'hide',
+        'fallback' --[[prevent ins-completion shadowing]],
+      },
       ['<C-l>'] = { 'accept' },
       ['<C-k>'] = { 'select_prev' },
       ['<C-j>'] = { 'select_next' },
@@ -53,7 +56,7 @@ return {
           columns = { { 'kind_icon' }, { 'label', 'source_name', gap = 1 } },
           components = {
             label = {
-              width = { fill = true, max = 48 },
+              width = { fill = true, max = 64 },
               ellipsis = true,
               highlight = function(ctx)
                 return 'BlinkCmpLabel'
@@ -68,8 +71,7 @@ return {
         auto_show = true,
         window = {
           min_width = 32,
-          max_width = 64,
-          max_height = 24,
+          max_width = 128,
           border = 'single',
           winhighlight = 'FloatBorder:FloatBorder,Search:None',
         },
@@ -81,13 +83,8 @@ return {
     },
 
     sources = {
-      default = { 'buffer', 'cmdline', 'lazydev', 'lsp', 'path' },
+      default = { 'cmdline', 'lazydev', 'lsp', 'path' },
       providers = {
-        buffer = {
-          name = 'buffer',
-          module = 'blink.cmp.sources.buffer',
-          score_offset = -2,
-        },
         cmdline = {
           name = 'cmdline',
           module = 'blink.cmp.sources.cmdline',
@@ -111,7 +108,6 @@ return {
               end)
               :totable()
           end,
-          fallbacks = { 'buffer' },
         },
         path = {
           name = 'path',

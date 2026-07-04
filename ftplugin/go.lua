@@ -12,8 +12,11 @@ local function organize_imports(client)
     L.lsp.notify_error(err)
     return
   end
+  if table.isempty(res) then
+    return
+  end
 
-  ---@type lsp.CodeAction
+  ---@type lsp.CodeAction?
   local ca = vim
     .iter(res[1].result)
     :filter(
@@ -24,11 +27,11 @@ local function organize_imports(client)
       end
     )
     :nth(1)
+  if not ca then
+    return
+  end
 
   vim.lsp.util.apply_workspace_edit(ca.edit, client.offset_encoding)
-  if ca.command then
-    client:exec_cmd(ca.command)
-  end
 end
 
 ---@param client vim.lsp.Client

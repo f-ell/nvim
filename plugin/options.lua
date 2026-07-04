@@ -37,6 +37,7 @@ vim.opt.listchars = {
 }
 
 vim.opt.spelllang = { 'en_gb', 'de_de' }
+vim.opt.formatoptions:append('ro/l')
 vim.opt.nrformats = { 'bin', 'hex', 'blank' }
 vim.opt.diffopt = {
   'internal',
