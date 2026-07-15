@@ -43,7 +43,7 @@ function M:eval()
     BlinkCmpKindBoolean = { link = 'BlinkCmpKindConstant' },
     BlinkCmpKindClass = { fg = LEAFLESS.normal.yel },
     BlinkCmpKindColor = { fg = LEAFLESS.normal.ora },
-    BlinkCmpKindConstant = { fg = LEAFLESS.normal.blu },
+    BlinkCmpKindConstant = { fg = LEAFLESS.normal.yel },
     BlinkCmpKindConstructor = { fg = LEAFLESS.normal.yel },
     BlinkCmpKindDefault = { link = 'Normal' },
     BlinkCmpKindEnum = { fg = LEAFLESS.normal.pur },

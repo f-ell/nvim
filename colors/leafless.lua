@@ -12,10 +12,10 @@ vim.g.colors_name = 'leafless'
 if vim.o.background == 'dark' then
   LEAFLESS = {
     fg = {
-      '#e0dbd0',
-      '#d5cfc1',
-      '#cac3b3',
-      '#bfb7a5',
+      '#fdf6e3',
+      '#f4f0d9',
+      '#efebd4',
+      '#e6e2cc',
     },
     gr = {
       '#94949c',
@@ -72,10 +72,10 @@ else
       '#827a74',
     },
     bg = {
-      '#dbd6c8',
-      '#e3ded0',
-      '#eae7d7',
-      '#f2efdf',
+      '#e6e2cc',
+      '#efebd4',
+      '#f4f0d9',
+      '#fdf6e3',
     },
 
     normal = {
