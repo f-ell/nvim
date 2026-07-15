@@ -9,7 +9,10 @@ return {
   },
   opts = {
     signs = false,
-    highlight = { multiline = true },
+    highlight = {
+      multiline = false,
+      after = '',
+    },
     keywords = {
       FIX = { icon = '•', color = 'error' },
       TODO = { icon = '•', color = 'info' },

@@ -2,7 +2,7 @@ return {
   'saghen/blink.cmp',
   lazy = true,
   event = { 'InsertEnter', 'CmdlineEnter' },
-  version = 'v0.*', -- download release binary
+  version = 'v1.*',
   dependencies = 'folke/lazydev.nvim',
   opts = {
     keymap = {
@@ -23,7 +23,7 @@ return {
     },
 
     fuzzy = {
-      use_frecency = false,
+      frecency = { enabled = false },
       max_typos = function()
         return 0
       end,
