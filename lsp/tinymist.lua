@@ -12,6 +12,6 @@ return {
       when = 'onType',
     },
     projectResolution = 'lockDatabase',
-    typstExtraArgs = { '--input', 'img=0' },
+    typstExtraArgs = { '--input=img=0' },
   },
 }
