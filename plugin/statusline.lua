@@ -519,7 +519,8 @@ local search = {
   get = function(self)
     local ok, search = pcall(vim.fn.searchcount, { maxcount = 998 })
 
-    if not ok then
+    -- The returned count may be empty at stratup.
+    if not ok or table.isempty(search) then
       search = self.meta.search
     else
       self.meta.search = search
